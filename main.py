@@ -441,6 +441,34 @@ if uploaded_file is not None:
             st.info("Selecciona al menos una variable numérica para generar el dendrograma y panel t-SNE.")
 
 
+        # ✅ Visualizar tabla filtrada por subcluster específico
+        st.subheader("🔍 Explora los datos de un subcluster específico")
+
+        if 'Subcluster' in df.columns:
+            unique_subclusters = sorted(df.loc[data.index, 'Subcluster'].dropna().unique())
+            selected_sub = st.selectbox(
+                "Selecciona un Subcluster para mostrar sus filas:",
+                options=unique_subclusters
+            )
+
+            filtered_df = df.loc[
+                (df.index.isin(data.index)) & (df['Subcluster'] == selected_sub)
+            ]
+
+            st.dataframe(filtered_df)
+
+            # Botón para descargar CSV de este subcluster
+            st.download_button(
+                "💾 Descargar CSV de este Subcluster",
+                filtered_df.to_csv(index=False).encode('utf-8'),
+                file_name=f"Subcluster_{selected_sub}.csv",
+                mime="text/csv"
+            )
+        else:
+            st.info("No se ha generado la columna 'Subcluster'.")
+
+
+
 
 
     

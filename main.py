@@ -6,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
+
 # Título de la app
 st.title('Clustering Jerárquico - Ejemplo')
 

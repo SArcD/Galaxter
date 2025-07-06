@@ -622,6 +622,63 @@ if uploaded_file is not None:
         else:
             st.info("No se ha generado la columna 'Subcluster'.")
 
+#with st.expander("📊 Barras estratificadas por Subestructura"):
+        import plotly.express as px
+
+        # Variables categóricas posibles
+        cat_candidates = ['Act', 'M(IPn)', 'M(IP)', 'M(ave)', 'M(C)']
+
+        selected_cats = st.multiselect(
+            "Selecciona variables categóricas para ver proporciones por Subestructura:",
+            options=cat_candidates,
+            default=['Act']
+        )
+
+        if 'Subcluster' in df.columns and selected_cats:
+            df_cat = df[df['Subcluster'].notna()].copy()
+
+            for cat_var in selected_cats:
+                if cat_var in df_cat.columns:
+                    # Asegúrate de tratar como categórica
+                    cat_name = f"{cat_var}_cat"
+                    df_cat[cat_name] = df_cat[cat_var].astype(str)
+
+                    # Proporciones
+                    df_prop = (
+                        df_cat.groupby(['Subcluster', cat_name])
+                        .size()
+                        .reset_index(name='Count')
+                    )
+
+                    totals = df_prop.groupby('Subcluster')['Count'].transform('sum')
+                    df_prop['Proportion'] = df_prop['Count'] / totals
+                    df_prop['Percent'] = (df_prop['Proportion'] * 100).round(1)
+
+                    fig_bar = px.bar(
+                        df_prop,
+                        x='Subcluster',
+                        y='Proportion',
+                        color=cat_name,
+                        text=df_prop['Percent'].astype(str) + '%',
+                        color_discrete_sequence=px.colors.qualitative.Safe,
+                        title=f'Proporción por categoría {cat_var} en cada Subestructura',
+                        barmode='stack',
+                        height=600
+                    )
+
+                    fig_bar.update_layout(
+                        yaxis=dict(title='Proporción'),
+                        xaxis=dict(title='Subestructura'),
+                        legend_title=cat_var,
+                        uniformtext_minsize=8,
+                        uniformtext_mode='hide'
+                    )
+
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                else:
+                    st.warning(f"La columna '{cat_var}' no existe en tu DataFrame.")
+        else:
+            st.info("No se encuentran las columnas necesarias o no se seleccionó ninguna variable.")
 
 
 

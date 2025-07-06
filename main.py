@@ -18,15 +18,34 @@ if uploaded_file is not None:
     st.write("Datos cargados:", df.head())
     # expansor
     # Expander con explicaciones
-    with st.expander("📌 Ver explicación de las columnas"):
+    with st.expander("**Ver explicación de las columnas**"):
         # 🔑 Aquí defines tus descripciones
-        descripcion_columnas = {
-            'RA': 'Ascensión Recta (en grados)',
-            'Dec': 'Declinación (en grados)',
-            'Vel': 'Velocidad radial (km/s)',
-            'Cl_d': 'Distancia al centro del cúmulo (Mpc)',
-            'Delta': 'Parámetro de densidad local',
-            # Agrega las que correspondan a tu archivo
+    descripcion_columnas = {
+        'SDSS': 'Nombre del catálogo Sloan Digital Sky Survey del objeto.',
+        'ID': 'Identificador único del objeto, usualmente coordenadas codificadas.',
+        'RA': 'Ascensión recta (Right Ascension) en grados (coordenada celeste este-oeste).',
+        'Dec': 'Declinación (Declination) en grados (coordenada celeste norte-sur).',
+        'Vel': 'Velocidad radial del objeto en km/s, indica movimiento relativo al observador.',
+        'Rf': 'Magnitud absoluta o relativa (posiblemente magnitud fotométrica corregida).',
+        'Cl_d': 'Distancia al centro del cúmulo en Mpc o arcmin (según convención).',
+        'Delta': 'Desviación estadística o parámetro de subestructura local (p.ej. parámetro δ de D-S).',
+        'plt.mjd.fiber': 'Placa, fecha modificada juliana (MJD) y número de fibra del SDSS, o nota de espectro.',
+        'C(index)': 'Índice de concentración de luz (Petrosian u otro).',
+        'M(C)': 'Clasificación morfológica basada en C(index) (p.ej. E/S0/Sa).',
+        '(u-g)': 'Color fotométrico entre bandas u y g.',
+        'M(u-g)': 'Clasificación morfológica asociada al color (u-g).',
+        '(g-r)': 'Color fotométrico entre bandas g y r.',
+        'M(g-r)': 'Clasificación morfológica asociada al color (g-r).',
+        '(r-i)': 'Color fotométrico entre bandas r y i.',
+        'M(r-i)': 'Clasificación morfológica asociada al color (r-i).',
+        '(i-z)': 'Color fotométrico entre bandas i y z.',
+        'M(i-z)': 'Clasificación morfológica asociada al color (i-z).',
+        'M(parn)': 'Clasificación morfológica paramétrica (posible resultado de un modelo).',
+        'M(ave)': 'Clasificación morfológica promedio de distintos métodos.',
+        'M(IPn)': 'Clasificación morfológica de acuerdo a Plauchu (con claves numéricas).',
+        'M(IP)': 'Clasificación morfológica de acuerdo a Plauchu.',
+        'Act': 'Clasificación de la actividad nuclear: TO (Transition Object), SFG (Star-Forming Galaxy), '
+            'LLA (Low-Luminosity AGN), UNK (Desconocido), NoE (Sin emisión).'
         }
 
         for col, desc in descripcion_columnas.items():

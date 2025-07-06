@@ -471,86 +471,90 @@ if uploaded_file is not None:
         import plotly.graph_objects as go
         import plotly.express as px
 
-        # ✅ Mapa RA–Dec por Subcluster con curvas QS y centros
-        df_plot = df.copy()
-#df_plot = df.copy()
-        df_plot = df_plot[df_plot['Subcluster'].notna()]
-        unique_clusters = sorted(df_plot['Subcluster'].dropna().unique())
-        colores = px.colors.qualitative.Set2
+    with st.expander("🗺️ Mapa final Abell 85 por Subestructura"):
+        import plotly.graph_objects as go
+        import plotly.express as px
 
-        fig = go.Figure()
+        df_plot = df[df['Subcluster'].notna()].copy()  # ✅ Solo puntos con Subcluster
 
-        for i, cluster in enumerate(unique_clusters):
-            cl_data = df_plot[df_plot['Subcluster'] == cluster]
-            color = colores[i % len(colores)]
-            cl_str = f"Subestructura {cluster}"
+        if not df_plot.empty:
+            unique_clusters = sorted(df_plot['Subcluster'].unique())
+            colores = px.colors.qualitative.Set2
 
-            # Curvas de contorno estilo QS
-            fig.add_trace(go.Histogram2dContour(
-            x=cl_data['RA'],
-            y=cl_data['Dec'],
-            colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
-            showscale=False,
-            opacity=0.3,
-            ncontours=8,
-            line=dict(width=1, color=color),
-            name=cl_str,
-            legendgroup=cl_str,
-            hoverinfo="skip",
-            showlegend=False
-        ))
+            fig = go.Figure()
 
-        # Puntos
-        fig.add_trace(go.Scatter(
-            x=cl_data['RA'],
-            y=cl_data['Dec'],
-            mode='markers',
-            marker=dict(size=6, color=color),
-            name=cl_str,
-            legendgroup=cl_str,
-            hovertemplate="<br>".join([
-                "ID: %{customdata[0]}",
-                "RA: %{x}",
-                "Dec: %{y}",
-                "Vel: %{customdata[1]}",
-                "Delta: %{customdata[2]}"
-            ]),
-            customdata=cl_data[['ID', 'Vel', 'Delta']],
-            showlegend=True
-        ))
+            for i, cluster in enumerate(unique_clusters):
+                cl_data = df_plot[df_plot['Subcluster'] == cluster]
+                color = colores[i % len(colores)]
+                cl_str = f"Subestructura {cluster}"
 
-        # Estrella centro aproximado
-        ra_centro = cl_data['RA'].mean()
-        dec_centro = cl_data['Dec'].mean()
+                # Curvas de contorno
+                fig.add_trace(go.Histogram2dContour(
+                    x=cl_data['RA'],
+                    y=cl_data['Dec'],
+                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
+                    showscale=False,
+                    opacity=0.3,
+                    ncontours=8,
+                    line=dict(width=1, color=color),
+                    name=cl_str,
+                    legendgroup=cl_str,
+                    hoverinfo="skip",
+                    showlegend=False
+                ))
 
-        fig.add_trace(go.Scatter(
-            x=[ra_centro],
-            y=[dec_centro],
-            mode="markers",
-            marker=dict(symbol="star", size=14, color=color, line=dict(width=1, color="black")),
-            name=f"{cl_str} (Centro)",
-            legendgroup=cl_str,
-            showlegend=False,
-            hoverinfo="skip"
-        ))
+                # Puntos
+                fig.add_trace(go.Scatter(
+                    x=cl_data['RA'],
+                    y=cl_data['Dec'],
+                    mode='markers',
+                    marker=dict(size=6, color=color),
+                    name=cl_str,
+                    legendgroup=cl_str,
+                    hovertemplate="<br>".join([
+                        "ID: %{customdata[0]}",
+                        "RA: %{x}",
+                        "Dec: %{y}",
+                        "Vel: %{customdata[1]}",
+                        "Delta: %{customdata[2]}"
+                    ]),
+                    customdata=cl_data[['ID', 'Vel', 'Delta']],
+                    showlegend=True
+                ))
 
-    fig.update_layout(
-        title="Mapa RA–Dec por Subcluster con Curvas QS y Centros",
-        xaxis_title="Ascensión Recta (RA, grados)",
-        yaxis_title="Declinación (Dec, grados)",
-        legend_title="Subestructura",
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        xaxis=dict(
-            showgrid=False,
-            autorange="reversed"  # 🔥 Invierte RA
-        ),
-        yaxis=dict(showgrid=False),
-        font=dict(color="black")
-    )
+                # Estrella centro
+                ra_centro = cl_data['RA'].mean()
+                dec_centro = cl_data['Dec'].mean()
 
-    st.plotly_chart(fig, use_container_width=True)
+                fig.add_trace(go.Scatter(
+                    x=[ra_centro],
+                    y=[dec_centro],
+                    mode="markers",
+                    marker=dict(symbol="star", size=14, color=color, line=dict(width=1, color="black")),
+                    name=f"{cl_str} (Centro)",
+                    legendgroup=cl_str,
+                    showlegend=False,
+                    hoverinfo="skip"
+                ))
 
+            fig.update_layout(
+                title="Mapa RA–Dec por Subcluster con Curvas QS y Centros",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                yaxis_title="Declinación (Dec, grados)",
+                legend_title="Subestructura",
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                xaxis=dict(
+                    showgrid=False,
+                    autorange="reversed"  # 🔥 Invierte RA
+                ),
+                yaxis=dict(showgrid=False),
+                font=dict(color="black")
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No hay datos con Subcluster asignado para mostrar el mapa.")
 
 
 

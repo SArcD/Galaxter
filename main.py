@@ -243,10 +243,9 @@ if uploaded_file is not None:
                 f"{required_cols - set(df.columns)}"
             )
 
-    with st.expander("🔍 Buscar subestructuras"):
+        with st.expander("🔍 Buscar subestructuras"):
         st.subheader("🧬 Clustering Jerárquico")
 
-        # Variables disponibles
         numeric_cols = df.select_dtypes(include='number').columns.tolist()
         selected_cols = st.multiselect(
             "Selecciona variables numéricas para clustering:",
@@ -260,10 +259,31 @@ if uploaded_file is not None:
             if data.shape[0] < 2:
                 st.warning("No hay suficientes datos después de limpiar filas para clustering.")
             else:
-            # --- Clustering jerárquico ---
                 scaler = StandardScaler()
                 scaled_data = scaler.fit_transform(data)
+
                 Z = linkage(scaled_data, method='ward')
+
+            #     🟢 NUEVO: Parámetros interactivos
+                num_clusters = st.slider(
+                    "Número de subestructuras:",
+                    min_value=2, max_value=10, value=4
+                )
+                criterion = st.selectbox(
+                    "Criterio de corte para fcluster:",
+                    options=['maxclust', 'distance'],
+                    index=0
+                )
+
+                from scipy.cluster.hierarchy import fcluster
+                if criterion == 'maxclust':
+                    df['Subcluster'] = fcluster(Z, t=num_clusters, criterion=criterion)
+                else:
+                    # Para 'distance', podrías ajustar t= umbral de distancia
+                    distance_threshold = st.number_input(
+                        "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
+                    )
+                    df['Subcluster'] = fcluster(Z, t=distance_threshold, criterion=criterion)
 
                 fig_dendro, ax = plt.subplots(figsize=(10, 5))
                 dendrogram(Z, labels=data.index.tolist(), ax=ax)
@@ -272,15 +292,14 @@ if uploaded_file is not None:
                 ax.set_ylabel("Distancia")
                 st.pyplot(fig_dendro)
 
-                # --- Panel interactivo t-SNE + Boxplots ---
+            #     🟢 PANEL t-SNE + Boxplots
                 import plotly.graph_objects as go
                 from plotly.subplots import make_subplots
 
-                # Variables para boxplots (usa las mismas)
-                vars_phys = selected_cols  # 👈 las mismas que seleccionaste
+                vars_phys = selected_cols
                 colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
 
-                if 'Subcluster' in df.columns:
+                if 'Subcluster' in df.columns and 'TSNE1' in df.columns and 'TSNE2' in df.columns:
                     unique_clusters = sorted(df['Subcluster'].dropna().unique())
 
                     n_cols = 3
@@ -299,7 +318,6 @@ if uploaded_file is not None:
                         subplot_titles=subplot_titles
                     )
 
-                # Scatter t-SNE
                     for i, cluster in enumerate(unique_clusters):
                         cluster_data = df[df['Subcluster'] == cluster]
                         hover_text = (
@@ -331,9 +349,8 @@ if uploaded_file is not None:
                                 hoverinfo='text'
                             ),
                             row=1, col=1
-                        )
+                        )    
 
-                    # Contour
                     fig.add_trace(
                         go.Histogram2dContour(
                             x=df['TSNE1'],
@@ -348,7 +365,6 @@ if uploaded_file is not None:
                         row=1, col=1
                     )
 
-                    # Boxplots
                     for idx, var in enumerate(vars_phys):
                         row = (idx // n_cols) + 2
                         col = (idx % n_cols) + 1
@@ -399,9 +415,12 @@ if uploaded_file is not None:
 
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("No existe la columna 'Subcluster' para generar panel t-SNE + Boxplots.")
+                    st.warning(
+                        "Faltan columnas 'Subcluster', 'TSNE1' o 'TSNE2' para el panel interactivo."
+                    )
         else:
             st.info("Selecciona al menos una variable numérica para generar el dendrograma y panel t-SNE.")
+
 
 
 

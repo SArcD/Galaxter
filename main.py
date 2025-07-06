@@ -58,7 +58,7 @@ if uploaded_file is not None:
     # 🕵️‍♂️ Barra de búsqueda para encontrar columnas por nombre
     st.subheader("🔍 Buscar variable por nombre")
 
-    search_query = st.text_input("Escribe parte del nombre de la variable:")
+    search_query = st.text_input("Escribe parte del nombre de la variable:", key="var_search_desc")
 
     if search_query:
         # Lista de nombres de columnas
@@ -87,7 +87,7 @@ if uploaded_file is not None:
         numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
         # Caja de búsqueda para variable numérica
-        search_var = st.text_input("🔍 Busca una variable numérica para graficar su distribución:")
+        search_var = st.text_input("🔍 Busca una variable numérica para graficar su distribución:", key="var_search_dist")
 
         if search_var:
             best_match_var = difflib.get_close_matches(search_var, numeric_cols, n=1, cutoff=0.1)

@@ -314,7 +314,8 @@ if uploaded_file is not None:
                 import plotly.graph_objects as go
                 from plotly.subplots import make_subplots
 
-                vars_phys = selected_cols
+                #vars_phys = selected_cols
+                vars_phys = numeric_cols
                 colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
 
                 if 'Subcluster' in df.columns and 'TSNE1' in df.columns and 'TSNE2' in df.columns:

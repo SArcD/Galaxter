@@ -473,7 +473,8 @@ if uploaded_file is not None:
 
         # ✅ Mapa RA–Dec por Subcluster con curvas QS y centros
         df_plot = df.copy()
-
+#df_plot = df.copy()
+        df_plot = df_plot[df_plot['Subcluster'].notna()]
         unique_clusters = sorted(df_plot['Subcluster'].dropna().unique())
         colores = px.colors.qualitative.Set2
 

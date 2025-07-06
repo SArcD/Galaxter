@@ -246,9 +246,8 @@ if uploaded_file is not None:
     with st.expander("🔍 Buscar subestructuras"):
         st.subheader("🧬 Clustering Jerárquico")
 
-        # Lista de columnas numéricas disponibles
+        # Variables disponibles
         numeric_cols = df.select_dtypes(include='number').columns.tolist()
-
         selected_cols = st.multiselect(
             "Selecciona variables numéricas para clustering:",
             options=numeric_cols,
@@ -256,25 +255,153 @@ if uploaded_file is not None:
         )
 
         if selected_cols:
-            data = df[selected_cols]
-            data = data.replace([np.inf, -np.inf], np.nan).dropna()
+            data = df[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
 
             if data.shape[0] < 2:
                 st.warning("No hay suficientes datos después de limpiar filas para clustering.")
             else:
+            # --- Clustering jerárquico ---
                 scaler = StandardScaler()
                 scaled_data = scaler.fit_transform(data)
-
                 Z = linkage(scaled_data, method='ward')
 
-                fig, ax = plt.subplots(figsize=(10, 5))
+                fig_dendro, ax = plt.subplots(figsize=(10, 5))
                 dendrogram(Z, labels=data.index.tolist(), ax=ax)
                 ax.set_title("Dendrograma de Clustering Jerárquico")
                 ax.set_xlabel("Índices de galaxias")
                 ax.set_ylabel("Distancia")
-                st.pyplot(fig)
+                st.pyplot(fig_dendro)
+
+                # --- Panel interactivo t-SNE + Boxplots ---
+                import plotly.graph_objects as go
+                from plotly.subplots import make_subplots
+
+                # Variables para boxplots (usa las mismas)
+                vars_phys = selected_cols  # 👈 las mismas que seleccionaste
+                colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
+
+                if 'Subcluster' in df.columns:
+                    unique_clusters = sorted(df['Subcluster'].dropna().unique())
+
+                    n_cols = 3
+                    n_rows = (len(vars_phys) + n_cols - 1) // n_cols
+                    total_rows = n_rows + 1
+
+                    specs = [[{"colspan": n_cols}] + [None]*(n_cols-1)]
+                    for _ in range(n_rows):
+                        specs.append([{} for _ in range(n_cols)])
+
+                    subplot_titles = ["PCA + t-SNE Clustering"] + vars_phys
+
+                    fig = make_subplots(
+                        rows=total_rows, cols=n_cols,
+                        specs=specs,
+                        subplot_titles=subplot_titles
+                    )
+
+                # Scatter t-SNE
+                    for i, cluster in enumerate(unique_clusters):
+                        cluster_data = df[df['Subcluster'] == cluster]
+                        hover_text = (
+                            "<b>ID:</b> " + cluster_data['ID'].astype(str) +
+                            "<br><b>RA:</b> " + cluster_data['RA'].round(4).astype(str) +
+                            "<br><b>Dec:</b> " + cluster_data['Dec'].round(4).astype(str) +
+                            "<br><b>Vel:</b> " + cluster_data['Vel'].round(1).astype(str) +
+                            "<br><b>Cl_d:</b> " + cluster_data['Cl_d'].round(3).astype(str) +
+                            "<br><b>Delta:</b> " + cluster_data['Delta'].round(3).astype(str) +
+                            "<br><b>M(IPn):</b> " + cluster_data['M(IPn)'].astype(str) +
+                            "<br><b>TSNE1:</b> " + cluster_data['TSNE1'].round(3).astype(str) +
+                            "<br><b>TSNE2:</b> " + cluster_data['TSNE2'].round(3).astype(str)
+                        )
+
+                        fig.add_trace(
+                            go.Scatter(
+                                x=cluster_data['TSNE1'],
+                                y=cluster_data['TSNE2'],
+                                mode='markers',
+                                name=f'Subcluster {cluster}',
+                                legendgroup=f'Subcluster {cluster}',
+                                showlegend=True,
+                                marker=dict(
+                                    size=6,
+                                    color=colors[i % len(colors)],
+                                    line=dict(width=1, color='DarkSlateGrey')
+                                ),
+                                text=hover_text,
+                                hoverinfo='text'
+                            ),
+                            row=1, col=1
+                        )
+
+                    # Contour
+                    fig.add_trace(
+                        go.Histogram2dContour(
+                            x=df['TSNE1'],
+                            y=df['TSNE2'],
+                            colorscale='Greys',
+                            reversescale=True,
+                            opacity=0.2,
+                            showscale=False,
+                            hoverinfo='skip',
+                            showlegend=False
+                        ),
+                        row=1, col=1
+                    )
+
+                    # Boxplots
+                    for idx, var in enumerate(vars_phys):
+                        row = (idx // n_cols) + 2
+                        col = (idx % n_cols) + 1
+                        for j, cluster in enumerate(unique_clusters):
+                            cluster_data = df[df['Subcluster'] == cluster]
+                            hover_text = (
+                                "<b>ID:</b> " + cluster_data['ID'].astype(str) +
+                                f"<br><b>{var}:</b> " + cluster_data[var].astype(str) +
+                                "<br><b>Subcluster:</b> " + cluster_data['Subcluster'].astype(str)
+                            )
+
+                            fig.add_trace(
+                                go.Box(
+                                    y=cluster_data[var],
+                                    x=[f'Subcluster {cluster}'] * len(cluster_data),
+                                    name=f'Subcluster {cluster}',
+                                    legendgroup=f'Subcluster {cluster}',
+                                    showlegend=False,
+                                    boxpoints='all',
+                                    jitter=0.5,
+                                    pointpos=-1.8,
+                                    marker_color=colors[j % len(colors)],
+                                    notched=True,
+                                    text=hover_text,
+                                    hoverinfo='text',
+                                    width=0.6
+                                ),
+                                row=row, col=col
+                            )
+
+                    fig.update_layout(
+                        title="Panel interactivo: PCA + t-SNE + Boxplots",
+                        template='plotly_white',
+                        width=400 * n_cols,
+                        height=400 * total_rows,
+                        boxmode='group',
+                        legend_title="Subclusters"
+                    )
+
+                    fig.update_xaxes(title="t-SNE 1", row=1, col=1)
+                    fig.update_yaxes(title="t-SNE 2", row=1, col=1)
+
+                    for idx, var in enumerate(vars_phys):
+                        row = (idx // n_cols) + 2
+                        col = (idx % n_cols) + 1
+                        fig.update_xaxes(title="Subcluster", row=row, col=col)
+                        fig.update_yaxes(title=var, row=row, col=col)
+
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No existe la columna 'Subcluster' para generar panel t-SNE + Boxplots.")
         else:
-            st.info("Selecciona al menos una variable numérica para generar el dendrograma.")
+            st.info("Selecciona al menos una variable numérica para generar el dendrograma y panel t-SNE.")
 
 
 

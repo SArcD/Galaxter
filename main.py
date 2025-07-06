@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 col1, col2 = st.columns([1, 3])
 
 with col1:
-    st.image("Designer.png", width=300)  # Más pequeño, ajusta el ancho como prefieras
+    st.image("Designer.png", width=400)  # Más pequeño, ajusta el ancho como prefieras
 
 with col2:
     st.markdown(

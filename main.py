@@ -266,9 +266,9 @@ if uploaded_file is not None:
 
                 Z = linkage(scaled_data, method='ward')
 
-            #     🟢 NUEVO: Parámetros interactivos
+            #     ✅ Controles interactivos
                 num_clusters = st.slider(
-                    "Número de subestructuras:",
+                    "Número de subestructuras (clusters):",
                     min_value=2, max_value=10, value=4
                 )
                 criterion = st.selectbox(
@@ -278,30 +278,39 @@ if uploaded_file is not None:
                 )
 
                 from scipy.cluster.hierarchy import fcluster
-                #if criterion == 'maxclust':
-                #    df['Subcluster'] = fcluster(Z, t=num_clusters, criterion=criterion)
-                #else:
-                #    # Para 'distance', podrías ajustar t= umbral de distancia
-                #    distance_threshold = st.number_input(
-                #        "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
-                #    )
-                #    df['Subcluster'] = fcluster(Z, t=distance_threshold, criterion=criterion)
+
                 if criterion == 'maxclust':
                     labels = fcluster(Z, t=num_clusters, criterion=criterion)
                 else:
+                    distance_threshold = st.number_input(
+                        "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
+                    )
                     labels = fcluster(Z, t=distance_threshold, criterion=criterion)
 
                 df.loc[data.index, 'Subcluster'] = labels
 
-                
+                # ✅ Dendrograma
                 fig_dendro, ax = plt.subplots(figsize=(10, 5))
                 dendrogram(Z, labels=data.index.tolist(), ax=ax)
                 ax.set_title("Dendrograma de Clustering Jerárquico")
                 ax.set_xlabel("Índices de galaxias")
                 ax.set_ylabel("Distancia")
                 st.pyplot(fig_dendro)
+    
+                # ✅ Generar TSNE1 y TSNE2 si faltan
+                if 'TSNE1' not in df.columns or 'TSNE2' not in df.columns:
+                    st.info("Generando TSNE1 y TSNE2 dinámicamente con PCA + t-SNE...")
+                    from sklearn.decomposition import PCA
+                    from sklearn.manifold import TSNE
 
-            #     🟢 PANEL t-SNE + Boxplots
+                    pca = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+                    tsne = TSNE(n_components=2, random_state=42)
+                    tsne_result = tsne.fit_transform(pca)
+
+                    df.loc[data.index, 'TSNE1'] = tsne_result[:, 0]
+                    df.loc[data.index, 'TSNE2'] = tsne_result[:, 1]
+
+                # ✅ PANEL t-SNE + Boxplots
                 import plotly.graph_objects as go
                 from plotly.subplots import make_subplots
 
@@ -309,7 +318,7 @@ if uploaded_file is not None:
                 colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
 
                 if 'Subcluster' in df.columns and 'TSNE1' in df.columns and 'TSNE2' in df.columns:
-                    unique_clusters = sorted(df['Subcluster'].dropna().unique())
+                    unique_clusters = sorted(df.loc[data.index, 'Subcluster'].dropna().unique())
 
                     n_cols = 3
                     n_rows = (len(vars_phys) + n_cols - 1) // n_cols
@@ -327,8 +336,9 @@ if uploaded_file is not None:
                         subplot_titles=subplot_titles
                     )
 
+                # Scatter t-SNE
                     for i, cluster in enumerate(unique_clusters):
-                        cluster_data = df[df['Subcluster'] == cluster]
+                        cluster_data = df.loc[data.index][df.loc[data.index, 'Subcluster'] == cluster]
                         hover_text = (
                             "<b>ID:</b> " + cluster_data['ID'].astype(str) +
                             "<br><b>RA:</b> " + cluster_data['RA'].round(4).astype(str) +
@@ -358,12 +368,12 @@ if uploaded_file is not None:
                                 hoverinfo='text'
                             ),
                             row=1, col=1
-                        )    
+                        )
 
                     fig.add_trace(
                         go.Histogram2dContour(
-                            x=df['TSNE1'],
-                            y=df['TSNE2'],
+                            x=df.loc[data.index, 'TSNE1'],
+                            y=df.loc[data.index, 'TSNE2'],
                             colorscale='Greys',
                             reversescale=True,
                             opacity=0.2,
@@ -374,11 +384,12 @@ if uploaded_file is not None:
                         row=1, col=1
                     )
 
+                    # Boxplots
                     for idx, var in enumerate(vars_phys):
                         row = (idx // n_cols) + 2
                         col = (idx % n_cols) + 1
                         for j, cluster in enumerate(unique_clusters):
-                            cluster_data = df[df['Subcluster'] == cluster]
+                            cluster_data = df.loc[data.index][df.loc[data.index, 'Subcluster'] == cluster]
                             hover_text = (
                                 "<b>ID:</b> " + cluster_data['ID'].astype(str) +
                                 f"<br><b>{var}:</b> " + cluster_data[var].astype(str) +
@@ -424,12 +435,9 @@ if uploaded_file is not None:
 
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning(
-                        "Faltan columnas 'Subcluster', 'TSNE1' o 'TSNE2' para el panel interactivo."
-                    )
+                    st.warning("Faltan columnas 'Subcluster', 'TSNE1' o 'TSNE2' para el panel interactivo.")
         else:
             st.info("Selecciona al menos una variable numérica para generar el dendrograma y panel t-SNE.")
-
 
 
 

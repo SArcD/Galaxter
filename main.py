@@ -20,7 +20,7 @@ if uploaded_file is not None:
     # Expander con explicaciones
     with st.expander("**Ver explicación de las columnas**"):
         # 🔑 Aquí defines tus descripciones
-    descripcion_columnas = {
+        descripcion_columnas = {
         'SDSS': 'Nombre del catálogo Sloan Digital Sky Survey del objeto.',
         'ID': 'Identificador único del objeto, usualmente coordenadas codificadas.',
         'RA': 'Ascensión recta (Right Ascension) en grados (coordenada celeste este-oeste).',

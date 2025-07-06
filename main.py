@@ -559,15 +559,44 @@ if uploaded_file is not None:
 
 #with st.expander("📊 Diagramas de caja por Subestructura"):
         import plotly.express as px
+        import pandas as pd
 
-        # ✅ Variables a comparar (ajusta según tu DataFrame)
-        vars_phys = ['RA', 'Dec', 'Vel', 'Delta']  # Cambia según lo que quieras analizar
+        # 1️⃣ Variables candidatas
+        vars_candidates = [
+            'RA', 'Dec', 'Vel', 'Delta', 'Cl_d',
+            'Rf', 'C(index)', '(u-g)', '(g-r)', 'M(IPn)', 'Act'
+        ]
 
+        selected_vars = st.multiselect(
+            "Selecciona variables para analizar evidencias de subestructuras:",
+            options=vars_candidates,
+            default=['RA', 'Dec', 'Vel', 'Delta']
+        )
+
+        # 2️⃣ Tabla de interpretación
+        st.markdown("**🔍 Sugerencias para interpretar cada variable:**")
+
+        table_data = [
+            ["RA, Dec", "Distribución espacial: busca agrupaciones locales."],
+            ["Vel", "Picos secundarios o colas: indica grupos cinemáticamente distintos."],
+            ["Delta", "Desviación local: zonas con dinámica diferente."],
+            ["Cl_d", "Distancia al centro: grupos externos o desplazados radialmente."],
+            ["Rf", "Magnitud: galaxias brillantes dominantes en subcúmulos."],
+            ["C(index)", "Concentración de luz: relación con morfología."],
+            ["(u-g), (g-r)", "Colores: poblaciones estelares jóvenes/viejas."],
+            ["M(IPn)", "Morfología interna: coherencia morfológica."],
+            ["Act", "Actividad nuclear: AGN/starburst asociados a interacción."]
+        ]
+        df_tips = pd.DataFrame(table_data, columns=["Variable", "¿Qué observar?"])
+        st.table(df_tips)
+
+        # 3️⃣ Boxplots dinámicos
         if 'Subcluster' in df.columns:
             df_box = df[df['Subcluster'].notna()].copy()
 
-            if not df_box.empty:
-                for var in vars_phys:
+            if selected_vars and not df_box.empty:
+                st.info("Observa si los diagramas muestran distribuciones diferenciadas entre subestructuras.")
+                for var in selected_vars:
                     fig = px.box(
                         df_box,
                         x='Subcluster',
@@ -589,7 +618,7 @@ if uploaded_file is not None:
                     )
                     st.plotly_chart(fig, use_container_width=True)
             else:
-                st.info("No hay datos con Subcluster asignado para los boxplots.")
+                st.info("No se seleccionaron variables o no hay datos para graficar.")
         else:
             st.info("No se ha generado la columna 'Subcluster'.")
 

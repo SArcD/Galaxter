@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
-
+import numpy as np
 # Título de la app
 st.title('Clustering Jerárquico - Ejemplo')
 

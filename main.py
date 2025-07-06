@@ -557,6 +557,44 @@ if uploaded_file is not None:
             st.info("No hay datos con Subcluster asignado para mostrar el mapa.")
 
 
+#with st.expander("📊 Diagramas de caja por Subestructura"):
+        import plotly.express as px
+
+        # ✅ Variables a comparar (ajusta según tu DataFrame)
+        vars_phys = ['RA', 'Dec', 'Vel', 'Delta']  # Cambia según lo que quieras analizar
+
+        if 'Subcluster' in df.columns:
+            df_box = df[df['Subcluster'].notna()].copy()
+
+            if not df_box.empty:
+                for var in vars_phys:
+                    fig = px.box(
+                        df_box,
+                        x='Subcluster',
+                        y=var,
+                        color='Subcluster',
+                        points='all',
+                        notched=True,
+                        title=f"Distribución de {var} por Subestructura",
+                        labels={'Subcluster': 'Subestructura', var: var},
+                        color_discrete_sequence=px.colors.qualitative.Safe
+                    )
+                    fig.update_traces(width=0.6, jitter=0.3)
+                    fig.update_layout(
+                        yaxis_title=var,
+                        xaxis_title='Subestructura',
+                        legend_title='Subestructura',
+                        boxmode='group',
+                        boxgap=0.1
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No hay datos con Subcluster asignado para los boxplots.")
+        else:
+            st.info("No se ha generado la columna 'Subcluster'.")
+
+
+
 
 
 

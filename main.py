@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 # Título de la app
 #st.image("GCexplorer.PNG", use_column_width=True)
-st.image("GCExplorer.webp")
+st.image("Designer.png")
 
 # 1️⃣ Cargar archivo CSV desde el usuario
 uploaded_file = st.file_uploader("Sube tu archivo CSV", type="csv")

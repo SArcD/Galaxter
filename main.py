@@ -16,7 +16,26 @@ if uploaded_file is not None:
     # Leer archivo
     df = pd.read_csv(uploaded_file)
     st.write("Datos cargados:", df.head())
+    # expansor
+    # Expander con explicaciones
+    with st.expander("📌 Ver explicación de las columnas"):
+        # 🔑 Aquí defines tus descripciones
+        descripcion_columnas = {
+            'RA': 'Ascensión Recta (en grados)',
+            'Dec': 'Declinación (en grados)',
+            'Vel': 'Velocidad radial (km/s)',
+            'Cl_d': 'Distancia al centro del cúmulo (Mpc)',
+            'Delta': 'Parámetro de densidad local',
+            # Agrega las que correspondan a tu archivo
+        }
 
+        for col, desc in descripcion_columnas.items():
+            st.markdown(f"**{col}**: {desc}")
+
+    
+
+
+    
     # Opcional: seleccionar columnas numéricas
     numeric_cols = df.select_dtypes(include='number').columns.tolist()
     selected_cols = st.multiselect("Selecciona variables numéricas:", numeric_cols, default=numeric_cols)

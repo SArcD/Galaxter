@@ -52,7 +52,29 @@ if uploaded_file is not None:
             st.markdown(f"**{col}**: {desc}")
 
     
+    # Buscador de variables
+    import difflib
 
+    # 🕵️‍♂️ Barra de búsqueda para encontrar columnas por nombre
+    st.subheader("🔍 Buscar variable por nombre")
+
+    search_query = st.text_input("Escribe parte del nombre de la variable:")
+
+    if search_query:
+        # Lista de nombres de columnas
+        cols = list(descripcion_columnas.keys())
+
+        # Encuentra la coincidencia más cercana usando difflib
+        best_match = difflib.get_close_matches(search_query, cols, n=1, cutoff=0.1)
+
+        if best_match:
+            col_name = best_match[0]
+            description = descripcion_columnas[col_name]
+            st.success(f"**{col_name}**: {description}")
+        else:
+            st.warning("No se encontró ninguna coincidencia.")
+    else:
+        st.info("Empieza a escribir para buscar una variable.")
 
     
     # Opcional: seleccionar columnas numéricas

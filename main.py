@@ -10,7 +10,26 @@ import plotly.graph_objects as go
 
 # Título de la app
 #st.image("GCexplorer.PNG", use_column_width=True)
-st.image("Designer.png")
+#st.image("Designer.png")
+
+#import streamlit as st
+
+# Crea dos columnas: una para el logo, otra para el texto
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    st.image("Designer.png", width=100)  # Más pequeño, ajusta el ancho como prefieras
+
+with col2:
+    st.markdown(
+        """
+        <h1 style='color: #FFD700; font-family: sans-serif;'>
+            Galaxy Cluster Explorer
+        </h1>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # 1️⃣ Cargar archivo CSV desde el usuario
 uploaded_file = st.file_uploader("Sube tu archivo CSV", type="csv")

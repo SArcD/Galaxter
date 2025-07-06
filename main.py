@@ -167,6 +167,8 @@ if uploaded_file is not None:
             try:
                 df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
                 labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
+                #labels = fcluster(Z, t=num_clusters, criterion=criterion)
+                #df.loc[data.index, 'Subcluster'] = labels
                 selected_labels = st.multiselect(
                     "Selecciona uno o varios rangos:",
                     options=labels,
@@ -276,15 +278,22 @@ if uploaded_file is not None:
                 )
 
                 from scipy.cluster.hierarchy import fcluster
+                #if criterion == 'maxclust':
+                #    df['Subcluster'] = fcluster(Z, t=num_clusters, criterion=criterion)
+                #else:
+                #    # Para 'distance', podrías ajustar t= umbral de distancia
+                #    distance_threshold = st.number_input(
+                #        "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
+                #    )
+                #    df['Subcluster'] = fcluster(Z, t=distance_threshold, criterion=criterion)
                 if criterion == 'maxclust':
-                    df['Subcluster'] = fcluster(Z, t=num_clusters, criterion=criterion)
+                    labels = fcluster(Z, t=num_clusters, criterion=criterion)
                 else:
-                    # Para 'distance', podrías ajustar t= umbral de distancia
-                    distance_threshold = st.number_input(
-                        "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
-                    )
-                    df['Subcluster'] = fcluster(Z, t=distance_threshold, criterion=criterion)
+                    labels = fcluster(Z, t=distance_threshold, criterion=criterion)
 
+                df.loc[data.index, 'Subcluster'] = labels
+
+                
                 fig_dendro, ax = plt.subplots(figsize=(10, 5))
                 dendrogram(Z, labels=data.index.tolist(), ax=ax)
                 ax.set_title("Dendrograma de Clustering Jerárquico")

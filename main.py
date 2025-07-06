@@ -149,21 +149,40 @@ if uploaded_file is not None:
     numeric_cols = df.select_dtypes(include='number').columns.tolist()
     selected_cols = st.multiselect("Selecciona variables numéricas:", numeric_cols, default=numeric_cols)
 
+    #if selected_cols:
+    #    data = df[selected_cols]
+    #    data = data.replace([np.inf, -np.inf], np.nan).dropna()
+
+    #    # 2️⃣ Estandarizar datos
+    #    scaler = StandardScaler()
+    #    scaled_data = scaler.fit_transform(data)
+
+    #    # 3️⃣ Clustering jerárquico
+    #    Z = linkage(scaled_data, method='ward')
+
+    #    # 4️⃣ Graficar dendrograma
+    #    fig, ax = plt.subplots(figsize=(10, 5))
+    #    dendrogram(Z, labels=df.index.tolist(), ax=ax)
+    #    st.pyplot(fig)
+
     if selected_cols:
         data = df[selected_cols]
         data = data.replace([np.inf, -np.inf], np.nan).dropna()
 
-        # 2️⃣ Estandarizar datos
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(data)
+        if data.shape[0] < 2:
+            st.warning("No hay suficientes datos después de limpiar filas.")
+        else:
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(data)
 
-        # 3️⃣ Clustering jerárquico
-        Z = linkage(scaled_data, method='ward')
+            Z = linkage(scaled_data, method='ward')
 
-        # 4️⃣ Graficar dendrograma
-        fig, ax = plt.subplots(figsize=(10, 5))
-        dendrogram(Z, labels=df.index.tolist(), ax=ax)
-        st.pyplot(fig)
+            fig, ax = plt.subplots(figsize=(10, 5))
+            dendrogram(Z, labels=data.index.tolist(), ax=ax)
+            st.pyplot(fig)
+
+
+    
     else:
         st.warning("Selecciona al menos una columna numérica.")
 else:

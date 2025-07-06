@@ -151,6 +151,7 @@ if uploaded_file is not None:
 
     if selected_cols:
         data = df[selected_cols]
+        data = data.replace([np.inf, -np.inf], np.nan).dropna()
 
         # 2️⃣ Estandarizar datos
         scaler = StandardScaler()

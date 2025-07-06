@@ -77,6 +77,74 @@ if uploaded_file is not None:
         st.info("Empieza a escribir para buscar una variable.")
 
     
+    import plotly.express as px
+    import plotly.figure_factory as ff
+
+    with st.expander("📊 Análisis exploratorio: Distribuciones, Pair Plot y Correlación"):
+        st.subheader("1️⃣ Distribución univariada de una variable numérica")
+
+        # Lista de columnas numéricas en tu DataFrame
+        numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+        # Caja de búsqueda para variable numérica
+        search_var = st.text_input("🔍 Busca una variable numérica para graficar su distribución:")
+
+        if search_var:
+            best_match_var = difflib.get_close_matches(search_var, numeric_cols, n=1, cutoff=0.1)
+            if best_match_var:
+                col = best_match_var[0]
+                st.success(f"Mostrando distribución para: **{col}**")
+                fig = px.histogram(df, x=col, nbins=30, title=f"Distribución de {col}")
+                st.plotly_chart(fig)
+            else:
+                st.warning("No se encontró ninguna variable numérica similar.")
+        else:
+            st.info("Empieza a escribir para buscar la variable numérica.")
+
+        st.divider()
+
+        st.subheader("2️⃣ Pair Plot de variables numéricas")
+
+        # Multiselect para elegir variables para el pair plot
+        selected_pair_cols = st.multiselect(
+            "Selecciona dos variables para el pair plot (o selecciona más para todos)",
+            options=numeric_cols,
+            default=numeric_cols[:2] if len(numeric_cols) >= 2 else numeric_cols
+        )
+
+        if len(selected_pair_cols) >= 2:
+            fig_pair = px.scatter_matrix(
+                df[selected_pair_cols],
+                dimensions=selected_pair_cols,
+                title="Pair Plot"
+            )
+            st.plotly_chart(fig_pair)
+        else:
+            st.info("Selecciona al menos dos variables para el pair plot.")
+
+        st.divider()
+
+        st.subheader("3️⃣ Matriz de correlación")
+
+        # Calcular y graficar matriz de correlación
+        if numeric_cols:
+            corr_matrix = df[numeric_cols].corr()
+
+            fig_corr = px.imshow(
+                corr_matrix,
+                text_auto=True,
+                aspect="auto",
+                title="Matriz de correlación",
+                color_continuous_scale='RdBu_r',
+                zmin=-1, zmax=1
+            )
+            st.plotly_chart(fig_corr)
+        else:
+            st.warning("No hay variables numéricas para calcular correlación.")
+
+    
+
+    #### clustering jerarquico
     # Opcional: seleccionar columnas numéricas
     numeric_cols = df.select_dtypes(include='number').columns.tolist()
     selected_cols = st.multiselect("Selecciona variables numéricas:", numeric_cols, default=numeric_cols)

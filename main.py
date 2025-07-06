@@ -243,7 +243,7 @@ if uploaded_file is not None:
                 f"{required_cols - set(df.columns)}"
             )
 
-        with st.expander("🔍 Buscar subestructuras"):
+    with st.expander("🔍 Buscar subestructuras"):
         st.subheader("🧬 Clustering Jerárquico")
 
         numeric_cols = df.select_dtypes(include='number').columns.tolist()

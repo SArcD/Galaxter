@@ -243,44 +243,40 @@ if uploaded_file is not None:
                 f"{required_cols - set(df.columns)}"
             )
 
-    
+    with st.expander("🔍 Buscar subestructuras"):
+        st.subheader("🧬 Clustering Jerárquico")
 
-    #### clustering jerarquico
-    # Opcional: seleccionar columnas numéricas
-    numeric_cols = df.select_dtypes(include='number').columns.tolist()
-    selected_cols = st.multiselect("Selecciona variables numéricas:", numeric_cols, default=numeric_cols)
+        # Lista de columnas numéricas disponibles
+        numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-    #if selected_cols:
-    #    data = df[selected_cols]
-    #    data = data.replace([np.inf, -np.inf], np.nan).dropna()
+        selected_cols = st.multiselect(
+            "Selecciona variables numéricas para clustering:",
+            options=numeric_cols,
+            default=numeric_cols
+        )
 
-    #    # 2️⃣ Estandarizar datos
-    #    scaler = StandardScaler()
-    #    scaled_data = scaler.fit_transform(data)
+        if selected_cols:
+            data = df[selected_cols]
+            data = data.replace([np.inf, -np.inf], np.nan).dropna()
 
-    #    # 3️⃣ Clustering jerárquico
-    #    Z = linkage(scaled_data, method='ward')
+            if data.shape[0] < 2:
+                st.warning("No hay suficientes datos después de limpiar filas para clustering.")
+            else:
+                scaler = StandardScaler()
+                scaled_data = scaler.fit_transform(data)
 
-    #    # 4️⃣ Graficar dendrograma
-    #    fig, ax = plt.subplots(figsize=(10, 5))
-    #    dendrogram(Z, labels=df.index.tolist(), ax=ax)
-    #    st.pyplot(fig)
+                Z = linkage(scaled_data, method='ward')
 
-    if selected_cols:
-        data = df[selected_cols]
-        data = data.replace([np.inf, -np.inf], np.nan).dropna()
-
-        if data.shape[0] < 2:
-            st.warning("No hay suficientes datos después de limpiar filas.")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                dendrogram(Z, labels=data.index.tolist(), ax=ax)
+                ax.set_title("Dendrograma de Clustering Jerárquico")
+                ax.set_xlabel("Índices de galaxias")
+                ax.set_ylabel("Distancia")
+                st.pyplot(fig)
         else:
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(data)
+            st.info("Selecciona al menos una variable numérica para generar el dendrograma.")
 
-            Z = linkage(scaled_data, method='ward')
 
-            fig, ax = plt.subplots(figsize=(10, 5))
-            dendrogram(Z, labels=data.index.tolist(), ax=ax)
-            st.pyplot(fig)
 
 
     

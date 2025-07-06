@@ -280,7 +280,7 @@ if uploaded_file is not None:
 
 
     
-        else:
-            st.warning("Selecciona al menos una columna numérica.")
+    else:
+        st.warning("Selecciona al menos una columna numérica.")
 else:
     st.info("Por favor, sube un archivo CSV.")

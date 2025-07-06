@@ -84,13 +84,13 @@ if uploaded_file is not None:
         st.subheader("1️⃣ Distribución univariada de una variable numérica")
 
         # Lista de columnas numéricas en tu DataFrame
-        numeric_cols = df.select_dtypes(include='number').columns.tolist()
+        numeric_colss = df.select_dtypes(include='number').columns.tolist()
 
         # Caja de búsqueda para variable numérica
         search_var = st.text_input("🔍 Busca una variable numérica para graficar su distribución:", key="var_search_dist")
 
         if search_var:
-            best_match_var = difflib.get_close_matches(search_var, numeric_cols, n=1, cutoff=0.1)
+            best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
             if best_match_var:
                 col = best_match_var[0]
                 st.success(f"Mostrando distribución para: **{col}**")
@@ -108,8 +108,8 @@ if uploaded_file is not None:
         # Multiselect para elegir variables para el pair plot
         selected_pair_cols = st.multiselect(
             "Selecciona dos variables para el pair plot (o selecciona más para todos)",
-            options=numeric_cols,
-            default=numeric_cols[:2] if len(numeric_cols) >= 2 else numeric_cols
+            options=numeric_colss,
+            default=numeric_colss[:2] if len(numeric_colss) >= 2 else numeric_colss
         )
 
         if len(selected_pair_cols) >= 2:
@@ -127,8 +127,8 @@ if uploaded_file is not None:
         st.subheader("3️⃣ Matriz de correlación")
 
         # Calcular y graficar matriz de correlación
-        if numeric_cols:
-            corr_matrix = df[numeric_cols].corr()
+        if numeric_colss:
+            corr_matrix = df[numeric_colss].corr()
 
             fig_corr = px.imshow(
                 corr_matrix,

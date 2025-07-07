@@ -153,8 +153,8 @@ if uploaded_file is not None:
             fig_pair = px.scatter_matrix(
                 df[selected_pair_cols],
                 dimensions=selected_pair_cols,
-                width=900,   # Cambia el ancho aquí
-                height=900,   # Cambia la altura aquí
+                width=1500,   # Cambia el ancho aquí
+                height=1500,   # Cambia la altura aquí
                 title="Pair Plot"
             )
             st.plotly_chart(fig_pair)

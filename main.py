@@ -25,7 +25,7 @@ with col2:
         """
         <div style='
             background-color: #001F3F;   /* Azul marino profundo */
-            padding: 25px 100px;
+            padding: 25px 90px;
             border-radius: 8px;
             display: inline-block;
         '>

@@ -33,7 +33,7 @@ with col2:
                 color: #FFD700;          /* Dorado */
                 font-family: sans-serif;
                 margin: 0;
-                font-size: 38px;
+                font-size: 35px;
             '>
                 Galaxy Cluster Explorer
             </h1>

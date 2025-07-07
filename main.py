@@ -25,7 +25,7 @@ with col2:
         """
         <div style='
             background-color: #001F3F;   /* Azul marino profundo */
-            padding: 25px 100px;
+            padding: 25px 120px;
             border-radius: 8px;
             display: inline-block;
         '>
@@ -33,7 +33,7 @@ with col2:
                 color: #FFD700;          /* Dorado */
                 font-family: sans-serif;
                 margin: 0;
-                font-size: 28px;
+                font-size: 48px;
             '>
                 Galaxy Cluster Explorer
             </h1>

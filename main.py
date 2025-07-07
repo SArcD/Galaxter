@@ -933,6 +933,82 @@ if uploaded_file is not None:
             st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico primero.")
 
 
+    #import plotly.express as px
+
+    #with st.expander("🔍 Análisis morfológico y cinemático por rango de Delta"):
+        st.subheader("📑 Evidencias de coherencia morfológica y dinámica")
+
+        if 'Delta_cat' in df_sub.columns:
+            unique_cats = df_sub['Delta_cat'].dropna().unique()
+            selected_cat = st.selectbox(
+                "Selecciona un rango de Delta:",
+                options=unique_cats
+            )
+
+            df_cat = df_sub[df_sub['Delta_cat'] == selected_cat].copy()
+
+            if df_cat.empty:
+                st.warning("No hay datos para este rango.")
+            else:
+                st.success(f"Galaxias en rango '{selected_cat}': {len(df_cat)}")
+
+                # 1️⃣ Barras de M(C)
+                fig_morph = px.histogram(
+                    df_cat,
+                    x='M(C)',
+                    color='M(C)',
+                    text_auto=True,
+                    title=f"Distribución morfológica M(C) para Delta: {selected_cat}",
+                    category_orders={"M(C)": sorted(df_cat['M(C)'].unique())}
+                )
+                fig_morph.update_layout(
+                    xaxis_title="Morfología M(C)",
+                    yaxis_title="Número de galaxias",
+                    showlegend=False
+                )
+                st.plotly_chart(fig_morph, use_container_width=True)
+
+                # 2️⃣ Barras de Act (Actividad Nuclear)
+                fig_act = px.histogram(
+                    df_cat,
+                    x='Act',
+                    color='Act',
+                    text_auto=True,
+                    title=f"Distribución de Actividad Nuclear para Delta: {selected_cat}",
+                    category_orders={"Act": sorted(df_cat['Act'].unique())}
+                )
+                fig_act.update_layout(
+                    xaxis_title="Actividad Nuclear",
+                    yaxis_title="Número de galaxias",
+                    showlegend=False
+                )
+                st.plotly_chart(fig_act, use_container_width=True)
+
+                # 3️⃣ Boxplots de Vel y Delta
+                fig_vel = px.box(
+                    df_cat,
+                    y='Vel',
+                    points='all',
+                    notched=True,
+                    title=f"Distribución de Velocidad (km/s) para Delta: {selected_cat}",
+                    color_discrete_sequence=['#1f77b4']
+                )
+                st.plotly_chart(fig_vel, use_container_width=True)
+
+                fig_delta = px.box(
+                    df_cat,
+                    y='Delta',
+                    points='all',
+                    notched=True,
+                    title=f"Distribución de Delta para Delta: {selected_cat}",
+                    color_discrete_sequence=['#ff7f0e']
+                )
+                st.plotly_chart(fig_delta, use_container_width=True)
+
+        else:
+            st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
+
+
 
 
     

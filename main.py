@@ -719,6 +719,113 @@ if uploaded_file is not None:
         else:
             st.info("No se encuentran las columnas necesarias o no se seleccionó ninguna variable.")
 
+    import numpy as np
+    from scipy.spatial import KDTree
+    import plotly.graph_objects as go
+    import plotly.figure_factory as ff
+
+    with st.expander("📊 Prueba Dressler–Shectman Interactiva"):
+        st.subheader("🧪 Análisis DS + Densidad Local")
+
+        if 'Subcluster' in df.columns:
+            unique_subclusters = sorted(df['Subcluster'].dropna().unique())
+            selected_sub = st.selectbox(
+                "Selecciona una Subestructura para la prueba DS:",
+                options=unique_subclusters
+            )
+
+            df_sub = df[df['Subcluster'] == selected_sub].copy()
+
+            if df_sub.empty or df_sub.shape[0] < 5:
+                st.warning("No hay suficientes galaxias para aplicar la prueba.")
+            else:
+                st.success(f"Galaxias seleccionadas: {len(df_sub)}")
+
+                coords = df_sub[['RA', 'Dec']].values
+                velocities = df_sub['Vel'].values
+
+                N = int(np.sqrt(len(coords)))
+                tree = KDTree(coords)
+                neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+
+                V_global = np.mean(velocities)
+                sigma_global = np.std(velocities)
+
+                delta = []
+                for i, neighbors in enumerate(neighbors_idx):
+                    local_vel = np.mean(velocities[neighbors])
+                    local_sigma = np.std(velocities[neighbors])
+
+                    d_i = ((N + 1) / sigma_global**2) * (
+                        (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                    )
+                    delta.append(np.sqrt(d_i))
+
+                df_sub['DS_delta'] = delta
+                DS_stat = np.sum(delta)
+
+                st.write(f"**Estadístico Dressler–Shectman Δ:** {DS_stat:.2f}")
+
+                # 📈 Gráfico interactivo Plotly
+                fig = go.Figure()
+
+                # Scatter de puntos
+                fig.add_trace(go.Scatter(
+                    x=df_sub['RA'],
+                    y=df_sub['Dec'],
+                    mode='markers',
+                    marker=dict(
+                        size=8,
+                        color=df_sub['DS_delta'],
+                        colorscale='Plasma',
+                        colorbar=dict(title='δ'),
+                        line=dict(width=0.5, color='DarkSlateGrey')
+                    ),
+                    text=df_sub.apply(lambda row:
+                        f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}<br>Vel: {row['Vel']:.1f}<br>δ: {row['DS_delta']:.3f}",
+                        axis=1),
+                    hoverinfo='text',
+                    name='Galaxias'
+                ))
+
+                # 🔵 Contorno de densidad local (KDE 2D)
+                fig.add_trace(go.Histogram2dContour(
+                    x=df_sub['RA'],
+                    y=df_sub['Dec'],
+                    colorscale='Blues',
+                    reversescale=True,
+                    showscale=False,
+                    opacity=0.3,
+                    name='Densidad Local',
+                    ncontours=15
+                ))
+
+                # Layout general
+                fig.update_layout(
+                    title=f'Prueba Dressler–Shectman + Densidad Local — Subestructura {selected_sub}',
+                    xaxis_title='Ascensión Recta (RA, grados)',
+                    yaxis_title='Declinación (Dec, grados)',
+                    xaxis=dict(autorange='reversed'),  # Invertir RA
+                    template='plotly_white',
+                    legend_title='',
+                    height=700,
+                    width=900
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 📄 Tabla y descarga
+                with st.expander("📄 Ver tabla de galaxias con δ"):
+                    st.dataframe(df_sub[['ID', 'RA', 'Dec', 'Vel', 'DS_delta']])
+                    st.download_button(
+                        "💾 Descargar resultados DS",
+                        df_sub.to_csv(index=False).encode('utf-8'),
+                        file_name=f"DS_Subcluster_{selected_sub}.csv",
+                        mime="text/csv"
+                    )
+        else:
+            st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico primero.")
+
 
 
 

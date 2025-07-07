@@ -724,8 +724,13 @@ if uploaded_file is not None:
     import plotly.graph_objects as go
     import plotly.figure_factory as ff
 
-    with st.expander("📊 Prueba Dressler–Shectman Interactiva"):
-        st.subheader("🧪 Análisis DS + Densidad Local")
+    import numpy as np
+    from scipy.spatial import KDTree
+    import plotly.graph_objects as go
+    from tqdm import tqdm
+
+    with st.expander("📊 Prueba Dressler–Shectman Interactiva + Bootstrapping"):
+        st.subheader("🧪 Análisis DS + Densidad Local + p-valor")
 
         if 'Subcluster' in df.columns:
             unique_subclusters = sorted(df['Subcluster'].dropna().unique())
@@ -762,14 +767,33 @@ if uploaded_file is not None:
                     delta.append(np.sqrt(d_i))
 
                 df_sub['DS_delta'] = delta
-                DS_stat = np.sum(delta)
+                DS_stat_real = np.sum(delta)
+                st.write(f"**Estadístico Dressler–Shectman Δ real:** {DS_stat_real:.2f}")
 
-                st.write(f"**Estadístico Dressler–Shectman Δ:** {DS_stat:.2f}")
+                # ✅ Bootstrapping
+                st.info("Calculando distribución nula con permutaciones...")
+                n_permutations = st.slider("Número de permutaciones:", 100, 2000, 500, step=100)
 
-                # 📈 Gráfico interactivo Plotly
+                DS_stats_permuted = []
+                for _ in tqdm(range(n_permutations), desc="Permutando"):
+                    velocities_perm = np.random.permutation(velocities)
+                    delta_perm = []
+                    for i, neighbors in enumerate(neighbors_idx):
+                        local_vel = np.mean(velocities_perm[neighbors])
+                        local_sigma = np.std(velocities_perm[neighbors])
+                        d_i = ((N + 1) / sigma_global**2) * (
+                            (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                        )
+                        delta_perm.append(np.sqrt(d_i))
+                    DS_stats_permuted.append(np.sum(delta_perm))
+
+                DS_stats_permuted = np.array(DS_stats_permuted)
+                p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
+                st.write(f"**p-valor empírico:** {p_value:.4f}")
+
+                # ✅ Scatter Plotly interactivo con KDE
                 fig = go.Figure()
 
-                # Scatter de puntos
                 fig.add_trace(go.Scatter(
                     x=df_sub['RA'],
                     y=df_sub['Dec'],
@@ -782,13 +806,13 @@ if uploaded_file is not None:
                         line=dict(width=0.5, color='DarkSlateGrey')
                     ),
                     text=df_sub.apply(lambda row:
-                        f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}<br>Vel: {row['Vel']:.1f}<br>δ: {row['DS_delta']:.3f}",
+                        f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}"
+                        f"<br>Vel: {row['Vel']:.1f}<br>δ: {row['DS_delta']:.3f}",
                         axis=1),
                     hoverinfo='text',
                     name='Galaxias'
                 ))
 
-                # 🔵 Contorno de densidad local (KDE 2D)
                 fig.add_trace(go.Histogram2dContour(
                     x=df_sub['RA'],
                     y=df_sub['Dec'],
@@ -800,21 +824,45 @@ if uploaded_file is not None:
                     ncontours=15
                 ))
 
-                # Layout general
                 fig.update_layout(
-                    title=f'Prueba Dressler–Shectman + Densidad Local — Subestructura {selected_sub}',
+                    title=f'DS + Densidad Local — Subestructura {selected_sub}',
                     xaxis_title='Ascensión Recta (RA, grados)',
                     yaxis_title='Declinación (Dec, grados)',
-                    xaxis=dict(autorange='reversed'),  # Invertir RA
+                    xaxis=dict(autorange='reversed'),
                     template='plotly_white',
-                    legend_title='',
                     height=700,
                     width=900
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
 
-                # 📄 Tabla y descarga
+                # ✅ Histograma distribución nula
+                fig_hist = go.Figure()
+                fig_hist.add_trace(go.Histogram(
+                    x=DS_stats_permuted,
+                    nbinsx=30,
+                    name="Δ permutado",
+                    marker_color='lightgrey'
+                ))
+
+                fig_hist.add_trace(go.Scatter(
+                    x=[DS_stat_real, DS_stat_real],
+                    y=[0, np.histogram(DS_stats_permuted, bins=30)[0].max()],
+                    mode='lines',
+                    line=dict(color='red', width=3, dash='dash'),
+                    name='Δ real'
+                ))
+
+                fig_hist.update_layout(
+                    title="Distribución nula (Δ permutado) vs. Δ real",
+                    xaxis_title='Δ',
+                    yaxis_title='Frecuencia',
+                    template='plotly_white'
+                )
+
+                st.plotly_chart(fig_hist, use_container_width=True)
+
+                # ✅ Tabla y descarga
                 with st.expander("📄 Ver tabla de galaxias con δ"):
                     st.dataframe(df_sub[['ID', 'RA', 'Dec', 'Vel', 'DS_delta']])
                     st.download_button(

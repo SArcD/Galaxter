@@ -856,23 +856,42 @@ if uploaded_file is not None:
                     axis=1
                 )
 
-                # ✅ Scatter RA–Dec con KDE
+
                 fig = go.Figure()
 
-                fig.add_trace(go.Scatter(
-                    x=df_sub['RA'],
-                    y=df_sub['Dec'],
-                    mode='markers',
-                    marker=dict(
-                        size=8,
-                        color=df_sub['color'],
-                        line=dict(width=0.5, color='DarkSlateGrey')
-                    ),
-                    text=hover_text,
-                    hoverinfo='text',
-                    name='Galaxias'
-                ))
+                # 1️⃣ Puntos: una traza por categoría Delta
+                for cat, color in color_map.items():
+                    df_cat = df_sub[df_sub['Delta_cat'] == cat]
+                    if not df_cat.empty:
+                        hover_text_cat = df_cat.apply(
+                            lambda row:
+                            f"SDSS: {row['SDSS']}<br>"
+                            f"ID: {row['ID']}<br>"
+                            f"RA: {row['RA']:.3f}°<br>"
+                            f"Dec: {row['Dec']:.3f}°<br>"
+                            f"Velocidad (km/s): {row['Vel']:.1f}<br>"
+                            f"Rf: {row['Rf']:.2f}<br>"
+                            f"Cl_d (Dist. centro): {row['Cl_d']:.2f}<br>"
+                            f"Delta: {row['Delta']:.3f} ({row['Delta_cat']})<br>"
+                            f"C(index): {row['C(index)']:.2f}<br>"
+                            f"Morfología M(C): {row['M(C)']}<br>"
+                            f"(u-g): {row['(u-g)']:.2f}, M(u-g): {row['M(u-g)']}<br>"
+                            f"(g-r): {row['(g-r)']:.2f}, M(g-r): {row['M(g-r)']}<br>"
+                            f"Actividad: {row['Act']}",
+                            axis=1
+                        )
+        
+                        fig.add_trace(go.Scatter(
+                            x=df_cat['RA'],
+                            y=df_cat['Dec'],
+                            mode='markers',
+                            name=f'Delta: {cat}',
+                            marker=dict(size=8, color=color, line=dict(width=0.5, color='DarkSlateGrey')),
+                            text=hover_text_cat,
+                            hoverinfo='text'
+                        ))
 
+                # 2️⃣ Contorno KDE (sin hover)
                 fig.add_trace(go.Histogram2dContour(
                     x=df_sub['RA'],
                     y=df_sub['Dec'],
@@ -885,17 +904,7 @@ if uploaded_file is not None:
                     ncontours=15
                 ))
 
-                for cat, color in color_map.items():
-                    fig.add_trace(go.Scatter(
-                        x=[None],
-                        y=[None],
-                        mode='markers',
-                        marker=dict(size=8, color=color),
-                        legendgroup=cat,
-                        showlegend=True,
-                        name=f'Delta: {cat}'
-                    ))
-
+                # 3️⃣ Layout
                 fig.update_layout(
                     title=f'DS + Densidad Local — Subestructura {selected_sub}',
                     xaxis_title='Ascensión Recta (RA, grados)',
@@ -908,6 +917,7 @@ if uploaded_file is not None:
 
                 st.plotly_chart(fig, use_container_width=True)
 
+                
                 # ✅ Exporta resultados
                 with st.expander("📄 Ver tabla de galaxias con Delta"):
                     st.dataframe(df_sub[['SDSS', 'ID', 'RA', 'Dec', 'Vel', 'Rf', 'Cl_d',

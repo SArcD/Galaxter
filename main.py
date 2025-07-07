@@ -729,8 +729,14 @@ if uploaded_file is not None:
     import plotly.graph_objects as go
     from tqdm import tqdm
 
+    import numpy as np
+    from scipy.spatial import KDTree
+    import plotly.graph_objects as go
+    import pandas as pd
+    from tqdm import tqdm
+
     with st.expander("📊 Prueba Dressler–Shectman Interactiva + Bootstrapping"):
-        st.subheader("🧪 Análisis DS + Densidad Local + p-valor")
+        st.subheader("🧪 Análisis DS + Densidad Local + p-valor (Monte Carlo)")
 
         if 'Subcluster' in df.columns:
             unique_subclusters = sorted(df['Subcluster'].dropna().unique())
@@ -766,12 +772,12 @@ if uploaded_file is not None:
                     )
                     delta.append(np.sqrt(d_i))
 
-                df_sub['DS_delta'] = delta
+                df_sub['Delta'] = delta
                 DS_stat_real = np.sum(delta)
                 st.write(f"**Estadístico Dressler–Shectman Δ real:** {DS_stat_real:.2f}")
 
-                # ✅ Bootstrapping
-                st.info("Calculando distribución nula con permutaciones...")
+                # ✅ Bootstrapping / Monte Carlo
+                st.info("Calculando distribución nula con permutaciones (Monte Carlo)...")
                 n_permutations = st.slider("Número de permutaciones:", 100, 2000, 500, step=100)
 
                 DS_stats_permuted = []
@@ -791,52 +797,7 @@ if uploaded_file is not None:
                 p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
                 st.write(f"**p-valor empírico:** {p_value:.4f}")
 
-                # ✅ Scatter Plotly interactivo con KDE
-                fig = go.Figure()
-
-                fig.add_trace(go.Scatter(
-                    x=df_sub['RA'],
-                    y=df_sub['Dec'],
-                    mode='markers',
-                    marker=dict(
-                        size=8,
-                        color=df_sub['DS_delta'],
-                        colorscale='Plasma',
-                        colorbar=dict(title='δ'),
-                        line=dict(width=0.5, color='DarkSlateGrey')
-                    ),
-                    text=df_sub.apply(lambda row:
-                        f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}"
-                        f"<br>Vel: {row['Vel']:.1f}<br>δ: {row['DS_delta']:.3f}",
-                        axis=1),
-                    hoverinfo='text',
-                    name='Galaxias'
-                ))
-
-                fig.add_trace(go.Histogram2dContour(
-                    x=df_sub['RA'],
-                    y=df_sub['Dec'],
-                    colorscale='Blues',
-                    reversescale=True,
-                    showscale=False,
-                    opacity=0.3,
-                    name='Densidad Local',
-                    ncontours=15
-                ))
-
-                fig.update_layout(
-                    title=f'DS + Densidad Local — Subestructura {selected_sub}',
-                    xaxis_title='Ascensión Recta (RA, grados)',
-                    yaxis_title='Declinación (Dec, grados)',
-                    xaxis=dict(autorange='reversed'),
-                    template='plotly_white',
-                    height=700,
-                    width=900
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-
-                # ✅ Histograma distribución nula
+                # ✅ Histograma nulo vs. real
                 fig_hist = go.Figure()
                 fig_hist.add_trace(go.Histogram(
                     x=DS_stats_permuted,
@@ -862,9 +823,96 @@ if uploaded_file is not None:
 
                 st.plotly_chart(fig_hist, use_container_width=True)
 
-                # ✅ Tabla y descarga
-                with st.expander("📄 Ver tabla de galaxias con δ"):
-                    st.dataframe(df_sub[['ID', 'RA', 'Dec', 'Vel', 'DS_delta']])
+                # ✅ Clasifica Delta en rangos y hover detallado
+                bins = [0, 1, 2, 3, 5]
+                labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
+
+                df_sub['Delta_cat'] = pd.cut(df_sub['Delta'], bins=bins, labels=labels)
+
+                color_map = {
+                    'Bajo': '#1f77b4',
+                    'Medio': '#2ca02c',
+                    'Alto': '#ff7f0e',
+                    'Muy Alto': '#d62728'
+                }
+
+                df_sub['color'] = df_sub['Delta_cat'].map(color_map)
+
+                hover_text = df_sub.apply(
+                    lambda row:
+                    f"SDSS: {row['SDSS']}<br>"
+                    f"ID: {row['ID']}<br>"
+                    f"RA: {row['RA']:.3f}°<br>"
+                    f"Dec: {row['Dec']:.3f}°<br>"
+                    f"Velocidad (km/s): {row['Vel']:.1f}<br>"
+                    f"Rf: {row['Rf']:.2f}<br>"
+                    f"Cl_d (Dist. centro): {row['Cl_d']:.2f}<br>"
+                    f"Delta: {row['Delta']:.3f} ({row['Delta_cat']})<br>"
+                    f"C(index): {row['C(index)']:.2f}<br>"
+                    f"Morfología M(C): {row['M(C)']}<br>"
+                    f"(u-g): {row['(u-g)']:.2f}, M(u-g): {row['M(u-g)']}<br>"
+                    f"(g-r): {row['(g-r)']:.2f}, M(g-r): {row['M(g-r)']}<br>"
+                    f"Actividad: {row['Act']}",
+                    axis=1
+                )
+
+                # ✅ Scatter RA–Dec con KDE
+                fig = go.Figure()
+
+                fig.add_trace(go.Scatter(
+                    x=df_sub['RA'],
+                    y=df_sub['Dec'],
+                    mode='markers',
+                    marker=dict(
+                        size=8,
+                        color=df_sub['color'],
+                        line=dict(width=0.5, color='DarkSlateGrey')
+                    ),
+                    text=hover_text,
+                    hoverinfo='text',
+                    name='Galaxias'
+                ))
+
+                fig.add_trace(go.Histogram2dContour(
+                    x=df_sub['RA'],
+                    y=df_sub['Dec'],
+                    colorscale='Blues',
+                    reversescale=True,
+                    showscale=False,
+                    opacity=0.3,
+                    name='Densidad Local',
+                    hoverinfo='skip',
+                    ncontours=15
+                ))
+
+                for cat, color in color_map.items():
+                    fig.add_trace(go.Scatter(
+                        x=[None],
+                        y=[None],
+                        mode='markers',
+                        marker=dict(size=8, color=color),
+                        legendgroup=cat,
+                        showlegend=True,
+                        name=f'Delta: {cat}'
+                    ))
+
+                fig.update_layout(
+                    title=f'DS + Densidad Local — Subestructura {selected_sub}',
+                    xaxis_title='Ascensión Recta (RA, grados)',
+                    yaxis_title='Declinación (Dec, grados)',
+                    xaxis=dict(autorange='reversed'),
+                    template='plotly_white',
+                    height=700,
+                    width=900
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+
+                # ✅ Exporta resultados
+                with st.expander("📄 Ver tabla de galaxias con Delta"):
+                    st.dataframe(df_sub[['SDSS', 'ID', 'RA', 'Dec', 'Vel', 'Rf', 'Cl_d',
+                                     'Delta', 'Delta_cat', 'C(index)', 'M(C)',
+                                     '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act']])
                     st.download_button(
                         "💾 Descargar resultados DS",
                         df_sub.to_csv(index=False).encode('utf-8'),
@@ -873,7 +921,6 @@ if uploaded_file is not None:
                     )
         else:
             st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico primero.")
-
 
 
 

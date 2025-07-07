@@ -266,7 +266,9 @@ if uploaded_file is not None:
                 height=700,
                 width=900
             )
+            fig.update_xaxes(autorange="reversed")
 
+            
             st.plotly_chart(fig)
 
             # Botón para descargar tabla filtrada

@@ -23,12 +23,27 @@ with col1:
 with col2:
     st.markdown(
         """
-        <h1 style='color: #FFD700; font-family: sans-serif;'>
-            Galaxy Cluster Explorer
-        </h1>
+        <div style='
+            background-color: #001F3F;   /* Azul marino profundo */
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: inline-block;
+        '>
+            <h1 style='
+                color: #FFD700;          /* Dorado */
+                font-family: sans-serif;
+                margin: 0;
+                font-size: 28px;
+            '>
+                Galaxy Cluster Explorer
+            </h1>
+        </div>
         """,
         unsafe_allow_html=True
     )
+
+
+
 
 
 # 1️⃣ Cargar archivo CSV desde el usuario

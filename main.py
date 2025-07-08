@@ -1059,17 +1059,17 @@ if uploaded_file is not None:
 
     import plotly.express as px
     import pandas as pd
-
     def plot_conditional_panel(df):
+
         st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
-        # ✅ Controles interactivos
+        # Controles interactivos
         n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)
         n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
 
         df_cond = df.copy()
 
-        # ✅ Bins dinámicos
+        # Bins dinámicos
         df_cond['Delta_bin'] = pd.qcut(
             df_cond['Delta'], 
             q=n_bins_delta, 
@@ -1093,22 +1093,7 @@ if uploaded_file is not None:
         ]
         hover_data = {col: True for col in hover_cols}
 
-        # ✅ 1️⃣ Panel FacetGrid RA–Dec (Puntos + Contornos líneas)
-        #fig_faceted = px.scatter(
-        #    df_cond,
-        #    x="RA",
-        #    y="Dec",
-        #    facet_col="Delta_bin",
-        #    facet_row="Vel_bin",
-        #    color="Delta_bin",
-        #    hover_name="ID",
-        #    hover_data=hover_data,
-        #    opacity=0.6,
-        #    color_discrete_sequence=px.colors.qualitative.Set2
-        #)
-
-
-        # 1️⃣ Scatter con hover
+        # ✅ 1️⃣ Panel FacetGrid RA–Dec (Puntos + Contornos)
         fig_faceted = px.scatter(
             df_cond,
             x="RA",
@@ -1116,22 +1101,9 @@ if uploaded_file is not None:
             facet_col="Delta_bin",
             facet_row="Vel_bin",
             color="Delta_bin",
-            #hover_name="ID",
-            hover_data={
-               "RA": True,
-               "Dec": True,
-               "Vel": True,
-               "Delta": True,
-               "Cl_d": True,
-               "C(index)": True,
-               "M(C)": True,
-               "(u-g)": True,
-               "M(u-g)": True,
-               "(g-r)": True,
-               "M(g-r)": True,
-               "Act": True
-            },
-            opacity=0.7
+            hover_data=hover_data,
+            opacity=0.7,
+            color_discrete_sequence=px.colors.qualitative.Set2
         )
 
         fig_contour = px.density_contour(
@@ -1147,71 +1119,27 @@ if uploaded_file is not None:
             trace.hoverinfo = "skip"
             fig_faceted.add_trace(trace)
 
-        # 3️⃣ Invertir ejes, limpiar leyenda duplicada
         fig_faceted.update_xaxes(autorange="reversed")
-        #fig_faceted.update_yaxes(autorange="reversed")
+        fig_faceted.update_yaxes(autorange="reversed")
 
-        for trace in fig_faceted.data:
-            if trace.type == "histogram2dcontour":
-                trace.showlegend = False
-
-
-        
-        #fig_contour = px.density_contour(
-        #    df_cond,
-        #    x="RA",
-        #    y="Dec",
-        #    facet_col="Delta_bin",
-        #    facet_row="Vel_bin",
-        #    color="Delta_bin",
-        #    nbinsx=30,
-        #    nbinsy=30
-        #)
-        #for trace in fig_contour.data:
-        #    fig_faceted.add_trace(trace)
-
-        fig_faceted.update_xaxes(autorange="reversed")
-        #fig_faceted.update_yaxes(autorange="reversed")
-        fig_faceted.update_layout(showlegend=True)
-
-
-
-        # 🔑 Quitar showscale residual
+        # Quitar leyenda duplicada y barras de color
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
-
-        # 🔑 Quitar duplicados de leyenda de contornos
-        for trace in fig_faceted.data:
-            if trace.type == "contour":
-                trace.showlegend = False
-        # 🔑 El fix real para FacetGrid: histogram2dcontour!
-        for trace in fig_faceted.data:
             if trace.type == "histogram2dcontour":
                 trace.showlegend = False
 
-
-        
         st.plotly_chart(fig_faceted, use_container_width=True)
+
         st.markdown("""
         <div style="text-align: justify;">
-        <strong>Checklist para interpretar Panel RA–Dec</strong>
-
-        - <strong>¿Ves agrupamientos claros?</strong>  
-        Regiones densas de galaxias en un panel (Δ × V) pueden ser subestructuras.
-    
-        - <strong>¿Hay filamentos o elongaciones?</strong>      
-        Formas alargadas pueden indicar filamentos o puentes de materia.
-
-        - <strong>¿Coinciden en varios rangos de Vel?</strong>  
-        Un clump que persiste en varios rangos cinemáticos es evidencia sólida.
-
-        - <strong>Cruza con morfología y actividad nuclear:</strong>  
-        Verifica si esas galaxias comparten morfología o actividad.
+        <strong>✅ Checklist para interpretar Panel RA–Dec</strong><br>
+        - <strong>¿Ves agrupamientos claros?</strong> Regiones densas pueden ser subestructuras.<br>
+        - <strong>¿Hay filamentos o elongaciones?</strong> Formas alargadas pueden ser filamentos o puentes.<br>
+        - <strong>¿Coinciden en varios rangos de Vel?</strong> Un clump que persiste refuerza hipótesis de coherencia.<br>
+        - <strong>Cruza con morfología y actividad nuclear.</strong>
         </div>
         """, unsafe_allow_html=True)
-
-        
 
         # ✅ 2️⃣ Histogramas
         st.subheader("Distribución global de Delta")
@@ -1227,22 +1155,13 @@ if uploaded_file is not None:
 
         st.markdown("""
         <div style="text-align: justify;">
-        <strong>Checklist para Histograma de Delta</strong>
-
-        - <strong>¿Predominan los rangos altos de Delta?</strong>  
-        Muchos valores Δ4 o Δ5 implican desviación local alta = posible fusión.
-
-        - <strong>¿Qué tan extendida es la distribución?</strong>  
-        Una distribución amplia puede reflejar complejidad estructural.
-
-        - <strong>Cruza con Vel:</strong>  
-        Verifica qué rangos de Vel coinciden con Delta alto para confirmar subgrupos dinámicos.
+        <strong>✅ Checklist para Histograma de Delta</strong><br>
+        - <strong>¿Predominan rangos altos de Delta?</strong> Muchos Δ4 o Δ5 = posible subestructura.<br>
+        - <strong>¿Distribución extendida?</strong> Refleja complejidad.<br>
+        - <strong>Cruza con Vel.</strong>
         </div>
         """, unsafe_allow_html=True)
 
-
-
-        
         st.subheader("Distribución global de Vel")
         fig_hist_vel = px.histogram(
             df_cond,
@@ -1254,24 +1173,17 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_hist_vel, use_container_width=True)
 
-
         st.markdown("""
         <div style="text-align: justify;">
-        <strong>Checklist para Histograma de Vel</strong>
-
-        - <strong>¿Hay picos secundarios o colas?</strong>  
-        Un pico extra o una cola larga puede sugerir grupos cinemáticamente distintos.
-
-        - <strong>¿Los bins coinciden con agrupamientos RA–Dec?</strong>  
-        Revisa si los rangos de Vel bien poblados tienen clumps espaciales.
-
-        - <strong>¿Desviación interna baja?</strong>  
-        Una dispersión baja en Vel refuerza la coherencia dinámica.
+        <strong>✅ Checklist para Histograma de Vel</strong><br>
+        - <strong>¿Picos secundarios o colas?</strong> Sugiere grupos cinemáticos.<br>
+        - <strong>¿Coinciden con agrupamientos RA–Dec?</strong><br>
+        - <strong>¿Desviación interna baja?</strong> Refuerza coherencia.
         </div>
         """, unsafe_allow_html=True)
 
-        # ✅ 3️⃣ Panel individual
-        st.subheader("Explora cada panel RA–Dec individual")
+        # ✅ 3️⃣ Panel individual RA–Dec
+        st.subheader("🔍 Explora cada panel RA–Dec individual")
 
         combinaciones = [
             (delta_bin, vel_bin)
@@ -1291,12 +1203,15 @@ if uploaded_file is not None:
             (df_cond['Vel_bin'] == vel_sel)
         ]
 
+        # Rango global
+        ra_min, ra_max = df_cond['RA'].min(), df_cond['RA'].max()
+        dec_min, dec_max = df_cond['Dec'].min(), df_cond['Dec'].max()
+
         fig_panel = px.scatter(
             df_panel,
             x="RA",
             y="Dec",
             color="Delta_bin",
-            #hover_name="ID",
             hover_data=hover_data,
             opacity=0.7,
             color_discrete_sequence=px.colors.qualitative.Set2
@@ -1311,10 +1226,13 @@ if uploaded_file is not None:
             nbinsy=30
         )
         for trace in fig_contour_panel.data:
+            trace.hoverinfo = "skip"
+            trace.showlegend = False
             fig_panel.add_trace(trace)
 
-        fig_panel.update_xaxes(autorange="reversed")
-        fig_panel.update_yaxes(autorange="reversed")
+        fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
+        fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
+
         fig_panel.update_layout(
             title=f"Panel RA–Dec: Δ = {delta_sel} | V = {vel_sel}",
             height=600,
@@ -1324,13 +1242,8 @@ if uploaded_file is not None:
         for trace in fig_panel.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
-            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
-                trace.marker.showscale = False
-            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
-                trace.line.showscale = False
 
         st.plotly_chart(fig_panel, use_container_width=True)
-
 
 
 

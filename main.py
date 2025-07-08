@@ -1488,3 +1488,69 @@ elif opcion == "Proceso":
         #    st.warning("Selecciona al menos una columna numérica.")
     else:
         st.info("Por favor, sube un archivo CSV.")
+
+elif opcion == "Equipo de trabajo":
+    st.subheader("Equipo de Trabajo")
+
+       # Información del equipo
+    equipo = [{
+               "nombre": "Dr. Santiago Arceo Díaz",
+               "foto": "ArceoS.jpg",
+               "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica). Posdoctorante de la Universidad de Colima. Miembro del Sistema Nacional de Investigadoras e Investigadores (Nivel 1).",
+               "CV": "https://scholar.google.com.mx/citations?user=3xPPTLoAAAAJ&hl=es", "contacto": "santiagoarceodiaz@gmail.com"},
+           {
+               "nombre": "Dra. Xochitl Angélica Rosío Trujillo Trujillo",
+               "foto": "DraXochilt.jpg",
+               "reseña": "Bióloga, Maestra y Doctora en Ciencias Fisiológicas con especialidad en Fisiología. Es Profesora-Investigadora de Tiempo Completo de la Universidad de Colima. Cuenta con perfil deseable y es miembro del Sistema Nacional de Investigadores en el nivel 3. Su línea de investigación es en Biomedicina en la que cuenta con una producción científica de más de noventa artículos en revistas internacionales, varios capítulos de libro y dos libros. Imparte docencia y ha formado a más de treinta estudiantes de licenciatura y de posgrado en programas académicos adscritos al Sistema Nacional de Posgrado del CONAHCYT.",
+               "CV": "https://portal.ucol.mx/cuib/XochitlTrujillo.htm", "contacto": "rosio@ucol.mx"},
+                 {
+               "nombre": "Dr. Miguel Huerta Viera",
+               "foto": "DrHuerta.jpg",
+               "reseña": "Doctor en Ciencias con especialidad en Fisiología y Biofísica. Es Profesor-Investigador Titular “C” del Centro Universitario de Investigaciones Biomédicas de la Universidad de Colima. Es miembro del Sistema Nacional de Investigadores en el nivel 3 emérito. Su campo de investigación es la Biomedicina, con énfasis en la fisiología y biofísica del sistema neuromuscular y la fisiopatología de la diabetes mellitus. Ha publicado más de cien artículos revistas indizadas al Journal of Citation Reports y ha graduado a más de 40 Maestros y Doctores en Ciencias en programas SNP-CONAHCyT.",
+               "CV": "https://portal.ucol.mx/cuib/dr-miguel-huerta.htm", "contacto": "huertam@ucol.mx"},
+                 {
+               "nombre": "Dr. Jaime Alberto Bricio Barrios",
+               "foto":  "BricioJ.jpg",
+               "reseña": "Licenciado en Nutrición, Maestro en Ciencias Médicas, Maestro en Seguridad Alimentaria y Doctor en Ciencias Médicas. Profesor e Investigador de Tiempo Completo de la Facultad de Medicina en la Universidad de Colima. miembro del Sistema Nacional de Investigadores en el nivel 1. Miembro fundador de la asociación civil DAYIN (Desarrollo de Ayuda con Investigación)",
+               "CV": "https://scholar.google.com.mx/citations?hl=es&user=ugl-bksAAAAJ", "contacto": "jbricio@ucol.mx"},      
+               {
+               "nombre": "Dra. Elena Elsa Bricio Barrios",
+               "foto": "BricioE.jpg",
+               "reseña": "Química Metalúrgica, Maestra en Ciencias en Ingeniería Química y doctorante en Ingeniería Química. Actualmente es profesora del Tecnológico Nacional de México Campus Colima. Cuenta con el perfil deseable, es miembro del cuerpo académico Tecnologías Emergentes y Desarrollo Web y ha codirigido tesis de la Maestría en Sistemas Computacionales.",
+               "CV": "https://scholar.google.com.mx/citations?hl=es&user=TGZGewEAAAAJ", "contacto": "elena.bricio@colima.tecnm.mx"},
+               {
+               "nombre": "Dra. Mónica Ríos Silva",
+               "foto": "rios.jpg",
+               "reseña": "Médica cirujana y partera con especialidad en Medicina Interna y Doctorado en Ciencias Médicas por la Universidad de Colima, médica especialista del Hospital Materno Infantil de Colima y PTC de la Facultad de Medicina de la Universidad de Colima. Es profesora de los posgrados en Ciencias Médicas, Ciencias Fisiológicas, Nutrición clínica y Ciencia ambiental global.",
+               "CV": "https://scholar.google.com.mx/scholar?hl=en&as_sdt=0%2C5&q=Monica+Rios+silva&btnG=", "contacto": "mrios@ucol.mx"}
+               ]
+
+    for persona in equipo:
+        st.image(persona["foto"], width=150)
+    
+        st.markdown(f"""
+        <h4 style='text-align: left;'>{persona['nombre']}</h4>
+        <p style='text-align: justify;'>{persona['reseña']}</p>
+        <p style='text-align: left;'>
+            📄 <a href="{persona['CV']}" target="_blank">Ver CV</a><br>
+            📧 {persona['contacto']}
+        </p>
+        <hr style='margin-top: 10px; margin-bottom: 20px;'>
+        """, unsafe_allow_html=True)
+
+    
+    
+    ## Establecer la altura deseada para las imágenes
+    #altura_imagen = 150  # Cambia este valor según tus preferencias
+
+    ### Mostrar información de cada miembro del equipo
+    ##for miembro in equipo:
+    #       st.subheader(miembro["nombre"])
+    #       img = st.image(miembro["foto"], caption=f"Foto de {miembro['nombre']}", use_column_width=False, width=altura_imagen)
+    #       st.write(f"Correo electrónico: {miembro['contacto']}")
+    #       st.write(f"Reseña profesional: {miembro['reseña']}")
+    #       st.write(f"CV: {miembro['CV']}")
+
+    # Información de contacto
+    st.subheader("Información de Contacto")
+    st.write("Si deseas ponerte en contacto con nuestro equipo, puedes enviar un correo a santiagoarceodiaz@gmail.com")

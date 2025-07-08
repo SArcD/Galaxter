@@ -1180,7 +1180,7 @@ if uploaded_file is not None:
         <h4>🔍 <strong>Checklist para Histograma de Delta</strong></h4>
 
         - <strong>¿Predominan los rangos altos de Delta?</strong>  
-        Muchos valores <code>Δ4</code> o <code>Δ5</code> implican desviación local alta = posible fusión.
+        Muchos valores Δ4 o Δ5 implican desviación local alta = posible fusión.
 
         - <strong>¿Qué tan extendida es la distribución?</strong>  
         Una distribución amplia puede reflejar complejidad estructural.

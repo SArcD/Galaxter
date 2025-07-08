@@ -1065,8 +1065,8 @@ if uploaded_file is not None:
     def plot_conditional_panel(df):
         st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
-        n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)
-        n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
+        n_bins_delta = st.slider("Número de bins Delta:", 2, 10, 4)
+        n_bins_vel = st.slider("Número de bins Vel:", 2, 10, 4)
 
         df_cond = df.copy()
         df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
@@ -1241,7 +1241,7 @@ if uploaded_file is not None:
         fig_panel.add_trace(go.Histogram2dContour(
             x=df_panel['RA'],
             y=df_panel['Dec'],
-            ncontours=60,
+            ncontours=7,
             colorscale=[[0, 'white'], [1, panel_color]],
             line=dict(width=1),
             hoverinfo="skip",

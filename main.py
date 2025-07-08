@@ -341,75 +341,101 @@ if uploaded_file is not None:
         import plotly.express as px
         from astropy.cosmology import FlatLambdaCDM
 
-        # ➡️ Sub-sección 3D
-        st.subheader("🌌 Mapa 3D comóvil interactivo con rangos filtrables")
+        st.subheader("🌌 Mapa 3D comóvil interactivo para Abell 85")
 
-        # Reutiliza df_filtered
+        # ✅ Controles para parámetros arbitrarios
+        st.markdown("### ⚙️ Parámetros de cosmología y proyección")
+
+        col1, col2, col3 = st.columns(3)
+
+        H0 = col1.number_input("H₀ (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
+        Om0 = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
+        Ode0 = col3.number_input("ΩΛ", value=0.7, min_value=0.0, max_value=1.0, step=0.01)
+
+        z_cluster = st.number_input("Redshift de referencia (z_cluster)", value=0.0555, step=0.001)
+
+        # Centro de proyección
+        ra0_default = float(df_filtered['RA'].mean()) if not df_filtered.empty else 0.0    
+        dec0_default = float(df_filtered['Dec'].mean()) if not df_filtered.empty else 0.0
+
+        ra0 = st.number_input("Centro RA₀ (°)", value=ra0_default, step=0.1)
+        dec0 = st.number_input("Centro Dec₀ (°)", value=dec0_default, step=0.1)
+
+        # ✅ Usar DataFrame filtrado
         df_3d = df_filtered.copy()
 
-        # Cosmología plana
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        c = 3e5  # km/s
-        z_cluster = 0.0555
-
-        # Calcular z_gal y distancia comóvil
-        df_3d['z_gal'] = z_cluster + (df_3d['Vel'] / c) * (1 + z_cluster)
-        df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
-
-        # Coordenadas comóviles
-        ra0 = np.mean(df_3d['RA'])
-        dec0 = np.mean(df_3d['Dec'])
-
-        df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0))
-        df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0))
-        df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0))
-
-        # Hover enriquecido
-        hover_3d = ["ID", "RA", "Dec", "Vel", "Delta", "Cl_d", "(u-g)", "(g-r)", "(r-i)", "(i-z)", "Act"]
-
-        # ⚙️ Verifica si se creó la columna de rango
-        group_col = None
-        if 'range_label' in df_3d.columns:
-            group_col = 'range_label'
-        elif 'Subcluster' in df_3d.columns:
-            group_col = 'Subcluster'
-        elif 'Delta_cat' in df_3d.columns:
-            group_col = 'Delta_cat'
-        elif selected_var in cat_vars:
-            group_col = selected_var
-
-        if group_col:
-            fig_3d = px.scatter_3d(
-                df_3d,
-                x='X', y='Y', z='Z',
-                color=group_col,
-                hover_data=hover_3d,
-                opacity=0.7,
-                title="Mapa 3D comóvil de Abell 85 agrupado por rangos",
-            )
+        if df_3d.empty:
+            st.warning("No hay galaxias para mostrar en 3D con los filtros actuales.")
         else:
-            # Fallback a Delta continuo
-            fig_3d = px.scatter_3d(
-                df_3d,
-                x='X', y='Y', z='Z',
-                color='Delta',
-                hover_data=hover_3d,
-                opacity=0.7,
-                color_continuous_scale='Viridis',
-                title="Mapa 3D comóvil de Abell 85"
+            # Cosmología
+            cosmo = FlatLambdaCDM(H0=H0, Om0=Om0, Ode0=Ode0)
+            c = 3e5  # km/s
+
+            # Calcular z_gal y distancia comóvil
+            df_3d['z_gal'] = z_cluster + (df_3d['Vel'] / c) * (1 + z_cluster)
+            df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
+
+            # Coordenadas comóviles
+            df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0))
+            df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0))
+            df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0))
+
+            # Hover enriquecido
+            hover_3d = ["ID", "RA", "Dec", "Vel", "Delta", "Cl_d",
+                "(u-g)", "(g-r)", "(r-i)", "(i-z)", "Act"]
+
+            # Usar rangos si existen
+            group_col = None
+            if 'range_label' in df_3d.columns:
+                group_col = 'range_label'
+            elif 'Subcluster' in df_3d.columns:
+                group_col = 'Subcluster'
+            elif 'Delta_cat' in df_3d.columns:
+                group_col = 'Delta_cat'
+            elif selected_var in cat_vars:
+                group_col = selected_var
+
+            if group_col:
+                fig_3d = px.scatter_3d(
+                    df_3d,
+                    x='X', y='Y', z='Z',
+                    color=group_col,
+                    hover_data=hover_3d,
+                    opacity=0.7,
+                    title=f"Mapa 3D comóvil agrupado por {group_col}"
+                )
+            else:
+                fig_3d = px.scatter_3d(
+                    df_3d,
+                    x='X', y='Y', z='Z',
+                    color='Delta',
+                    hover_data=hover_3d,
+                    opacity=0.7,
+                    color_continuous_scale='Viridis',
+                    title="Mapa 3D comóvil de Abell 85"
+                )
+
+            fig_3d.update_layout(
+                scene=dict(
+                    xaxis_title="X [Mpc]",
+                    yaxis_title="Y [Mpc]",
+                    zaxis_title="Z [Mpc]"
+                ),
+                height=700,
+                margin=dict(l=0, r=0, b=0, t=40)
             )
 
-        fig_3d.update_layout(
-            scene=dict(
-                xaxis_title="X [Mpc]",
-                yaxis_title="Y [Mpc]",
-                zaxis_title="Z [Mpc]"
-            ),
-            height=700,
-            margin=dict(l=0, r=0, b=0, t=40)
-        )
+            st.plotly_chart(fig_3d, use_container_width=True)
 
-        st.plotly_chart(fig_3d, use_container_width=True)
+            st.markdown("""
+            <div style="text-align: justify;">
+            <strong>Nota:</strong><br>
+            Este mapa proyecta la estructura tridimensional comóvil usando los parámetros de cosmología y redshift que elegiste.<br>
+            Los valores pueden variar ligeramente dependiendo de tu elección de H₀, Ωₘ, ΩΛ y centro de proyección RA₀/Dec₀.<br>
+            Los movimientos peculiares de las galaxias pueden estirar o comprimir la estructura a lo largo de la línea de visión (efecto Fingers of God).<br>
+            </div>
+            """, unsafe_allow_html=True)
+
 
     
     

@@ -1057,6 +1057,67 @@ if uploaded_file is not None:
             st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
 
 
+        import plotly.express as px
+        import pandas as pd
+
+        # ✅ Asegúrate de tener estos datos en tu df:
+        # 'RA', 'Dec', 'Delta', 'Vel'
+
+        # 1️⃣ Define rangos condicionales para Delta y Vel
+        df_cond = df.copy()
+
+        # Por ejemplo: usa quartiles para Delta y Vel
+        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], 4, labels=['Δ1', 'Δ2', 'Δ3', 'Δ4'])
+        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], 4, labels=['V1', 'V2', 'V3', 'V4'])
+
+        # ✅ Opcional: filtra valores NaN
+        df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
+
+        # 2️⃣ Mapa RA–Dec por bin Delta y Vel (FacetGrid)
+        fig = px.scatter(
+            df_cond,
+            x="RA",
+            y="Dec",
+            facet_col="Delta_bin",
+            facet_row="Vel_bin",
+            color="Delta_bin",
+            opacity=0.5,
+            title="Panel condicional RA–Dec por rangos Delta × Vel",
+            labels={"RA": "Ascensión Recta", "Dec": "Declinación"}
+        )
+    
+        # 3️⃣ Añade contornos KDE por bin
+        # ⚡️ plotly.express no tiene un método directo para contornos por faceta,
+        # pero puedes usar density_contour con la misma segmentación:
+        fig2 = px.density_contour(
+            df_cond,
+            x="RA",
+            y="Dec",
+            facet_col="Delta_bin",
+            facet_row="Vel_bin",
+            color="Delta_bin",
+            title="Isocontornos adaptativos RA–Dec",
+            labels={"RA": "Ascensión Recta", "Dec": "Declinación"}
+        )
+
+        # 4️⃣ Combina puntos y contornos
+        for trace in fig2.data:
+            fig.add_trace(trace)
+
+        # 5️⃣ Layout final
+        fig.update_xaxes(autorange='reversed')  # RA invertido
+        fig.update_yaxes(autorange='reversed')  # Dec invertido si lo quieres así
+        fig.update_layout(
+            height=1000,
+            width=1200,
+            showlegend=False,
+            margin=dict(t=100, l=50, r=50, b=50)
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
 
 
     

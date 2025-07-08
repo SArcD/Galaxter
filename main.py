@@ -1241,7 +1241,7 @@ if uploaded_file is not None:
         fig_panel.add_trace(go.Histogram2dContour(
             x=df_panel['RA'],
             y=df_panel['Dec'],
-            ncontours=15,
+            ncontours=60,
             colorscale=[[0, 'white'], [1, panel_color]],
             line=dict(width=1),
             hoverinfo="skip",
@@ -1250,7 +1250,7 @@ if uploaded_file is not None:
         ))
 
         fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
-        fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
+        #fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
         fig_panel.update_layout(
             title=f"Panel RA–Dec: Δ = {delta_sel} | V = {vel_sel}",
             height=600,

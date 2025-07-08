@@ -188,7 +188,7 @@ if uploaded_file is not None:
 
     # Expansor cpm el mapa de Abell 85
     with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-        num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
+        num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta']
         cat_vars = ['M(parn)', 'Act']
         all_vars = num_vars + cat_vars
 
@@ -933,9 +933,6 @@ if uploaded_file is not None:
             st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico primero.")
 
 
-    #import plotly.express as px
-
-    #with st.expander("🔍 Análisis morfológico y cinemático por rango de Delta"):
         st.subheader("📑 Evidencias de coherencia morfológica y dinámica")
 
         if 'Delta_cat' in df_sub.columns:

@@ -1145,19 +1145,19 @@ if uploaded_file is not None:
         st.plotly_chart(fig_faceted, use_container_width=True)
         st.markdown("""
         <div style="text-align: justify;">
-        <h4>🔍 <strong>Checklist para interpretar Panel RA–Dec</strong></h4>
+        <strong>Checklist para interpretar Panel RA–Dec</strong>
 
-        ✅ <strong>¿Ves agrupamientos claros?</strong>  
+        - <strong>¿Ves agrupamientos claros?</strong>  
         Regiones densas de galaxias en un panel (Δ × V) pueden ser subestructuras.
     
-        ✅ <strong>¿Hay filamentos o elongaciones?</strong>      
+        - <strong>¿Hay filamentos o elongaciones?</strong>      
         Formas alargadas pueden indicar filamentos o puentes de materia.
 
-        ✅ <strong>¿Coinciden en varios rangos de Vel?</strong>  
+        - <strong>¿Coinciden en varios rangos de Vel?</strong>  
         Un clump que persiste en varios rangos cinemáticos es evidencia sólida.
 
-        ✅ <strong>Cruza con morfología y actividad nuclear:</strong>  
-        Verifica si esas galaxias comparten morfología (<code>M(C)</code>) o actividad (<code>Act</code>).
+        - <strong>Cruza con morfología y actividad nuclear:</strong>  
+        Verifica si esas galaxias comparten morfología o actividad.
         </div>
         """, unsafe_allow_html=True)
 

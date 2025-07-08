@@ -1121,6 +1121,18 @@ if uploaded_file is not None:
         )
 
         # KDE heatmap (fondo suavizado)
+        #fig_heatmap = px.density_heatmap(
+        #    df_cond,
+        #    x="RA",
+        #    y="Dec",
+        #    facet_col="Delta_bin",
+        #    facet_row="Vel_bin",
+        #    nbinsx=50,
+        #    nbinsy=50,
+        #    color_continuous_scale="Blues",
+        #    opacity=0.3
+        #)
+
         fig_heatmap = px.density_heatmap(
             df_cond,
             x="RA",
@@ -1129,9 +1141,10 @@ if uploaded_file is not None:
             facet_row="Vel_bin",
             nbinsx=50,
             nbinsy=50,
-            color_continuous_scale="Blues",
-            opacity=0.3
+            color_continuous_scale="Blues"
         )
+        fig_heatmap.data[0].opacity = 0.3  # 👈 Aquí es correcto
+
 
         # Combina todo: scatter + contornos + heatmap
         for trace in fig_contour.data:

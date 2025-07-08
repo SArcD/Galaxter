@@ -1070,29 +1070,30 @@ if uploaded_file is not None:
         df_cond = df.copy()
 
         # ✅ Bins dinámicos
-        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
-        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], q=n_bins_vel, labels=[f'V{i+1}' for i in range(n_bins_vel)])
+        df_cond['Delta_bin'] = pd.qcut(
+            df_cond['Delta'], 
+            q=n_bins_delta, 
+            labels=[f'Δ{i+1}' for i in range(n_bins_delta)]
+        )
+        df_cond['Vel_bin'] = pd.qcut(
+            df_cond['Vel'], 
+            q=n_bins_vel, 
+            labels=[f'V{i+1}' for i in range(n_bins_vel)]
+        )
 
-        # Fuerza str para colores categóricos
         df_cond['Delta_bin'] = df_cond['Delta_bin'].astype(str)
         df_cond['Vel_bin'] = df_cond['Vel_bin'].astype(str)
-
         df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
 
-        # ✅ Hover enriquecido
         hover_cols = [
-            "ID",
-            "RA", "Dec",
-            "Vel", "Delta",
-            "Cl_d", "C(index)",
-            "M(C)",
-            "(u-g)", "(g-r)",
-            "M(u-g)", "M(g-r)",
+            "ID", "RA", "Dec", "Vel", "Delta",
+            "Cl_d", "C(index)", "M(C)",
+            "(u-g)", "(g-r)", "M(u-g)", "M(g-r)",
             "Act"
         ]
         hover_data = {col: True for col in hover_cols}
 
-        # ✅ 1️⃣ Panel FacetGrid RA–Dec
+        # ✅ 1️⃣ Panel FacetGrid RA–Dec (Puntos + Contornos líneas)
         fig_faceted = px.scatter(
             df_cond,
             x="RA",
@@ -1106,7 +1107,6 @@ if uploaded_file is not None:
             color_discrete_sequence=px.colors.qualitative.Set2
         )
 
-        # ✅ Contornos KDE
         fig_contour = px.density_contour(
             df_cond,
             x="RA",
@@ -1115,33 +1115,17 @@ if uploaded_file is not None:
             facet_row="Vel_bin",
             color="Delta_bin",
             nbinsx=30,
-            nbinsy=30
+            nbinsy=30,
+            contours_coloring="lines"  # ✅ solo líneas, sin relleno
         )
         for trace in fig_contour.data:
             fig_faceted.add_trace(trace)
 
-        # ✅ KDE heatmap fondo
-        fig_heatmap = px.density_heatmap(
-            df_cond,
-            x="RA",
-            y="Dec",
-            facet_col="Delta_bin",
-            facet_row="Vel_bin",
-            nbinsx=50,
-            nbinsy=50,
-            color_continuous_scale="Blues"
-        )
-        for trace in fig_heatmap.data:
-            trace.opacity = 0.2
-            fig_faceted.add_trace(trace)
-
-
-        # Después de agregar todos los traces:
         fig_faceted.update_xaxes(autorange="reversed")
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
-        # 🔒 Bloque robusto
+        # 🔒 Apaga cualquier showscale residual
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
@@ -1150,20 +1134,9 @@ if uploaded_file is not None:
             if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
                 trace.line.showscale = False
 
-        # 🔑 Ajusta la posición de la barra de color SOLO para heatmaps y contours
-        for trace in fig_faceted.data:
-            if hasattr(trace, 'colorbar'):
-                # Ejemplo: barra horizontal abajo
-                trace.colorbar.orientation = "h"
-                trace.colorbar.x = 0.5   # centrada horizontal
-                trace.colorbar.y = -0.25 # debajo del gráfico
-                trace.colorbar.xanchor = "center"
-                trace.colorbar.len = 0.7 # opcional: longitud de barra
-        
-        
         st.plotly_chart(fig_faceted, use_container_width=True)
 
-        # ✅ 2️⃣ Histogramas independientes
+        # ✅ 2️⃣ Histogramas
         st.subheader("📊 Distribución global de Delta")
         fig_hist_delta = px.histogram(
             df_cond,
@@ -1224,21 +1197,10 @@ if uploaded_file is not None:
             y="Dec",
             color="Delta_bin",
             nbinsx=30,
-            nbinsy=30
+            nbinsy=30,
+            contours_coloring="lines"  # ✅ solo líneas, sin relleno
         )
         for trace in fig_contour_panel.data:
-            fig_panel.add_trace(trace)
-
-        fig_heatmap_panel = px.density_heatmap(
-            df_panel,
-            x="RA",
-            y="Dec",
-            nbinsx=50,
-            nbinsy=50,
-            color_continuous_scale="Blues"
-        )
-        for trace in fig_heatmap_panel.data:
-            trace.opacity = 0.2
             fig_panel.add_trace(trace)
 
         fig_panel.update_xaxes(autorange="reversed")
@@ -1248,6 +1210,14 @@ if uploaded_file is not None:
             height=600,
             showlegend=False
         )
+
+        for trace in fig_panel.data:
+            if hasattr(trace, 'showscale'):
+                trace.showscale = False
+            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
+                trace.marker.showscale = False
+            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
+                trace.line.showscale = False
 
         st.plotly_chart(fig_panel, use_container_width=True)
 

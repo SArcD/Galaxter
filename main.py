@@ -1257,9 +1257,10 @@ if uploaded_file is not None:
             showlegend=False
         )
 
-        fig_panel.update_traces(
-            marker=dict(size=12)
-        )
+        for trace in fig_panel.data:
+            if trace.type == "scatter":
+                trace.marker.size = 12
+
         
         st.plotly_chart(fig_panel, use_container_width=True)
 

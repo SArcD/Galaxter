@@ -1177,7 +1177,7 @@ if uploaded_file is not None:
 
         st.markdown("""
         <div style="text-align: justify;">
-        <h4>🔍 <strong>Checklist para Histograma de Delta</strong></h4>
+        <strong>Checklist para Histograma de Delta</strong>
 
         - <strong>¿Predominan los rangos altos de Delta?</strong>  
         Muchos valores Δ4 o Δ5 implican desviación local alta = posible fusión.

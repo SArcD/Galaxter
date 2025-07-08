@@ -1073,10 +1073,20 @@ if uploaded_file is not None:
         n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
 
         # 2️⃣ Crea bins con qcut dinámico
-        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
-        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], q=n_bins_vel, labels=[f'V{i+1}' for i in range(n_bins_vel)])
+        df_cond['Delta_bin'] = pd.qcut(
+            df_cond['Delta'], 
+            q=n_bins_delta, 
+            labels=[f'Δ{i+1}' for i in range(n_bins_delta)]
+        )
+        df_cond['Vel_bin'] = pd.qcut(
+            df_cond['Vel'], 
+            q=n_bins_vel, 
+            labels=[f'V{i+1}' for i in range(n_bins_vel)]
+        )
 
-        df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
+        df_cond = df_cond[
+            df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()
+        ]
 
         # 3️⃣ Panel principal RA–Dec con KDE y contornos
         hover_cols = [
@@ -1085,6 +1095,7 @@ if uploaded_file is not None:
         ]
         hover_data = {col: True for col in hover_cols}
 
+        # Scatter de puntos con hover detallado
         fig_scatter = px.scatter(
             df_cond,
             x="RA",
@@ -1097,18 +1108,19 @@ if uploaded_file is not None:
             opacity=0.6
         )
 
+        # Contornos KDE (sin argumentos inválidos)
         fig_contour = px.density_contour(
             df_cond,
             x="RA",
             y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-            color="Delta_bin"
-            #contours_coloring="lines",
-            #line_shape="spline"
+            color="Delta_bin",
+            nbinsx=30,
+            nbinsy=30
         )
 
-        # KDE heatmap (opcional)
+        # KDE heatmap (fondo suavizado)
         fig_heatmap = px.density_heatmap(
             df_cond,
             x="RA",
@@ -1121,7 +1133,7 @@ if uploaded_file is not None:
             opacity=0.3
         )
 
-        # Combina todo en la figura principal
+        # Combina todo: scatter + contornos + heatmap
         for trace in fig_contour.data:
             fig_scatter.add_trace(trace)
         for trace in fig_heatmap.data:
@@ -1152,7 +1164,6 @@ if uploaded_file is not None:
         )
 
         # 5️⃣ Combina todo en un solo layout    
-        # Usa make_subplots
         fig_final = make_subplots(
             rows=2, cols=2,
             row_heights=[0.2, 0.8],
@@ -1185,8 +1196,6 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig_final, use_container_width=True)
-
-
 
 
     

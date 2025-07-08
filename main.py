@@ -1135,10 +1135,13 @@ if uploaded_file is not None:
             trace.opacity = 0.2
             fig_faceted.add_trace(trace)
 
+
+        # Después de agregar todos los traces:
         fig_faceted.update_xaxes(autorange="reversed")
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
+        # 🔒 Bloque robusto
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
@@ -1147,7 +1150,8 @@ if uploaded_file is not None:
             if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
                 trace.line.showscale = False
 
-        
+        # Extra: refuerza con update_traces global si quieres
+        fig_faceted.update_traces(showscale=False)
 
         st.plotly_chart(fig_faceted, use_container_width=True)
 

@@ -1139,6 +1139,15 @@ if uploaded_file is not None:
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
+        for trace in fig_faceted.data:
+            if hasattr(trace, 'showscale'):
+                trace.showscale = False
+            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
+                trace.marker.showscale = False
+            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
+                trace.line.showscale = False
+
+        
         # ✅ Quita barra de color innecesaria
         for trace in fig_faceted.data:
             if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):

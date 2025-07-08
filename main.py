@@ -1207,7 +1207,7 @@ if uploaded_file is not None:
 
         st.markdown("""
         <div style="text-align: justify;">
-        <h4>🔍 <strong>Checklist para Histograma de Vel</strong></h4>
+        <strong>Checklist para Histograma de Vel</strong>
 
         - <strong>¿Hay picos secundarios o colas?</strong>  
         Un pico extra o una cola larga puede sugerir grupos cinemáticamente distintos.

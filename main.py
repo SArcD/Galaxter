@@ -1115,8 +1115,7 @@ if uploaded_file is not None:
             facet_row="Vel_bin",
             color="Delta_bin",
             nbinsx=30,
-            nbinsy=30,
-            contours_coloring="lines"  # ✅ solo líneas, sin relleno
+            nbinsy=30
         )
         for trace in fig_contour.data:
             fig_faceted.add_trace(trace)

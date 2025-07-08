@@ -872,6 +872,107 @@ if uploaded_file is not None:
         else:
             st.info("No se encuentran las columnas necesarias o no se seleccionó ninguna variable.")
 
+
+
+
+
+
+    import numpy as np
+    import plotly.express as px
+    from astropy.cosmology import FlatLambdaCDM
+
+    st.subheader("🌌 Mapa 3D comóvil por Subestructura y Variable")
+
+    # ✅ Cosmología y centro interactivos
+    col1, col2, col3 = st.columns(3)
+    H0 = col1.number_input("H₀ (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
+    Om0 = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
+    z_cluster = col3.number_input("Redshift de referencia", value=0.0555, step=0.001)
+
+    ra0_default = float(df['RA'].mean()) if not df.empty else 0.0
+    dec0_default = float(df['Dec'].mean()) if not df.empty else 0.0
+
+    ra0 = st.number_input("Centro RA₀ (°)", value=ra0_default, step=0.1)
+    dec0 = st.number_input("Centro Dec₀ (°)", value=dec0_default, step=0.1)
+
+    # ✅ Filtrado de Subestructura
+    df_sub = df[df['Subcluster'].notna()].copy()
+    if df_sub.empty:
+        st.warning("No hay subestructuras detectadas.")
+    else:
+        unique_subs = sorted(df_sub['Subcluster'].unique())
+        selected_subs = st.multiselect(
+            "Selecciona una o varias Subestructuras:",
+            options=unique_subs,
+            default=unique_subs
+        )
+
+        df_3d = df_sub[df_sub['Subcluster'].isin(selected_subs)].copy()
+
+        # ✅ Variable numérica para rangos
+        num_vars = ['Vel', 'Delta', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
+        var_selected = st.selectbox("Variable para agrupar rangos:", options=num_vars, index=1)
+
+        # Crear rangos dinámicos
+        n_bins = st.slider("Número de rangos:", min_value=2, max_value=6, value=4)
+        df_3d['Var_bin'] = pd.qcut(df_3d[var_selected], q=n_bins, duplicates='drop')
+        df_3d['Var_bin_str'] = df_3d['Var_bin'].astype(str)
+
+        # Cosmología
+        cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
+        c = 3e5  # km/s
+
+        # Calcular z_gal y D_C
+        df_3d['z_gal'] = z_cluster + (df_3d['Vel'] / c) * (1 + z_cluster)
+        df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
+
+        # Coordenadas comóviles
+        df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0))
+        df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0))
+        df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0))
+
+        # Tamaño basado en rango (más alto → mayor)
+        bin_map = {k: i+1 for i, k in enumerate(sorted(df_3d['Var_bin_str'].unique()))}
+        df_3d['Size'] = df_3d['Var_bin_str'].map(lambda x: 4 + bin_map[x]*3)
+
+        # Hover enriquecido
+        hover_3d = ["ID", "Subcluster", "RA", "Dec", "Vel", "Delta", "Cl_d",
+                    "(u-g)", "(g-r)", "(r-i)", "(i-z)", "Act"]
+
+        fig_3d = px.scatter_3d(
+            df_3d,
+            x='X', y='Y', z='Z',
+            color='Var_bin_str',
+            size='Size',
+            hover_data=hover_3d,
+            opacity=0.7,
+            title=f"Mapa 3D comóvil | Subestructura(s): {selected_subs} | Rango: {var_selected}",
+        )
+
+        fig_3d.update_layout(
+            scene=dict(
+                xaxis_title="X [Mpc]",
+                yaxis_title="Y [Mpc]",
+                zaxis_title="Z [Mpc]"
+            ),
+            height=800,
+            margin=dict(l=0, r=0, b=0, t=50)
+        )
+
+        st.plotly_chart(fig_3d, use_container_width=True)
+
+        st.markdown(f"""
+        <div style="text-align: justify;">
+        <strong> Cómo interpretarlo:</strong><br>
+        - Cada punto es una galaxia en coordenadas comóviles X, Y, Z.<br>
+        - El color indica el rango de {var_selected}.<br>
+        - El tamaño refleja su posición dentro del rango: más grande = rango más alto.<br>
+        - Puedes girar, acercar y ocultar rangos usando la leyenda.<br>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+    
     import numpy as np
     from scipy.spatial import KDTree
     import plotly.graph_objects as go

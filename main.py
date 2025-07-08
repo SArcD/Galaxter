@@ -885,15 +885,15 @@ if uploaded_file is not None:
 
     # ✅ Cosmología y centro interactivos
     col1, col2, col3 = st.columns(3)
-    H0_3d = col1.number_input("H₀ (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
-    Om0_3d = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
-    z_cluster_3d = col3.number_input("Redshift de referencia", value=0.0555, step=0.001)
+    H0_3d = col1.number_input("H0 (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
+    Om0_3d = col2.number_input("Ωm", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
+    z_cluster_3d = col3.number_input("Redshift para referencia", value=0.0555, step=0.001)
 
     ra0_default_3d = float(df['RA'].mean()) if not df.empty else 0.0
     dec0_default_3d = float(df['Dec'].mean()) if not df.empty else 0.0
 
-    ra0_3d = st.number_input("Centro RA₀ (°)", value=ra0_default_3d, step=0.1)
-    dec0_3d = st.number_input("Centro Dec₀ (°)", value=dec0_default_3d, step=0.1)
+    ra0_3d = st.number_input("Centro RA (°)", value=ra0_default_3d, step=0.1)
+    dec0_3d = st.number_input("Centro Dec (°)", value=dec0_default_3d, step=0.1)
 
     # ✅ Filtrado de Subestructura
     df_sub = df[df['Subcluster'].notna()].copy()
@@ -911,10 +911,10 @@ if uploaded_file is not None:
 
         # ✅ Variable numérica para rangos
         num_vars_3d = ['Vel', 'Delta', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
-        var_selected_3d = st.selectbox("Variable para agrupar rangos:", options=num_vars_3d, index=1)
+        var_selected_3d = st.selectbox("Variable que agrupar rangos:", options=num_vars_3d, index=1)
 
         # Crear rangos dinámicos
-        n_bins_3d = st.slider("Número de rangos:", min_value=2, max_value=6, value=4)
+        n_bins_3d = st.slider("Número de rangos a usar:", min_value=2, max_value=6, value=4)
         df_3d['Var_bin'] = pd.qcut(df_3d[var_selected_3d], q=n_bins_3d, duplicates='drop')
         df_3d['Var_bin_str'] = df_3d['Var_bin'].astype(str)
 

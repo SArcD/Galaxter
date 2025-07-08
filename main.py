@@ -1063,24 +1063,32 @@ if uploaded_file is not None:
     def plot_conditional_panel(df):
         st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
-        # ✅ Controles
+        # ✅ Controles interactivos
         n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)
         n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
 
         df_cond = df.copy()
 
-        # ✅ Crear bins
+        # ✅ Bins dinámicos
         df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
         df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], q=n_bins_vel, labels=[f'V{i+1}' for i in range(n_bins_vel)])
 
+        # Fuerza str para colores categóricos
         df_cond['Delta_bin'] = df_cond['Delta_bin'].astype(str)
         df_cond['Vel_bin'] = df_cond['Vel_bin'].astype(str)
 
         df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
 
+        # ✅ Hover enriquecido
         hover_cols = [
-            'ID', 'Vel', 'Delta', 'Cl_d', 'C(index)',
-            'M(C)', '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act'
+            "ID",
+            "RA", "Dec",
+            "Vel", "Delta",
+            "Cl_d", "C(index)",
+            "M(C)",
+            "(u-g)", "(g-r)",
+            "M(u-g)", "M(g-r)",
+            "Act"
         ]
         hover_data = {col: True for col in hover_cols}
 
@@ -1098,7 +1106,7 @@ if uploaded_file is not None:
             color_discrete_sequence=px.colors.qualitative.Set2
         )
 
-        # Contornos
+        # ✅ Contornos KDE
         fig_contour = px.density_contour(
             df_cond,
             x="RA",
@@ -1112,7 +1120,7 @@ if uploaded_file is not None:
         for trace in fig_contour.data:
             fig_faceted.add_trace(trace)
 
-        # KDE heatmap fondo
+        # ✅ KDE heatmap fondo
         fig_heatmap = px.density_heatmap(
             df_cond,
             x="RA",
@@ -1131,13 +1139,14 @@ if uploaded_file is not None:
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
+        # ✅ Quita barra de color innecesaria
         for trace in fig_faceted.data:
             if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
                 trace.marker.showscale = False
 
         st.plotly_chart(fig_faceted, use_container_width=True)
 
-        # ✅ 2️⃣ Histograma Delta
+        # ✅ 2️⃣ Histogramas independientes
         st.subheader("📊 Distribución global de Delta")
         fig_hist_delta = px.histogram(
             df_cond,
@@ -1145,12 +1154,10 @@ if uploaded_file is not None:
             nbins=20,
             color="Delta_bin",
             opacity=0.7,
-            title="Distribución global de Delta",
             color_discrete_sequence=px.colors.qualitative.Set2
         )
         st.plotly_chart(fig_hist_delta, use_container_width=True)
 
-        # ✅ 3️⃣ Histograma Vel
         st.subheader("📊 Distribución global de Vel")
         fig_hist_vel = px.histogram(
             df_cond,
@@ -1158,12 +1165,11 @@ if uploaded_file is not None:
             nbins=20,
             color="Vel_bin",
             opacity=0.7,
-            title="Distribución global de Vel",
             color_discrete_sequence=px.colors.qualitative.Set2
         )
         st.plotly_chart(fig_hist_vel, use_container_width=True)
 
-        # ✅ 4️⃣ Panel individual
+        # ✅ 3️⃣ Panel individual
         st.subheader("🗂️ Explora cada panel RA–Dec individual")
 
         combinaciones = [

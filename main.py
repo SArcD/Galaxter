@@ -368,7 +368,7 @@ if uploaded_file is not None:
             st.warning("No hay galaxias para mostrar en 3D con los filtros actuales.")
         else:
             # Cosmología
-            cosmo = FlatLambdaCDM(H0=H0, Om0=Om0, Ode0=Ode0)
+            cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
             c = 3e5  # km/s
 
             # Calcular z_gal y distancia comóvil

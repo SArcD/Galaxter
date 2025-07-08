@@ -1087,18 +1087,54 @@ if uploaded_file is not None:
         hover_data = {col: True for col in hover_cols}
 
         # === ✅ 2️⃣ FACET GRID ===
+        #fig_faceted = px.scatter(
+        #    df_cond,
+        #    x="RA", y="Dec",
+        #    facet_col="Delta_bin",
+        #    facet_row="Vel_bin",
+        #color="Delta_bin",
+        #hover_name="ID",
+        #    hover_data=hover_data,
+        #    opacity=0.7,
+        #    color_discrete_map=color_map
+        #)
+
+        # Asegúrate de no poner hover_name
         fig_faceted = px.scatter(
             df_cond,
-            x="RA", y="Dec",
+            x="RA",
+            y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-        color="Delta_bin",
-        #hover_name="ID",
-            hover_data=hover_data,
+            color="Delta_bin",
             opacity=0.7,
-            color_discrete_map=color_map
+            color_discrete_map=color_map,
         )
 
+        # Añade customdata (se pasa como array 2D)
+        for trace in fig_faceted.data:
+            trace.customdata = df_cond[hover_cols].values
+            trace.hovertemplate = (
+                "<b>ID:</b> %{customdata[0]}<br>" +
+                "<b>RA:</b> %{customdata[1]:.4f}<br>" +
+                "<b>Dec:</b> %{customdata[2]:.4f}<br>" +
+                "<b>Vel:</b> %{customdata[3]:.2f}<br>" +
+                "<b>Delta:</b> %{customdata[4]:.2f}<br>" +
+                "<b>Cl_d:</b> %{customdata[5]:.2f}<br>" +
+                "<b>C(index):</b> %{customdata[6]:.2f}<br>" +
+                "<b>M(C):</b> %{customdata[7]}<br>" +
+                "<b>(u-g):</b> %{customdata[8]:.2f}<br>" +
+                "<b>(g-r):</b> %{customdata[9]:.2f}<br>" +
+                "<b>M(u-g):</b> %{customdata[10]}<br>" +
+                "<b>M(g-r):</b> %{customdata[11]}<br>" +
+                "<b>Act:</b> %{customdata[12]}"
+            )
+
+
+
+
+
+        
         fig_contour = px.density_contour(
             df_cond,
             x="RA", y="Dec",
@@ -1113,7 +1149,7 @@ if uploaded_file is not None:
             fig_faceted.add_trace(trace)
 
         fig_faceted.update_xaxes(autorange="reversed")
-        fig_faceted.update_yaxes(autorange="reversed")
+        #fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
         for trace in fig_faceted.data:

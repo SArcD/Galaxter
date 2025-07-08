@@ -1065,56 +1065,47 @@ if uploaded_file is not None:
     def plot_conditional_panel(df):
         st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
-        # Controles interactivos
         n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)
         n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
 
         df_cond = df.copy()
+        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
+        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], q=n_bins_vel, labels=[f'V{i+1}' for i in range(n_bins_vel)])
 
-        # Bins dinámicos
-        df_cond['Delta_bin'] = pd.qcut(
-            df_cond['Delta'], 
-            q=n_bins_delta, 
-            labels=[f'Δ{i+1}' for i in range(n_bins_delta)]
-        )
-        df_cond['Vel_bin'] = pd.qcut(
-            df_cond['Vel'], 
-            q=n_bins_vel, 
-            labels=[f'V{i+1}' for i in range(n_bins_vel)]
-        )
-
-        df_cond['Delta_bin'] = df_cond['Delta_bin'].astype(str)
-        df_cond['Vel_bin'] = df_cond['Vel_bin'].astype(str)
         df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
 
+        color_map = {
+            f'Δ{i+1}': px.colors.qualitative.Set2[i % len(px.colors.qualitative.Set2)]
+            for i in range(n_bins_delta)
+        }
+
         hover_cols = [
-            "ID", "RA", "Dec", "Vel", "Delta",
-            "Cl_d", "C(index)", "M(C)",
-            "(u-g)", "(g-r)", "M(u-g)", "M(g-r)",
-            "Act"
+            "ID", "RA", "Dec", "Vel", "Delta", "Cl_d",
+            "C(index)", "M(C)", "(u-g)", "(g-r)", "M(u-g)",
+            "M(g-r)", "Act"
         ]
         hover_data = {col: True for col in hover_cols}
 
-        # ✅ 1️⃣ Panel FacetGrid RA–Dec (Puntos + Contornos)
+        # === ✅ 2️⃣ FACET GRID ===
         fig_faceted = px.scatter(
             df_cond,
-            x="RA",
-            y="Dec",
+            x="RA", y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-            color="Delta_bin",
+        color="Delta_bin",
+        #hover_name="ID",
             hover_data=hover_data,
             opacity=0.7,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_map=color_map
         )
 
         fig_contour = px.density_contour(
             df_cond,
-            x="RA",
-            y="Dec",
+            x="RA", y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-            color="Delta_bin"
+            color="Delta_bin",
+            color_discrete_map=color_map
         )
         for trace in fig_contour.data:
             trace.showlegend = False
@@ -1123,6 +1114,7 @@ if uploaded_file is not None:
 
         fig_faceted.update_xaxes(autorange="reversed")
         fig_faceted.update_yaxes(autorange="reversed")
+        fig_faceted.update_layout(showlegend=True)
 
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
@@ -1134,56 +1126,32 @@ if uploaded_file is not None:
 
         st.markdown("""
         <div style="text-align: justify;">
-        <strong>✅ Checklist para interpretar Panel RA–Dec</strong><br>
-        - <strong>¿Ves agrupamientos claros?</strong> Regiones densas pueden ser subestructuras.<br>
-        - <strong>¿Hay filamentos o elongaciones?</strong> Formas alargadas pueden ser filamentos o puentes.<br>
-        - <strong>¿Coinciden en varios rangos de Vel?</strong> Un clump que persiste refuerza hipótesis de coherencia.<br>
-        - <strong>Cruza con morfología y actividad nuclear.</strong>
+        <strong>✅ Checklist para Panel RA–Dec</strong><br>
+        - Agrupamientos claros<br>
+        - Filamentos o elongaciones<br>
+        - Coinciden en rangos Vel<br>
+        - Cruza morfología/actividad
         </div>
         """, unsafe_allow_html=True)
 
-        # ✅ 2️⃣ Histogramas
+        # === ✅ 3️⃣ HISTOGRAMAS ===
         st.subheader("Distribución global de Delta")
         fig_hist_delta = px.histogram(
-            df_cond,
-            x="Delta",
-            nbins=20,
-            color="Delta_bin",
-            opacity=0.7,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            df_cond, x="Delta",
+            nbins=20, color="Delta_bin",
+            opacity=0.7, color_discrete_map=color_map
         )
         st.plotly_chart(fig_hist_delta, use_container_width=True)
 
-        st.markdown("""
-        <div style="text-align: justify;">
-        <strong>✅ Checklist para Histograma de Delta</strong><br>
-        - <strong>¿Predominan rangos altos de Delta?</strong> Muchos Δ4 o Δ5 = posible subestructura.<br>
-        - <strong>¿Distribución extendida?</strong> Refleja complejidad.<br>
-        - <strong>Cruza con Vel.</strong>
-        </div>
-        """, unsafe_allow_html=True)
-
         st.subheader("Distribución global de Vel")
         fig_hist_vel = px.histogram(
-            df_cond,
-            x="Vel",
-            nbins=20,
-            color="Vel_bin",
-            opacity=0.7,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            df_cond, x="Vel",
+            nbins=20, color="Vel_bin",
+            opacity=0.7
         )
         st.plotly_chart(fig_hist_vel, use_container_width=True)
 
-        st.markdown("""
-        <div style="text-align: justify;">
-        <strong>✅ Checklist para Histograma de Vel</strong><br>
-        - <strong>¿Picos secundarios o colas?</strong> Sugiere grupos cinemáticos.<br>
-        - <strong>¿Coinciden con agrupamientos RA–Dec?</strong><br>
-        - <strong>¿Desviación interna baja?</strong> Refuerza coherencia.
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ✅ 3️⃣ Panel individual con hover enriquecido REAL
+        # === ✅ 4️⃣ PANEL INDIVIDUAL ===
         st.subheader("🔍 Explora cada panel RA–Dec individual")
 
         combinaciones = [
@@ -1204,53 +1172,49 @@ if uploaded_file is not None:
             (df_cond['Vel_bin'] == vel_sel)
         ]
 
-        # Rango global para coherencia
         ra_min, ra_max = df_cond['RA'].min(), df_cond['RA'].max()
         dec_min, dec_max = df_cond['Dec'].min(), df_cond['Dec'].max()
+        panel_color = color_map.get(delta_sel, "blue")
 
-        # Puntos: hover enriquecido con go.Scatter + customdata
-        customdata = df_panel[[
-            "ID", "Vel", "Delta", "Cl_d",
-            "C(index)", "M(C)", "(u-g)",
-            "M(u-g)", "(g-r)", "M(g-r)", "Act"
-        ]].values
-
+        # Usar go.Figure para hover enriquecido
         fig_panel = go.Figure()
 
         fig_panel.add_trace(go.Scatter(
-            x=df_panel["RA"],
-            y=df_panel["Dec"],
+            x=df_panel['RA'],
+            y=df_panel['Dec'],
             mode="markers",
-            marker=dict(size=6, color="blue"),
-            customdata=customdata,
-            hovertemplate=
-                "ID: %{customdata[0]}<br>" +
-                "Vel: %{customdata[1]:.1f}<br>" +
-                "Delta: %{customdata[2]:.2f}<br>" +
-                "Cl_d: %{customdata[3]:.2f}<br>" +
-                "C(index): %{customdata[4]:.2f}<br>" +
-                "M(C): %{customdata[5]}<br>" +
-                "(u-g): %{customdata[6]:.2f}<br>" +
-                "M(u-g): %{customdata[7]}<br>" +
-                "(g-r): %{customdata[8]:.2f}<br>" +
-                "M(g-r): %{customdata[9]}<br>" +
-                "Act: %{customdata[10]}<br>" +
-                "<extra></extra>"
-            ))
-
-        fig_panel.add_trace(go.Histogram2dContour(
-            x=df_cond["RA"],  # usa toda la nube para amplitud
-            y=df_cond["Dec"],
-            ncontours=20,
-            colorscale="Blues",
-            showscale=False,
-            hoverinfo="skip",
-            line=dict(width=1)
+            marker=dict(size=6, color=panel_color),
+            customdata=df_panel[hover_cols].values,
+            hovertemplate="<br>".join([
+                "ID: %{customdata[0]}",
+                "RA: %{x}",
+                "Dec: %{y}",
+                "Vel: %{customdata[3]}",
+                "Delta: %{customdata[4]}",
+                "Cl_d: %{customdata[5]}",
+                "C(index): %{customdata[6]}",
+                "M(C): %{customdata[7]}",
+                "(u-g): %{customdata[8]}",
+                "(g-r): %{customdata[9]}",
+                "M(u-g): %{customdata[10]}",
+                "M(g-r): %{customdata[11]}",
+                "Act: %{customdata[12]}"
+            ])
         ))
 
-        fig_panel.update_xaxes(autorange="reversed", range=[ra_max, ra_min])
-        fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
+        fig_panel.add_trace(go.Histogram2dContour(
+            x=df_panel['RA'],
+            y=df_panel['Dec'],
+            ncontours=15,
+            colorscale=[[0, 'white'], [1, panel_color]],
+            line=dict(width=1),
+            hoverinfo="skip",
+            showscale=False,
+            contours=dict(showlines=True)
+        ))
 
+        fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
+        fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
         fig_panel.update_layout(
             title=f"Panel RA–Dec: Δ = {delta_sel} | V = {vel_sel}",
             height=600,

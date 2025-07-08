@@ -1175,6 +1175,24 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_hist_delta, use_container_width=True)
 
+        st.markdown("""
+        <div style="text-align: justify;">
+        <h4>🔍 <strong>Checklist para Histograma de Delta</strong></h4>
+
+        - <strong>¿Predominan los rangos altos de Delta?</strong>  
+        Muchos valores <code>Δ4</code> o <code>Δ5</code> implican desviación local alta = posible fusión.
+
+        - <strong>¿Qué tan extendida es la distribución?</strong>  
+        Una distribución amplia puede reflejar complejidad estructural.
+
+        - <strong>Cruza con Vel:</strong>  
+        Verifica qué rangos de Vel coinciden con Delta alto para confirmar subgrupos dinámicos.
+        </div>
+        """, unsafe_allow_html=True)
+
+
+
+        
         st.subheader("📊 Distribución global de Vel")
         fig_hist_vel = px.histogram(
             df_cond,
@@ -1185,6 +1203,22 @@ if uploaded_file is not None:
             color_discrete_sequence=px.colors.qualitative.Set2
         )
         st.plotly_chart(fig_hist_vel, use_container_width=True)
+
+
+        st.markdown("""
+        <div style="text-align: justify;">
+        <h4>🔍 <strong>Checklist para Histograma de Vel</strong></h4>
+
+        - <strong>¿Hay picos secundarios o colas?</strong>  
+        Un pico extra o una cola larga puede sugerir grupos cinemáticamente distintos.
+
+        - <strong>¿Los bins coinciden con agrupamientos RA–Dec?</strong>  
+        Revisa si los rangos de Vel bien poblados tienen clumps espaciales.
+
+        - <strong>¿Desviación interna baja?</strong>  
+        Una dispersión baja en Vel refuerza la coherencia dinámica.
+        </div>
+        """, unsafe_allow_html=True)
 
         # ✅ 3️⃣ Panel individual
         st.subheader("🗂️ Explora cada panel RA–Dec individual")

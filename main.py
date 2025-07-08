@@ -1149,7 +1149,7 @@ if uploaded_file is not None:
 
         # 3️⃣ Invertir ejes, limpiar leyenda duplicada
         fig_faceted.update_xaxes(autorange="reversed")
-        fig_faceted.update_yaxes(autorange="reversed")
+        #fig_faceted.update_yaxes(autorange="reversed")
 
         for trace in fig_faceted.data:
             if trace.type == "histogram2dcontour":

@@ -1241,7 +1241,7 @@ if uploaded_file is not None:
         fig_panel.add_trace(go.Histogram2dContour(
             x=df_panel['RA'],
             y=df_panel['Dec'],
-            ncontours=20,
+            ncontours=10,
             xbins=dict(size=0.05),  # Controla resolución RA
             ybins=dict(size=0.05),  # Controla resolución Dec
             #ncontours=10,

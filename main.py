@@ -1058,157 +1058,118 @@ if uploaded_file is not None:
 
 
         import plotly.express as px
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
         import pandas as pd
-        import numpy as np
 
-        # ✅ Asegúrate de tener RA, Dec, Delta, Vel y tus columnas clave
-        df_cond = df.copy()
+        def plot_conditional_panel(df):
+            import plotly.express as px
+            import plotly.graph_objects as go
 
-        # 1️⃣ Controles Streamlit para ajustar percentiles
-        st.subheader("🎛️ Ajusta percentiles para bins")
+            st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
-        n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)    
-        n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
+            # Controles interactivos
+            n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)
+            n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
 
-        # 2️⃣ Crea bins con qcut dinámico
-        df_cond['Delta_bin'] = pd.qcut(
-            df_cond['Delta'], 
-            q=n_bins_delta, 
-            labels=[f'Δ{i+1}' for i in range(n_bins_delta)]
-        )
-        df_cond['Vel_bin'] = pd.qcut(
-            df_cond['Vel'], 
-            q=n_bins_vel, 
-            labels=[f'V{i+1}' for i in range(n_bins_vel)]
-        )
+            df_cond = df.copy()
 
-        df_cond = df_cond[
-            df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()
-        ]
+            #  Crear bins dinámicos
+            df_cond['Delta_bin'] = pd.qcut(
+                df_cond['Delta'],
+                q=n_bins_delta,
+                labels=[f'Δ{i+1}' for i in range(n_bins_delta)]
+            )
 
-        # 3️⃣ Panel principal RA–Dec con KDE y contornos
-        hover_cols = [
-            'ID', 'Vel', 'Delta', 'Cl_d', 'C(index)',
-            'M(C)', '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act'
-        ]
-        hover_data = {col: True for col in hover_cols}
+            df_cond['Vel_bin'] = pd.qcut(
+                df_cond['Vel'],
+                q=n_bins_vel,
+                labels=[f'V{i+1}' for i in range(n_bins_vel)]
+            )
 
-        # Scatter de puntos con hover detallado
-        fig_scatter = px.scatter(
-            df_cond,
-            x="RA",
-            y="Dec",
-            facet_col="Delta_bin",
-            facet_row="Vel_bin",
-            color="Delta_bin",
-            hover_name="ID",
-            hover_data=hover_data,
-            opacity=0.6
-        )
+            df_cond = df_cond[
+                df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()
+            ]
 
-        # Contornos KDE (sin argumentos inválidos)
-        fig_contour = px.density_contour(
-            df_cond,
-            x="RA",
-            y="Dec",
-            facet_col="Delta_bin",
-            facet_row="Vel_bin",
-            color="Delta_bin",
-            nbinsx=30,
-            nbinsy=30
-        )
+            hover_cols = [
+                'ID', 'Vel', 'Delta', 'Cl_d', 'C(index)',
+                'M(C)', '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act'
+            ]
+            hover_data = {col: True for col in hover_cols}
 
-        # KDE heatmap (fondo suavizado)
-        #fig_heatmap = px.density_heatmap(
-        #    df_cond,
-        #    x="RA",
-        #    y="Dec",
-        #    facet_col="Delta_bin",
-        #    facet_row="Vel_bin",
-        #    nbinsx=50,
-        #    nbinsy=50,
-        #    color_continuous_scale="Blues",
-        #    opacity=0.3
-        #)
+            # Scatter base con FacetGrid
+            fig_faceted = px.scatter(
+                df_cond,
+                x="RA",
+                y="Dec",
+                facet_col="Delta_bin",
+                facet_row="Vel_bin",
+                color="Delta_bin",
+                hover_name="ID",
+                hover_data=hover_data,
+                opacity=0.6
+            )
 
-        fig_heatmap = px.density_heatmap(
-            df_cond,
-            x="RA",
-            y="Dec",
-            facet_col="Delta_bin",
-            facet_row="Vel_bin",
-            nbinsx=50,
-            nbinsy=50,
-            color_continuous_scale="Blues"
-        )
-        fig_heatmap.data[0].opacity = 0.3  # 👈 Aquí es correcto
+            # KDE contornos
+            fig_contour = px.density_contour(
+                df_cond,
+                x="RA",
+                y="Dec",
+                facet_col="Delta_bin",
+                facet_row="Vel_bin",
+                color="Delta_bin",
+                nbinsx=30,
+                nbinsy=30
+            )
 
+            for trace in fig_contour.data:
+                fig_faceted.add_trace(trace)
 
-        # Combina todo: scatter + contornos + heatmap
-        for trace in fig_contour.data:
-            fig_scatter.add_trace(trace)
-        for trace in fig_heatmap.data:
-            fig_scatter.add_trace(trace)
+            # KDE heatmap fondo
+            fig_heatmap = px.density_heatmap(
+                df_cond,
+                x="RA",
+                y="Dec",
+                facet_col="Delta_bin",
+                facet_row="Vel_bin",
+                nbinsx=50,
+                nbinsy=50,
+                color_continuous_scale="Blues"
+            )
+            # Aplica opacidad después
+            for trace in fig_heatmap.data:
+                trace.opacity = 0.2
+                fig_faceted.add_trace(trace)
 
-        fig_scatter.update_xaxes(autorange="reversed")
-        fig_scatter.update_yaxes(autorange="reversed")
-        fig_scatter.update_layout(showlegend=False)
+            fig_faceted.update_xaxes(autorange="reversed")
+            fig_faceted.update_yaxes(autorange="reversed")
+            fig_faceted.update_layout(
+                height=800,
+                title="Panel condicional RA–Dec por rangos Delta × Vel"
+            )
 
-        # 4️⃣ Histogramas marginales
-        fig_hist_delta = px.histogram(
-            df_cond,
-            x="Delta",
-            nbins=20,
-            color="Delta_bin",
-            title="Distribución Delta",
-            opacity=0.7
-        )
+            # Histogramas marginales por separado
+            fig_hist_delta = px.histogram(
+                df_cond,
+                x="Delta",
+                nbins=20,
+                color="Delta_bin",
+                opacity=0.7,
+                title="Distribución global de Delta"
+            )
 
-        fig_hist_vel = px.histogram(
-            df_cond,
-            y="Vel",
-            nbins=20,
-            color="Vel_bin",
-            title="Distribución Vel",
-            opacity=0.7,
-            orientation='h'
-        )
+            fig_hist_vel = px.histogram(
+                df_cond,
+                y="Vel",
+                nbins=20,
+                color="Vel_bin",
+                opacity=0.7,
+                orientation='h',
+                title="Distribución global de Vel"
+            )
 
-        # 5️⃣ Combina todo en un solo layout    
-        fig_final = make_subplots(
-            rows=2, cols=2,
-            row_heights=[0.2, 0.8],
-            column_widths=[0.8, 0.2],
-            specs=[
-                [{"type": "xy"}, {"type": "xy"}],
-                [{"type": "xy"}, {"type": "xy"}]
-            ],
-            subplot_titles=("Histograma Delta", "", "Panel RA–Dec", "Histograma Vel")
-        )
-
-        # Agrega histogramas
-        for trace in fig_hist_delta.data:
-            fig_final.add_trace(trace, row=1, col=1)
-        for trace in fig_hist_vel.data:
-            fig_final.add_trace(trace, row=2, col=2)
-
-        # Agrega panel principal
-        for trace in fig_scatter.data:
-            fig_final.add_trace(trace, row=2, col=1)
-
-        # Ajusta ejes invertidos solo en panel RA–Dec
-        fig_final.update_xaxes(autorange="reversed", row=2, col=1)
-        fig_final.update_yaxes(autorange="reversed", row=2, col=1)
-
-        fig_final.update_layout(
-            height=1000,
-            width=1200,
-            title_text="Panel condicional RA–Dec con histogramas marginales"
-        )
-
-        st.plotly_chart(fig_final, use_container_width=True)
+            # Muestra todos
+            st.plotly_chart(fig_hist_delta, use_container_width=True)
+            st.plotly_chart(fig_hist_vel, use_container_width=True)
+            st.plotly_chart(fig_faceted, use_container_width=True)
 
 
     

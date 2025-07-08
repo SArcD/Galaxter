@@ -1124,15 +1124,28 @@ if uploaded_file is not None:
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
-        # 🔒 Apaga cualquier showscale residual
+#        # 🔒 Apaga cualquier showscale residual
+#        for trace in fig_faceted.data:
+#            if hasattr(trace, 'showscale'):
+#                trace.showscale = False
+#            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
+#                trace.marker.showscale = False
+#            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
+#                trace.line.showscale = False
+
+
+        # 🔑 Quitar showscale residual
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
-            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
-                trace.marker.showscale = False
-            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
-                trace.line.showscale = False
 
+        # 🔑 Quitar duplicados de leyenda de contornos
+        for trace in fig_faceted.data:
+            if trace.type == "contour":
+                trace.showlegend = False
+
+
+        
         st.plotly_chart(fig_faceted, use_container_width=True)
 
         # ✅ 2️⃣ Histogramas
@@ -1196,8 +1209,7 @@ if uploaded_file is not None:
             y="Dec",
             color="Delta_bin",
             nbinsx=30,
-            nbinsy=30,
-            contours_coloring="lines"  # ✅ solo líneas, sin relleno
+            nbinsy=30
         )
         for trace in fig_contour_panel.data:
             fig_panel.add_trace(trace)

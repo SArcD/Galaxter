@@ -885,15 +885,15 @@ if uploaded_file is not None:
 
     # ✅ Cosmología y centro interactivos
     col1, col2, col3 = st.columns(3)
-    H0 = col1.number_input("H₀ (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
-    Om0 = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
-    z_cluster = col3.number_input("Redshift de referencia", value=0.0555, step=0.001)
+    H0_3d = col1.number_input("H₀ (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
+    Om0_3d = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
+    z_cluster_3d = col3.number_input("Redshift de referencia", value=0.0555, step=0.001)
 
     ra0_default = float(df['RA'].mean()) if not df.empty else 0.0
     dec0_default = float(df['Dec'].mean()) if not df.empty else 0.0
 
-    ra0 = st.number_input("Centro RA₀ (°)", value=ra0_default, step=0.1)
-    dec0 = st.number_input("Centro Dec₀ (°)", value=dec0_default, step=0.1)
+    ra0_3d = st.number_input("Centro RA₀ (°)", value=ra0_default, step=0.1)
+    dec0_3d = st.number_input("Centro Dec₀ (°)", value=dec0_default, step=0.1)
 
     # ✅ Filtrado de Subestructura
     df_sub = df[df['Subcluster'].notna()].copy()
@@ -914,22 +914,22 @@ if uploaded_file is not None:
         var_selected = st.selectbox("Variable para agrupar rangos:", options=num_vars, index=1)
 
         # Crear rangos dinámicos
-        n_bins = st.slider("Número de rangos:", min_value=2, max_value=6, value=4)
-        df_3d['Var_bin'] = pd.qcut(df_3d[var_selected], q=n_bins, duplicates='drop')
+        n_bins_3d = st.slider("Número de rangos:", min_value=2, max_value=6, value=4)
+        df_3d['Var_bin'] = pd.qcut(df_3d[var_selected], q=n_bins_3d, duplicates='drop')
         df_3d['Var_bin_str'] = df_3d['Var_bin'].astype(str)
 
         # Cosmología
-        cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
+        cosmo = FlatLambdaCDM(H0=H0_3d, Om0=Om0_3d)
         c = 3e5  # km/s
 
         # Calcular z_gal y D_C
-        df_3d['z_gal'] = z_cluster + (df_3d['Vel'] / c) * (1 + z_cluster)
+        df_3d['z_gal'] = z_cluster_3d + (df_3d['Vel'] / c) * (1 + z_cluster_3d)
         df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
 
         # Coordenadas comóviles
-        df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0))
-        df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0))
-        df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0))
+        df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0_3d))
+        df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0_3d))
+        df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0_3d))
 
         # Tamaño basado en rango (más alto → mayor)
         bin_map = {k: i+1 for i, k in enumerate(sorted(df_3d['Var_bin_str'].unique()))}

@@ -1150,9 +1150,7 @@ if uploaded_file is not None:
             if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
                 trace.line.showscale = False
 
-        # Extra: refuerza con update_traces global si quieres
-        fig_faceted.update_traces(showscale=False)
-
+        
         st.plotly_chart(fig_faceted, use_container_width=True)
 
         # ✅ 2️⃣ Histogramas independientes

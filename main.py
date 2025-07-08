@@ -1103,9 +1103,9 @@ if uploaded_file is not None:
             y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-            color="Delta_bin",
+            color="Delta_bin"
             #contours_coloring="lines",
-            line_shape="spline"
+            #line_shape="spline"
         )
 
         # KDE heatmap (opcional)

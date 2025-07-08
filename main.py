@@ -1116,7 +1116,7 @@ if uploaded_file is not None:
             facet_col="Delta_bin",
             facet_row="Vel_bin",
             color="Delta_bin",
-            hover_name="ID",
+            #hover_name="ID",
             hover_data={
                "RA": True,
                "Dec": True,
@@ -1296,7 +1296,7 @@ if uploaded_file is not None:
             x="RA",
             y="Dec",
             color="Delta_bin",
-            hover_name="ID",
+            #hover_name="ID",
             hover_data=hover_data,
             opacity=0.7,
             color_discrete_sequence=px.colors.qualitative.Set2

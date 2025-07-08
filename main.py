@@ -1143,6 +1143,10 @@ if uploaded_file is not None:
         for trace in fig_faceted.data:
             if trace.type == "contour":
                 trace.showlegend = False
+        # 🔑 El fix real para FacetGrid: histogram2dcontour!
+        for trace in fig_faceted.data:
+            if trace.type == "histogram2dcontour":
+                trace.showlegend = False
 
 
         

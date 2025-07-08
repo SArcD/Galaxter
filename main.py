@@ -1164,7 +1164,7 @@ if uploaded_file is not None:
         
 
         # ✅ 2️⃣ Histogramas
-        st.subheader("📊 Distribución global de Delta")
+        st.subheader("Distribución global de Delta")
         fig_hist_delta = px.histogram(
             df_cond,
             x="Delta",
@@ -1193,7 +1193,7 @@ if uploaded_file is not None:
 
 
         
-        st.subheader("📊 Distribución global de Vel")
+        st.subheader("Distribución global de Vel")
         fig_hist_vel = px.histogram(
             df_cond,
             x="Vel",
@@ -1221,7 +1221,7 @@ if uploaded_file is not None:
         """, unsafe_allow_html=True)
 
         # ✅ 3️⃣ Panel individual
-        st.subheader("🗂️ Explora cada panel RA–Dec individual")
+        st.subheader("Explora cada panel RA–Dec individual")
 
         combinaciones = [
             (delta_bin, vel_bin)

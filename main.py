@@ -430,9 +430,7 @@ if uploaded_file is not None:
             st.markdown("""
             <div style="text-align: justify;">
             <strong>Nota:</strong><br>
-            Este mapa proyecta la estructura tridimensional comóvil usando los parámetros de cosmología y redshift que elegiste.<br>
-            Los valores pueden variar ligeramente dependiendo de tu elección de H₀, Ωₘ, ΩΛ y centro de proyección RA₀/Dec₀.<br>
-            Los movimientos peculiares de las galaxias pueden estirar o comprimir la estructura a lo largo de la línea de visión (efecto Fingers of God).<br>
+            Este mapa proyecta la estructura tridimensional comóvil usando los parámetros de cosmología y redshift que se elijan. Los valores pueden variar ligeramente dependiendo de la elección de H₀, Ωₘ, ΩΛ y centro de proyección RA₀/Dec₀. Los movimientos peculiares de las galaxias pueden estirar o comprimir la estructura a lo largo de la línea de visión (efecto Fingers of God).<br>
             </div>
             """, unsafe_allow_html=True)
 

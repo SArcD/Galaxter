@@ -1124,14 +1124,6 @@ if uploaded_file is not None:
         fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
-#        # 🔒 Apaga cualquier showscale residual
-#        for trace in fig_faceted.data:
-#            if hasattr(trace, 'showscale'):
-#                trace.showscale = False
-#            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
-#                trace.marker.showscale = False
-#            if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
-#                trace.line.showscale = False
 
 
         # 🔑 Quitar showscale residual
@@ -1151,6 +1143,25 @@ if uploaded_file is not None:
 
         
         st.plotly_chart(fig_faceted, use_container_width=True)
+        st.markdown("""
+        <div style="text-align: justify;">
+        <h4>🔍 <strong>Checklist para interpretar Panel RA–Dec</strong></h4>
+
+        ✅ <strong>¿Ves agrupamientos claros?</strong>  
+        Regiones densas de galaxias en un panel (Δ × V) pueden ser subestructuras.
+    
+        ✅ <strong>¿Hay filamentos o elongaciones?</strong>      
+        Formas alargadas pueden indicar filamentos o puentes de materia.
+
+        ✅ <strong>¿Coinciden en varios rangos de Vel?</strong>  
+        Un clump que persiste en varios rangos cinemáticos es evidencia sólida.
+
+        ✅ <strong>Cruza con morfología y actividad nuclear:</strong>  
+        Verifica si esas galaxias comparten morfología (<code>M(C)</code>) o actividad (<code>Act</code>).
+        </div>
+        """, unsafe_allow_html=True)
+
+        
 
         # ✅ 2️⃣ Histogramas
         st.subheader("📊 Distribución global de Delta")

@@ -1257,6 +1257,10 @@ if uploaded_file is not None:
             showlegend=False
         )
 
+        fig_panel.update_traces(
+            marker=dict(size=12)
+        )
+        
         st.plotly_chart(fig_panel, use_container_width=True)
 
 

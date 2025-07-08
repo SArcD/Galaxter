@@ -1148,10 +1148,6 @@ if uploaded_file is not None:
                 trace.line.showscale = False
 
         
-        # ✅ Quita barra de color innecesaria
-        for trace in fig_faceted.data:
-            if hasattr(trace, 'marker') and hasattr(trace.marker, 'showscale'):
-                trace.marker.showscale = False
 
         st.plotly_chart(fig_faceted, use_container_width=True)
 

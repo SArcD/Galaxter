@@ -1057,10 +1057,12 @@ if uploaded_file is not None:
             st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
 
 
+    import streamlit as st
     import plotly.express as px
+    import plotly.graph_objects as go
     import pandas as pd
-    def plot_conditional_panel(df):
 
+    def plot_conditional_panel(df):
         st.subheader("🎛️ Ajusta percentiles para bins Delta y Vel")
 
         # Controles interactivos
@@ -1122,7 +1124,6 @@ if uploaded_file is not None:
         fig_faceted.update_xaxes(autorange="reversed")
         fig_faceted.update_yaxes(autorange="reversed")
 
-        # Quitar leyenda duplicada y barras de color
         for trace in fig_faceted.data:
             if hasattr(trace, 'showscale'):
                 trace.showscale = False
@@ -1182,7 +1183,7 @@ if uploaded_file is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        # ✅ 3️⃣ Panel individual RA–Dec
+        # ✅ 3️⃣ Panel individual con hover enriquecido REAL
         st.subheader("🔍 Explora cada panel RA–Dec individual")
 
         combinaciones = [
@@ -1203,34 +1204,51 @@ if uploaded_file is not None:
             (df_cond['Vel_bin'] == vel_sel)
         ]
 
-        # Rango global
+        # Rango global para coherencia
         ra_min, ra_max = df_cond['RA'].min(), df_cond['RA'].max()
         dec_min, dec_max = df_cond['Dec'].min(), df_cond['Dec'].max()
 
-        fig_panel = px.scatter(
-            df_panel,
-            x="RA",
-            y="Dec",
-            color="Delta_bin",
-            hover_data=hover_data,
-            opacity=0.7,
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
+        # Puntos: hover enriquecido con go.Scatter + customdata
+        customdata = df_panel[[
+            "ID", "Vel", "Delta", "Cl_d",
+            "C(index)", "M(C)", "(u-g)",
+            "M(u-g)", "(g-r)", "M(g-r)", "Act"
+        ]].values
 
-        fig_contour_panel = px.density_contour(
-            df_panel,
-            x="RA",
-            y="Dec",
-            color="Delta_bin",
-            nbinsx=30,
-            nbinsy=30
-        )
-        for trace in fig_contour_panel.data:
-            trace.hoverinfo = "skip"
-            trace.showlegend = False
-            fig_panel.add_trace(trace)
+        fig_panel = go.Figure()
 
-        fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
+        fig_panel.add_trace(go.Scatter(
+            x=df_panel["RA"],
+            y=df_panel["Dec"],
+            mode="markers",
+            marker=dict(size=6, color="blue"),
+            customdata=customdata,
+            hovertemplate=
+                "ID: %{customdata[0]}<br>" +
+                "Vel: %{customdata[1]:.1f}<br>" +
+                "Delta: %{customdata[2]:.2f}<br>" +
+                "Cl_d: %{customdata[3]:.2f}<br>" +
+                "C(index): %{customdata[4]:.2f}<br>" +
+                "M(C): %{customdata[5]}<br>" +
+                "(u-g): %{customdata[6]:.2f}<br>" +
+                "M(u-g): %{customdata[7]}<br>" +
+                "(g-r): %{customdata[8]:.2f}<br>" +
+                "M(g-r): %{customdata[9]}<br>" +
+                "Act: %{customdata[10]}<br>" +
+                "<extra></extra>"
+            ))
+
+        fig_panel.add_trace(go.Histogram2dContour(
+            x=df_cond["RA"],  # usa toda la nube para amplitud
+            y=df_cond["Dec"],
+            ncontours=20,
+            colorscale="Blues",
+            showscale=False,
+            hoverinfo="skip",
+            line=dict(width=1)
+        ))
+
+        fig_panel.update_xaxes(autorange="reversed", range=[ra_max, ra_min])
         fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
 
         fig_panel.update_layout(
@@ -1239,12 +1257,7 @@ if uploaded_file is not None:
             showlegend=False
         )
 
-        for trace in fig_panel.data:
-            if hasattr(trace, 'showscale'):
-                trace.showscale = False
-
         st.plotly_chart(fig_panel, use_container_width=True)
-
 
 
     

@@ -1058,64 +1058,133 @@ if uploaded_file is not None:
 
 
         import plotly.express as px
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
         import pandas as pd
+        import numpy as np
 
-        # ✅ Asegúrate de tener estos datos en tu df:
-        # 'RA', 'Dec', 'Delta', 'Vel'
-
-        # 1️⃣ Define rangos condicionales para Delta y Vel
+        # ✅ Asegúrate de tener RA, Dec, Delta, Vel y tus columnas clave
         df_cond = df.copy()
 
-        # Por ejemplo: usa quartiles para Delta y Vel
-        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], 4, labels=['Δ1', 'Δ2', 'Δ3', 'Δ4'])
-        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], 4, labels=['V1', 'V2', 'V3', 'V4'])
+        # 1️⃣ Controles Streamlit para ajustar percentiles
+        st.subheader("🎛️ Ajusta percentiles para bins")
 
-        # ✅ Opcional: filtra valores NaN
+        n_bins_delta = st.slider("Número de bins Delta:", 2, 6, 4)    
+        n_bins_vel = st.slider("Número de bins Vel:", 2, 6, 4)
+
+        # 2️⃣ Crea bins con qcut dinámico
+        df_cond['Delta_bin'] = pd.qcut(df_cond['Delta'], q=n_bins_delta, labels=[f'Δ{i+1}' for i in range(n_bins_delta)])
+        df_cond['Vel_bin'] = pd.qcut(df_cond['Vel'], q=n_bins_vel, labels=[f'V{i+1}' for i in range(n_bins_vel)])
+
         df_cond = df_cond[df_cond['Delta_bin'].notna() & df_cond['Vel_bin'].notna()]
 
-        # 2️⃣ Mapa RA–Dec por bin Delta y Vel (FacetGrid)
-        fig = px.scatter(
+        # 3️⃣ Panel principal RA–Dec con KDE y contornos
+        hover_cols = [
+            'ID', 'Vel', 'Delta', 'Cl_d', 'C(index)',
+            'M(C)', '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act'
+        ]
+        hover_data = {col: True for col in hover_cols}
+
+        fig_scatter = px.scatter(
             df_cond,
             x="RA",
             y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
             color="Delta_bin",
-            opacity=0.5,
-            title="Panel condicional RA–Dec por rangos Delta × Vel",
-            labels={"RA": "Ascensión Recta", "Dec": "Declinación"}
+            hover_name="ID",
+            hover_data=hover_data,
+            opacity=0.6
         )
-    
-        # 3️⃣ Añade contornos KDE por bin
-        # ⚡️ plotly.express no tiene un método directo para contornos por faceta,
-        # pero puedes usar density_contour con la misma segmentación:
-        fig2 = px.density_contour(
+
+        fig_contour = px.density_contour(
             df_cond,
             x="RA",
             y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
             color="Delta_bin",
-            title="Isocontornos adaptativos RA–Dec",
-            labels={"RA": "Ascensión Recta", "Dec": "Declinación"}
+            contours_coloring="lines",
+            line_shape="spline"
         )
 
-        # 4️⃣ Combina puntos y contornos
-        for trace in fig2.data:
-            fig.add_trace(trace)
+        # KDE heatmap (opcional)
+        fig_heatmap = px.density_heatmap(
+            df_cond,
+            x="RA",
+            y="Dec",
+            facet_col="Delta_bin",
+            facet_row="Vel_bin",
+            nbinsx=50,
+            nbinsy=50,
+            color_continuous_scale="Blues",
+            opacity=0.3
+        )
 
-        # 5️⃣ Layout final
-        fig.update_xaxes(autorange='reversed')  # RA invertido
-        fig.update_yaxes(autorange='reversed')  # Dec invertido si lo quieres así
-        fig.update_layout(
+        # Combina todo en la figura principal
+        for trace in fig_contour.data:
+            fig_scatter.add_trace(trace)
+        for trace in fig_heatmap.data:
+            fig_scatter.add_trace(trace)
+
+        fig_scatter.update_xaxes(autorange="reversed")
+        fig_scatter.update_yaxes(autorange="reversed")
+        fig_scatter.update_layout(showlegend=False)
+
+        # 4️⃣ Histogramas marginales
+        fig_hist_delta = px.histogram(
+            df_cond,
+            x="Delta",
+            nbins=20,
+            color="Delta_bin",
+            title="Distribución Delta",
+            opacity=0.7
+        )
+
+        fig_hist_vel = px.histogram(
+            df_cond,
+            y="Vel",
+            nbins=20,
+            color="Vel_bin",
+            title="Distribución Vel",
+            opacity=0.7,
+            orientation='h'
+        )
+
+        # 5️⃣ Combina todo en un solo layout    
+        # Usa make_subplots
+        fig_final = make_subplots(
+            rows=2, cols=2,
+            row_heights=[0.2, 0.8],
+            column_widths=[0.8, 0.2],
+            specs=[
+                [{"type": "xy"}, {"type": "xy"}],
+                [{"type": "xy"}, {"type": "xy"}]
+            ],
+            subplot_titles=("Histograma Delta", "", "Panel RA–Dec", "Histograma Vel")
+        )
+
+        # Agrega histogramas
+        for trace in fig_hist_delta.data:
+            fig_final.add_trace(trace, row=1, col=1)
+        for trace in fig_hist_vel.data:
+            fig_final.add_trace(trace, row=2, col=2)
+
+        # Agrega panel principal
+        for trace in fig_scatter.data:
+            fig_final.add_trace(trace, row=2, col=1)
+
+        # Ajusta ejes invertidos solo en panel RA–Dec
+        fig_final.update_xaxes(autorange="reversed", row=2, col=1)
+        fig_final.update_yaxes(autorange="reversed", row=2, col=1)
+
+        fig_final.update_layout(
             height=1000,
             width=1200,
-            showlegend=False,
-            margin=dict(t=100, l=50, r=50, b=50)
+            title_text="Panel condicional RA–Dec con histogramas marginales"
         )
 
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.plotly_chart(fig_final, use_container_width=True)
 
 
 

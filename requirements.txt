@@ -6,4 +6,4 @@ matplotlib
 plotly
 numpy
 tqdm
-
+seaborn

@@ -284,6 +284,57 @@ if uploaded_file is not None:
                 f"{required_cols - set(df.columns)}"
             )
 
+
+
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from scipy.stats import gaussian_kde
+
+        # ✅ Sub-sección para suavizar
+        st.subheader("🗺️ Mapa suavizado de densidad para variable seleccionada")
+
+        # Ofrece solo numéricas que tengan sentido
+        smooth_var = st.selectbox(
+            "Variable para mapa suavizado:",
+            options=['Delta', 'Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)'],
+            index=0
+        )
+
+        # Filtrar puntos con datos válidos
+        df_smooth = df_filtered[df_filtered[smooth_var].notna()]
+
+        if df_smooth.empty:
+            st.warning("No hay datos válidos para suavizar.")
+        else:
+            # Crear malla
+            ra = df_smooth['RA'].values
+            dec = df_smooth['Dec'].values
+            z = df_smooth[smooth_var].values
+
+            # Grid para interpolar
+            xi, yi = np.mgrid[ra.min():ra.max():200j, dec.min():dec.max():200j]
+
+            # KDE 2D ponderada por variable
+            positions = np.vstack([ra, dec])
+            kernel = gaussian_kde(positions, weights=z, bw_method=0.3)
+
+            zi = np.reshape(kernel(np.vstack([xi.ravel(), yi.ravel()])), xi.shape)
+
+            fig_smooth, ax = plt.subplots(figsize=(8, 6))
+            cf = ax.contourf(xi, yi, zi, levels=15, cmap='viridis')
+            scatter = ax.scatter(ra, dec, c=z, cmap='viridis', edgecolor='k', s=20)
+
+            ax.set_title(f"Mapa suavizado (KDE) — {smooth_var}")
+            ax.set_xlabel("Ascensión Recta (RA, grados)")
+            ax.set_ylabel("Declinación (Dec, grados)")
+            ax.invert_xaxis()  # Invertir RA como en tus otros mapas
+            fig_smooth.colorbar(cf, ax=ax, label=smooth_var)
+
+            st.pyplot(fig_smooth)
+
+    
     with st.expander("🔍 Buscar subestructuras"):
         st.subheader("🧬 Clustering Jerárquico")
 

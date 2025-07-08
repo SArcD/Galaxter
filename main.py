@@ -334,6 +334,84 @@ if uploaded_file is not None:
 
             st.pyplot(fig_smooth)
 
+
+
+
+        import numpy as np
+        import plotly.express as px
+        from astropy.cosmology import FlatLambdaCDM
+
+        # ➡️ Sub-sección 3D
+        st.subheader("🌌 Mapa 3D comóvil interactivo con rangos filtrables")
+
+        # Reutiliza df_filtered
+        df_3d = df_filtered.copy()
+
+        # Cosmología plana
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        c = 3e5  # km/s
+        z_cluster = 0.0555
+
+        # Calcular z_gal y distancia comóvil
+        df_3d['z_gal'] = z_cluster + (df_3d['Vel'] / c) * (1 + z_cluster)
+        df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
+
+        # Coordenadas comóviles
+        ra0 = np.mean(df_3d['RA'])
+        dec0 = np.mean(df_3d['Dec'])
+
+        df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0))
+        df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0))
+        df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0))
+
+        # Hover enriquecido
+        hover_3d = ["ID", "RA", "Dec", "Vel", "Delta", "Cl_d", "(u-g)", "(g-r)", "(r-i)", "(i-z)", "Act"]
+
+        # ⚙️ Verifica si se creó la columna de rango
+        group_col = None
+        if 'range_label' in df_3d.columns:
+            group_col = 'range_label'
+        elif 'Subcluster' in df_3d.columns:
+            group_col = 'Subcluster'
+        elif 'Delta_cat' in df_3d.columns:
+            group_col = 'Delta_cat'
+        elif selected_var in cat_vars:
+            group_col = selected_var
+
+        if group_col:
+            fig_3d = px.scatter_3d(
+                df_3d,
+                x='X', y='Y', z='Z',
+                color=group_col,
+                hover_data=hover_3d,
+                opacity=0.7,
+                title="Mapa 3D comóvil de Abell 85 agrupado por rangos",
+            )
+        else:
+            # Fallback a Delta continuo
+            fig_3d = px.scatter_3d(
+                df_3d,
+                x='X', y='Y', z='Z',
+                color='Delta',
+                hover_data=hover_3d,
+                opacity=0.7,
+                color_continuous_scale='Viridis',
+                title="Mapa 3D comóvil de Abell 85"
+            )
+
+        fig_3d.update_layout(
+            scene=dict(
+                xaxis_title="X [Mpc]",
+                yaxis_title="Y [Mpc]",
+                zaxis_title="Z [Mpc]"
+            ),
+            height=700,
+            margin=dict(l=0, r=0, b=0, t=40)
+        )
+
+        st.plotly_chart(fig_3d, use_container_width=True)
+
+    
     
     with st.expander("🔍 Buscar subestructuras"):
         st.subheader("🧬 Clustering Jerárquico")

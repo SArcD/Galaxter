@@ -1242,8 +1242,8 @@ if uploaded_file is not None:
             x=df_panel['RA'],
             y=df_panel['Dec'],
             ncontours=20,
-            xbins=dict(size=0.2),  # Controla resolución RA
-            ybins=dict(size=0.2),  # Controla resolución Dec
+            xbins=dict(size=0.1),  # Controla resolución RA
+            ybins=dict(size=0.1),  # Controla resolución Dec
             #ncontours=10,
             colorscale=[[0, 'white'], [1, panel_color]],
             line=dict(width=1),

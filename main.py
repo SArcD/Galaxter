@@ -1242,8 +1242,8 @@ if uploaded_file is not None:
             x=df_panel['RA'],
             y=df_panel['Dec'],
             ncontours=20,
-            xbins=dict(size=0.1),  # Controla resolución RA
-            ybins=dict(size=0.1),  # Controla resolución Dec
+            xbins=dict(size=0.05),  # Controla resolución RA
+            ybins=dict(size=0.05),  # Controla resolución Dec
             #ncontours=10,
             colorscale=[[0, 'white'], [1, panel_color]],
             line=dict(width=1),
@@ -1253,7 +1253,7 @@ if uploaded_file is not None:
         ))
 
         fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
-        #fig_panel.update_yaxes(autorange="reversed", range=[dec_min, dec_max])
+        fig_panel.update_yaxes(autorange="True", range=[dec_min, dec_max])
         fig_panel.update_layout(
             title=f"Panel RA–Dec: Δ = {delta_sel} | V = {vel_sel}",
             height=600,

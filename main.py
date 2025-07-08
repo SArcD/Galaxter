@@ -889,11 +889,11 @@ if uploaded_file is not None:
     Om0_3d = col2.number_input("Ωₘ", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
     z_cluster_3d = col3.number_input("Redshift de referencia", value=0.0555, step=0.001)
 
-    ra0_default = float(df['RA'].mean()) if not df.empty else 0.0
-    dec0_default = float(df['Dec'].mean()) if not df.empty else 0.0
+    ra0_default_3d = float(df['RA'].mean()) if not df.empty else 0.0
+    dec0_default_3d = float(df['Dec'].mean()) if not df.empty else 0.0
 
-    ra0_3d = st.number_input("Centro RA₀ (°)", value=ra0_default, step=0.1)
-    dec0_3d = st.number_input("Centro Dec₀ (°)", value=dec0_default, step=0.1)
+    ra0_3d = st.number_input("Centro RA₀ (°)", value=ra0_default_3d, step=0.1)
+    dec0_3d = st.number_input("Centro Dec₀ (°)", value=dec0_default_3d, step=0.1)
 
     # ✅ Filtrado de Subestructura
     df_sub = df[df['Subcluster'].notna()].copy()
@@ -910,12 +910,12 @@ if uploaded_file is not None:
         df_3d = df_sub[df_sub['Subcluster'].isin(selected_subs)].copy()
 
         # ✅ Variable numérica para rangos
-        num_vars = ['Vel', 'Delta', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
-        var_selected = st.selectbox("Variable para agrupar rangos:", options=num_vars, index=1)
+        num_vars_3d = ['Vel', 'Delta', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
+        var_selected_3d = st.selectbox("Variable para agrupar rangos:", options=num_vars_3d, index=1)
 
         # Crear rangos dinámicos
         n_bins_3d = st.slider("Número de rangos:", min_value=2, max_value=6, value=4)
-        df_3d['Var_bin'] = pd.qcut(df_3d[var_selected], q=n_bins_3d, duplicates='drop')
+        df_3d['Var_bin'] = pd.qcut(df_3d[var_selected_3d], q=n_bins_3d, duplicates='drop')
         df_3d['Var_bin_str'] = df_3d['Var_bin'].astype(str)
 
         # Cosmología
@@ -946,7 +946,7 @@ if uploaded_file is not None:
             size='Size',
             hover_data=hover_3d,
             opacity=0.7,
-            title=f"Mapa 3D comóvil | Subestructura(s): {selected_subs} | Rango: {var_selected}",
+            title=f"Mapa 3D comóvil | Subestructura(s): {selected_subs} | Rango: {var_selected_3d}",
         )
 
         fig_3d.update_layout(
@@ -965,7 +965,7 @@ if uploaded_file is not None:
         <div style="text-align: justify;">
         <strong> Cómo interpretarlo:</strong><br>
         - Cada punto es una galaxia en coordenadas comóviles X, Y, Z.<br>
-        - El color indica el rango de {var_selected}.<br>
+        - El color indica el rango de {var_selected_3d}.<br>
         - El tamaño refleja su posición dentro del rango: más grande = rango más alto.<br>
         - Puedes girar, acercar y ocultar rangos usando la leyenda.<br>
         </div>

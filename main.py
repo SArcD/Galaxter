@@ -1171,6 +1171,8 @@ if uploaded_file is not None:
             st.plotly_chart(fig_hist_vel, use_container_width=True)
             st.plotly_chart(fig_faceted, use_container_width=True)
 
+    with st.expander("🔍 Panel condicional Delta × Vel con KDE"):
+        plot_conditional_panel(df)
 
     
     #else:

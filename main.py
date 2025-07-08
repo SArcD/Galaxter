@@ -1253,7 +1253,7 @@ if uploaded_file is not None:
         ))
 
         fig_panel.update_xaxes(autorange="reversed", range=[ra_min, ra_max])
-        fig_panel.update_yaxes(autorange="True", range=[dec_min, dec_max])
+        fig_panel.update_yaxes(autorange=True, range=[dec_min, dec_max])
         fig_panel.update_layout(
             title=f"Panel RA–Dec: Δ = {delta_sel} | V = {vel_sel}",
             height=600,

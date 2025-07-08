@@ -1150,6 +1150,16 @@ if uploaded_file is not None:
             if hasattr(trace, 'line') and hasattr(trace.line, 'showscale'):
                 trace.line.showscale = False
 
+        # 🔑 Ajusta la posición de la barra de color SOLO para heatmaps y contours
+        for trace in fig_faceted.data:
+            if hasattr(trace, 'colorbar'):
+                # Ejemplo: barra horizontal abajo
+                trace.colorbar.orientation = "h"
+                trace.colorbar.x = 0.5   # centrada horizontal
+                trace.colorbar.y = -0.25 # debajo del gráfico
+                trace.colorbar.xanchor = "center"
+                trace.colorbar.len = 0.7 # opcional: longitud de barra
+        
         
         st.plotly_chart(fig_faceted, use_container_width=True)
 

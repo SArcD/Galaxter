@@ -1094,6 +1094,21 @@ if uploaded_file is not None:
         hover_data = {col: True for col in hover_cols}
 
         # ✅ 1️⃣ Panel FacetGrid RA–Dec (Puntos + Contornos líneas)
+        #fig_faceted = px.scatter(
+        #    df_cond,
+        #    x="RA",
+        #    y="Dec",
+        #    facet_col="Delta_bin",
+        #    facet_row="Vel_bin",
+        #    color="Delta_bin",
+        #    hover_name="ID",
+        #    hover_data=hover_data,
+        #    opacity=0.6,
+        #    color_discrete_sequence=px.colors.qualitative.Set2
+        #)
+
+
+        # 1️⃣ Scatter con hover
         fig_faceted = px.scatter(
             df_cond,
             x="RA",
@@ -1102,9 +1117,21 @@ if uploaded_file is not None:
             facet_row="Vel_bin",
             color="Delta_bin",
             hover_name="ID",
-            hover_data=hover_data,
-            opacity=0.6,
-            color_discrete_sequence=px.colors.qualitative.Set2
+            hover_data={
+               "RA": True,
+               "Dec": True,
+               "Vel": True,
+               "Delta": True,
+               "Cl_d": True,
+               "C(index)": True,
+               "M(C)": True,
+               "(u-g)": True,
+               "M(u-g)": True,
+               "(g-r)": True,
+               "M(g-r)": True,
+               "Act": True
+            },
+            opacity=0.7
         )
 
         fig_contour = px.density_contour(
@@ -1113,15 +1140,38 @@ if uploaded_file is not None:
             y="Dec",
             facet_col="Delta_bin",
             facet_row="Vel_bin",
-            color="Delta_bin",
-            nbinsx=30,
-            nbinsy=30
+            color="Delta_bin"
         )
         for trace in fig_contour.data:
+            trace.showlegend = False
+            trace.hoverinfo = "skip"
             fig_faceted.add_trace(trace)
 
+        # 3️⃣ Invertir ejes, limpiar leyenda duplicada
         fig_faceted.update_xaxes(autorange="reversed")
         fig_faceted.update_yaxes(autorange="reversed")
+
+        for trace in fig_faceted.data:
+            if trace.type == "histogram2dcontour":
+                trace.showlegend = False
+
+
+        
+        #fig_contour = px.density_contour(
+        #    df_cond,
+        #    x="RA",
+        #    y="Dec",
+        #    facet_col="Delta_bin",
+        #    facet_row="Vel_bin",
+        #    color="Delta_bin",
+        #    nbinsx=30,
+        #    nbinsy=30
+        #)
+        #for trace in fig_contour.data:
+        #    fig_faceted.add_trace(trace)
+
+        fig_faceted.update_xaxes(autorange="reversed")
+        #fig_faceted.update_yaxes(autorange="reversed")
         fig_faceted.update_layout(showlegend=True)
 
 

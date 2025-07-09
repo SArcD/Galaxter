@@ -53,12 +53,10 @@ if opcion == "Introducción":
 
     st.markdown("""
 <div style="text-align: justify">
-La presente aplicación reúne conceptos y técnicas de Machine Learning para el análisis de datos de cúmulos de galaxias. 
-Los conceptos principales son el aprendizaje no supervisado para la clasificación de objetos a partir de sus características, 
-la visualización de gráficos interactivos, el ajuste de datos mediante técnicas de interpolación y la formulación de reglas 
-de clasificación de aprendizaje supervisado mediante Random Forest.
+La presente aplicación reúne conceptos y técnicas de <a href="https://en.wikipedia.org/wiki/Machine_learning" target="_blank">Machine Learning</a> para el análisis de datos de cúmulos de galaxias. Los conceptos principales son el <a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank">aprendizaje no supervisado</a> para la clasificación de objetos a partir de sus características, la <a href="https://plotly.com/python/" target="_blank">visualización de gráficos interactivos</a>, el ajuste de datos mediante técnicas de <a href="https://en.wikipedia.org/wiki/Interpolation" target="_blank">interpolación</a> y la formulación de reglas de clasificación de <a href="https://scikit-learn.org/stable/modules/ensemble.html#random-forests" target="_blank">aprendizaje supervisado</a> mediante <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html" target="_blank">Random Forest</a>.
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

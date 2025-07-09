@@ -74,7 +74,7 @@ Derivado de este esfuerzo, se han publicado tres artículos científicos:
 "Sistema de Cribado Primario para la Sarcopenia en Personas Adultas Mayores Basado en Inteligencia Artificial"</a>, 
 <a href="https://itchihuahua.mx/revista_electro/2024/A53_18-24.html" target="_blank">
 "Sistema Biomédico Basado en Inteligencia Artificial para Estimar Indirectamente Sarcopenia en Personas Adultas Mayores Mexicanas"</a> y 
-<a href="https://scholar.google.com/citations?view_op=view_citation&hl=es&user=SFgL-gkAAAAJ&cstart=20&pagesize=80&citation_for_view=SFgL-gkAAAAJ:ldfaerwXgEUC" target="_blank">
+<a href="https://www.scielo.org.mx/scielo.php?pid=S0188-95322023000400053&script=sci_abstract&tlng=en" target="_blank">
 "Primary Screening System for Sarcopenia in Elderly People Based on Artificial Intelligence"</a>.
 </div>
 """, unsafe_allow_html=True)

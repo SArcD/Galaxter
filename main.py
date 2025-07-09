@@ -49,7 +49,7 @@ opcion = st.sidebar.radio(
 
 # Contenido condicional
 if opcion == "Introducción":
-    st.title("Sobre la aplicación")
+    st.subtitle("Sobre la aplicación")
     st.markdown("""texto""")
 
 elif opcion == "Proceso":

@@ -69,6 +69,18 @@ Finalmente, parte del código y su documentación fueron desarrollados mediante 
 </div>
 """, unsafe_allow_html=True)
 
+    st.subheader("Datos")
+    st.markdown("""
+<div style="text-align: justify">
+Los datos utilizados corresponden al cúmulo de galaxias Abell 85 y forman parte del trabajo de tesis doctoral del Dr. Juan Manuel Islas Islas, Doctor en Ciencias (Astrofísica), realizado en el <a href="https://www.astro.ugto.mx/" target="_blank">Departamento de Astronomía</a> de la <a href="https://www.ugto.mx/" target="_blank">Universidad de Guanajuato</a>.  
+<br><br>
+Adicionalmente, cada sección de la aplicación se ha diseñado para que, en caso de actualizar o sustituir los datos por los de otro cúmulo de galaxias, el análisis pueda realizarse de manera automática, siempre y cuando se mantenga la misma estructura de nombres de columnas.
+<br><br>
+Puedes consultar el perfil académico del Dr. Islas en su <a href="https://scholar.google.com/citations?user=PutTuLinkAqui" target="_blank">Google Scholar</a>.
+</div>
+""", unsafe_allow_html=True)
+
+
 
 
 elif opcion == "Proceso":

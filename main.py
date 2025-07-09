@@ -58,6 +58,31 @@ Además, se implementan técnicas de <a href="https://en.wikipedia.org/wiki/Inte
 </div>
 """, unsafe_allow_html=True)
 
+    st.markdown("""
+<div style="text-align: justify">
+Esta aplicación es resultado del proyecto de estancia posdoctoral 
+<b>"Identificación de las etapas y tipos de sarcopenia mediante modelos predictivos como herramienta de apoyo en el diagnóstico a partir de parámetros antropométricos"</b>, 
+desarrollado por el <a href="https://scholar.google.com/citations?user=SFgL-gkAAAAJ&hl=es" target="_blank">Dr. Santiago Arceo Díaz</a>, Doctor en Ciencias (Astrofísica), 
+bajo la dirección de la <b>Dra. Xóchitl Rosío Angélica Trujillo Trujillo</b>, y con el apoyo de los colaboradores mencionados en esta sección.
+<br><br>
+Esta estancia es posible gracias a la colaboración entre la 
+<b>Secretaría de Ciencia Humanidades Tecnología e Innovación</b> ([<b>SECIHTI</b>, antes <b>CONAHCYT</b>](https://secihti.mx/)) 
+y la <a href="https://portal.ucol.mx/cuib/" target="_blank"><b>Universidad de Colima</b> ([<b>UCOL</b>])</a>.
+<br><br>
+El trabajo realizado ha producido tres artículos científicos: 
+<a href="https://scholar.google.com/citations?view_op=view_citation&hl=es&user=SFgL-gkAAAAJ&cstart=20&pagesize=80&citation_for_view=SFgL-gkAAAAJ:M3NEmzRMIkIC" target="_blank">
+"Sistema de Cribado Primario para la Sarcopenia en Personas Adultas Mayores Basado en Inteligencia Artificial"</a>,
+<a href="https://itchihuahua.mx/revista_electro/2024/A53_18-24.html" target="_blank">
+"Sistema Biomédico Basado en Inteligencia Artificial para Estimar Indirectamente Sarcopenia en Personas Adultas Mayores Mexicanas"</a> y
+<a href="https://scholar.google.com/citations?view_op=view_citation&hl=es&user=SFgL-gkAAAAJ&cstart=20&pagesize=80&citation_for_view=SFgL-gkAAAAJ:ldfaerwXgEUC" target="_blank">
+"Primary Screening System for Sarcopenia in Elderly People Based on Artificial Intelligence"</a>. 
+<br><br>
+Este esfuerzo muestra cómo la <b>colaboración interdisciplinaria</b> facilita el estudio de casos en los que técnicas avanzadas de análisis de datos se aplican en entornos nuevos, promoviendo la transferencia de conocimiento entre distintas áreas de la ciencia.
+</div>
+""", unsafe_allow_html=True)
+
+
+    
     st.subheader("Motivación")
     st.markdown("""
 <div style="text-align: justify">
@@ -69,6 +94,9 @@ Finalmente, parte del código y su documentación fueron desarrollados mediante 
 </div>
 """, unsafe_allow_html=True)
 
+
+
+    
     st.subheader("Datos")
     st.markdown("""
 <div style="text-align: justify">

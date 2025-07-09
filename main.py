@@ -62,22 +62,23 @@ Además, se implementan técnicas de <a href="https://en.wikipedia.org/wiki/Inte
 <div style="text-align: justify">
 Las técnicas de clasificación presentadas en esta aplicación fueron aplicadas previamente durante la estancia posdoctoral 
 <b>"Identificación de las etapas y tipos de sarcopenia mediante modelos predictivos como herramienta de apoyo en el diagnóstico a partir de parámetros antropométricos"</b>, 
-desarrollada por el <a href="https://scholar.google.com/citations?user=SFgL-gkAAAAJ&hl=es" target="_blank">Dr. Santiago Arceo Díaz</a>, Doctor en Ciencias (Astrofísica), 
+desarrollada por el <a href="https://scholar.google.com/citations?user=SFgL-gkAAAAJ&hl=es" target="_blank"><b>Dr. Santiago Arceo Díaz</b></a>, Doctor en Ciencias (Astrofísica), 
 bajo la dirección de la <b>Dra. Xóchitl Rosío Angélica Trujillo Trujillo</b>. Este trabajo demuestra cómo la <b>colaboración interdisciplinaria</b> facilita el análisis de casos en los que técnicas avanzadas de procesamiento y análisis de datos se aplican en contextos novedosos, promoviendo la transferencia de conocimiento entre distintas áreas de la ciencia.
 <br><br>
 Esta estancia fue posible gracias a la colaboración entre la 
-<b>Secretaría de Ciencia, Humanidades, Tecnología e Innovación</b> ([<b>SECIHTI</b>, antes <b>CONAHCYT</b>](https://secihti.mx/)) 
-y la <a href="https://portal.ucol.mx/cuib/" target="_blank"><b>Universidad de Colima</b> ([<b>UCOL</b>])</a>.
+<a href="https://secihti.mx/" target="_blank"><b>Secretaría de Ciencia, Humanidades, Tecnología e Innovación (SECIHTI)</b></a> (antes <b>CONAHCYT</b>) 
+y la <a href="https://portal.ucol.mx/cuib/" target="_blank"><b>Universidad de Colima (UCOL)</b></a>.
 <br><br>
 Derivado de este esfuerzo, se han publicado tres artículos científicos: 
-<a href="https://www.researchgate.net/profile/Elena-Bricio-Barrios/publication/378476892_Inteligencia_Artificial_para_el_diagnostico_primario_de_dependencia_funcional_en_personas_adultas_mayores/links/65dbb4a0c3b52a1170f8658d/Inteligencia-Artificial-para-el-diagnostico-primario-de-dependencia-funcional-en-personas-adultas-mayores.pdf" target="_blank">
-"Inteligencia Artificial para el diagnóstico primario de dependencia funcional en personas adultas mayores"</a>, 
-<a href="https://itchihuahua.mx/revista_electro/2024/A53_18-24.html" target="_blank">
-"Sistema Biomédico Basado en Inteligencia Artificial para Estimar Indirectamente Sarcopenia en Personas Adultas Mayores Mexicanas"</a> y 
-<a href="https://scholar.google.com/citations?view_op=view_citation&hl=es&user=SFgL-gkAAAAJ&cstart=20&pagesize=80&citation_for_view=SFgL-gkAAAAJ:ldfaerwXgEUC" target="_blank">
-"Primary Screening System for Sarcopenia in Elderly People Based on Artificial Intelligence"</a>.
+<a href="https://www.researchgate.net/profile/Elena-Bricio-Barrios/publication/378476892_Inteligencia_Artificial_para_el_diagnostico_primario_de_dependencia_funcional_en_personas_adultas_mayores/links/65dbb4a0c3b52a1170f8658d/Inteligencia-Artificial-para-el-diagnostico-primario-de-dependencia-funcional-en-personas-adultas-mayores.pdf" target="_blank"><b>
+"Inteligencia Artificial para el diagnóstico primario de dependencia funcional en personas adultas mayores"</b></a>, 
+<a href="https://itchihuahua.mx/revista_electro/2024/A53_18-24.html" target="_blank"><b>
+"Sistema Biomédico Basado en Inteligencia Artificial para Estimar Indirectamente Sarcopenia en Personas Adultas Mayores Mexicanas"</b></a> y 
+<a href="https://scholar.google.com/citations?view_op=view_citation&hl=es&user=SFgL-gkAAAAJ&cstart=20&pagesize=80&citation_for_view=SFgL-gkAAAAJ:ldfaerwXgEUC" target="_blank"><b>
+"Primary Screening System for Sarcopenia in Elderly People Based on Artificial Intelligence"</b></a>.
 </div>
 """, unsafe_allow_html=True)
+
 
     
     st.subheader("Motivación")

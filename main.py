@@ -106,7 +106,7 @@ Finalmente, parte del código y su documentación fueron desarrollados mediante 
 """, unsafe_allow_html=True)
 
     st.subheader("Datos")
-st.markdown("""
+    st.markdown("""
 <div style="text-align: justify">
 Los datos utilizados corresponden al cúmulo de galaxias Abell 85 y forman parte del trabajo de tesis doctoral del 
 <a href="https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ" target="_blank"><b>Dr. Juan Manuel Islas Islas</b></a>, Doctor en Ciencias (Astrofísica), realizado en el 

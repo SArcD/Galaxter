@@ -58,6 +58,13 @@ Además, se implementan técnicas de <a href="https://en.wikipedia.org/wiki/Inte
 </div>
 """, unsafe_allow_html=True)
 
+    st.subheader("Motivación")
+    st.markdown("""
+<div style="text-align: justify">
+La motivación principal es mostrar cómo estas técnicas pueden integrarse en un algoritmo que permita extraer información de datos astronómicos de forma práctica y accesible. La aplicación sigue el principio de un <a href="https://en.wikipedia.org/wiki/Black_box" target="_blank">método de caja negra</a>, donde la complejidad del proceso interno se abstrae para que el usuario obtenga resultados interpretables sin necesidad de conocer los detalles matemáticos o computacionales del modelo.  
+Además, se adopta el enfoque <a href="https://en.wikipedia.org/wiki/No-code_development_platform" target="_blank">no-code</a>, facilitando que cualquier persona, sin experiencia previa en programación, pueda utilizar la herramienta, analizar resultados y extraer conclusiones por sí misma.
+</div>
+""", unsafe_allow_html=True)
 
 
 

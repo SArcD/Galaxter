@@ -50,7 +50,17 @@ opcion = st.sidebar.radio(
 # Contenido condicional
 if opcion == "Introducción":
     st.subheader("Sobre la aplicación")
-    st.markdown("""texto""")
+
+st.markdown("""
+<div style="text-align: justify">
+La presente aplicación reúne conceptos y técnicas de Machine Learning para el análisis de datos de cúmulos de galaxias. 
+Los conceptos principales son el aprendizaje no supervisado para la clasificación de objetos a partir de sus características, 
+la visualización de gráficos interactivos, el ajuste de datos mediante técnicas de interpolación y la formulación de reglas 
+de clasificación de aprendizaje supervisado mediante Random Forest.
+</div>
+""", unsafe_allow_html=True)
+
+
 
 elif opcion == "Proceso":
 

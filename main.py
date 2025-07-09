@@ -51,7 +51,7 @@ opcion = st.sidebar.radio(
 if opcion == "Introducción":
     st.subheader("Sobre la aplicación")
 
-st.markdown("""
+    st.markdown("""
 <div style="text-align: justify">
 La presente aplicación reúne conceptos y técnicas de Machine Learning para el análisis de datos de cúmulos de galaxias. 
 Los conceptos principales son el aprendizaje no supervisado para la clasificación de objetos a partir de sus características, 

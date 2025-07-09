@@ -92,7 +92,7 @@ Derivado de este esfuerzo, se han publicado tres artículos científicos:
 
 
     st.subheader("Motivación")
-st.markdown("""
+    st.markdown("""
 <div style="text-align: justify">
 La motivación principal es mostrar cómo estas técnicas pueden integrarse en un algoritmo que permita extraer información de datos astronómicos de forma práctica y accesible. La aplicación sigue el principio de un 
 <a href="https://en.wikipedia.org/wiki/Black_box" target="_blank"><b>método de caja negra</b></a>, donde la complejidad del proceso interno se abstrae para que el usuario obtenga resultados interpretables sin necesidad de conocer los detalles matemáticos o computacionales del modelo.

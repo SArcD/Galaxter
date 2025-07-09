@@ -53,8 +53,19 @@ if opcion == "Introducción":
 
     st.markdown("""
 <div style="text-align: justify">
-La presente aplicación reúne conceptos y técnicas de <a href="https://en.wikipedia.org/wiki/Machine_learning" target="_blank">Machine Learning</a> para el análisis de datos de cúmulos de galaxias. Los conceptos clave incluyen el uso de <a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank">aprendizaje no supervisado</a>, como el <a href="https://en.wikipedia.org/wiki/Hierarchical_clustering" target="_blank">clustering jerárquico</a>, para la clasificación de galaxias a partir de sus características, así como la formulación de reglas de decisión mediante <a href="https://scikit-learn.org/stable/modules/ensemble.html#random-forests" target="_blank">aprendizaje supervisado</a> con algoritmos como <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html" target="_blank">Random Forest</a>.  
-Además, se implementan técnicas de <a href="https://en.wikipedia.org/wiki/Interpolation" target="_blank">interpolación</a> para el ajuste de datos y herramientas de <a href="https://plotly.com/python/" target="_blank">visualización interactiva</a> que permiten explorar mapas espaciales, diagramas de fase y gráficos de densidad para identificar posibles subestructuras y patrones dentro de los cúmulos galácticos.
+La presente aplicación reúne conceptos y técnicas de 
+<a href="https://en.wikipedia.org/wiki/Machine_learning" target="_blank"><b>Machine Learning</b></a> 
+para el análisis de datos de cúmulos de galaxias. Los conceptos clave incluyen el uso de 
+<a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank"><b>aprendizaje no supervisado</b></a>, 
+como el <a href="https://en.wikipedia.org/wiki/Hierarchical_clustering" target="_blank"><b>clustering jerárquico</b></a>, 
+para la clasificación de galaxias a partir de sus características, así como la formulación de reglas de decisión mediante 
+<a href="https://scikit-learn.org/stable/modules/ensemble.html#random-forests" target="_blank"><b>aprendizaje supervisado</b></a> 
+con algoritmos como <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html" target="_blank"><b>Random Forest</b></a>.<br><br>
+Además, se implementan técnicas de 
+<a href="https://en.wikipedia.org/wiki/Interpolation" target="_blank"><b>interpolación</b></a> 
+para el ajuste de datos y herramientas de 
+<a href="https://plotly.com/python/" target="_blank"><b>visualización interactiva</b></a> 
+que permiten explorar mapas espaciales, diagramas de fase y gráficos de densidad para identificar posibles subestructuras y patrones dentro de los cúmulos galácticos.
 </div>
 """, unsafe_allow_html=True)
 
@@ -80,26 +91,32 @@ Derivado de este esfuerzo, se han publicado tres artículos científicos:
 """, unsafe_allow_html=True)
 
 
-    
     st.subheader("Motivación")
-    st.markdown("""
+st.markdown("""
 <div style="text-align: justify">
-La motivación principal es mostrar cómo estas técnicas pueden integrarse en un algoritmo que permita extraer información de datos astronómicos de forma práctica y accesible. La aplicación sigue el principio de un <a href="https://en.wikipedia.org/wiki/Black_box" target="_blank">método de caja negra</a>, donde la complejidad del proceso interno se abstrae para que el usuario obtenga resultados interpretables sin necesidad de conocer los detalles matemáticos o computacionales del modelo.
+La motivación principal es mostrar cómo estas técnicas pueden integrarse en un algoritmo que permita extraer información de datos astronómicos de forma práctica y accesible. La aplicación sigue el principio de un 
+<a href="https://en.wikipedia.org/wiki/Black_box" target="_blank"><b>método de caja negra</b></a>, donde la complejidad del proceso interno se abstrae para que el usuario obtenga resultados interpretables sin necesidad de conocer los detalles matemáticos o computacionales del modelo.
 <br><br>
-Además, se adopta el enfoque <a href="https://en.wikipedia.org/wiki/No-code_development_platform" target="_blank">no-code</a>, facilitando que cualquier persona, sin experiencia previa en programación, pueda utilizar la herramienta, analizar resultados y extraer conclusiones por sí misma.
+Además, se adopta el enfoque 
+<a href="https://en.wikipedia.org/wiki/No-code_development_platform" target="_blank"><b>no-code</b></a>, facilitando que cualquier persona, sin experiencia previa en programación, pueda utilizar la herramienta, analizar resultados y extraer conclusiones por sí misma.
 <br><br>
-Finalmente, parte del código y su documentación fueron desarrollados mediante <strong>programación asistida por Inteligencia Artificial</strong>, integrando herramientas como <a href="https://openai.com/blog/chatgpt" target="_blank">ChatGPT</a> para optimizar la escritura, estructuración y depuración del proyecto.
+Finalmente, parte del código y su documentación fueron desarrollados mediante <strong>programación asistida por Inteligencia Artificial</strong>, integrando herramientas como 
+<a href="https://openai.com/blog/chatgpt" target="_blank"><b>ChatGPT</b></a> para optimizar la escritura, estructuración y depuración del proyecto.
+</div>
+""", unsafe_allow_html=True)
+
+    st.subheader("Datos")
+st.markdown("""
+<div style="text-align: justify">
+Los datos utilizados corresponden al cúmulo de galaxias Abell 85 y forman parte del trabajo de tesis doctoral del 
+<a href="https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ" target="_blank"><b>Dr. Juan Manuel Islas Islas</b></a>, Doctor en Ciencias (Astrofísica), realizado en el 
+<a href="https://www.astro.ugto.mx/" target="_blank"><b>Departamento de Astronomía</b></a> de la 
+<a href="https://www.ugto.mx/" target="_blank"><b>Universidad de Guanajuato</b></a>.<br><br>
+Adicionalmente, cada sección de la aplicación se ha diseñado para que, en caso de actualizar o sustituir los datos por los de otro cúmulo de galaxias, el análisis pueda realizarse de forma automática, siempre y cuando se mantenga la misma estructura de nombres de columnas.
 </div>
 """, unsafe_allow_html=True)
 
     
-    st.subheader("Datos")
-    st.markdown("""
-<div style="text-align: justify">
-Los datos utilizados corresponden al cúmulo de galaxias Abell 85 y forman parte del trabajo de tesis doctoral del <a href="https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ" target="_blank">Dr. Juan Manuel Islas Islas</a>, Doctor en Ciencias (Astrofísica), realizado en el <a href="https://www.astro.ugto.mx/" target="_blank">Departamento de Astronomía</a> de la <a href="https://www.ugto.mx/" target="_blank">Universidad de Guanajuato</a>.<br><br>
-Adicionalmente, cada sección de la aplicación se ha diseñado para que, en caso de actualizar o sustituir los datos por los de otro cúmulo de galaxias, el análisis pueda realizarse de manera automática, siempre y cuando se mantenga la misma estructura de nombres de columnas.
-</div>
-""", unsafe_allow_html=True)
 
 
 

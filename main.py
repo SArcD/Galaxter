@@ -53,9 +53,11 @@ if opcion == "Introducción":
 
     st.markdown("""
 <div style="text-align: justify">
-La presente aplicación reúne conceptos y técnicas de <a href="https://en.wikipedia.org/wiki/Machine_learning" target="_blank">Machine Learning</a> para el análisis de datos de cúmulos de galaxias. Los conceptos principales son el <a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank">aprendizaje no supervisado</a> para la clasificación de objetos a partir de sus características, la <a href="https://plotly.com/python/" target="_blank">visualización de gráficos interactivos</a>, el ajuste de datos mediante técnicas de <a href="https://en.wikipedia.org/wiki/Interpolation" target="_blank">interpolación</a> y la formulación de reglas de clasificación de <a href="https://scikit-learn.org/stable/modules/ensemble.html#random-forests" target="_blank">aprendizaje supervisado</a> mediante <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html" target="_blank">Random Forest</a>.
+La presente aplicación reúne conceptos y técnicas de <a href="https://en.wikipedia.org/wiki/Machine_learning" target="_blank">Machine Learning</a> para el análisis de datos de cúmulos de galaxias. Los conceptos clave incluyen el uso de <a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank">aprendizaje no supervisado</a>, como el <a href="https://en.wikipedia.org/wiki/Hierarchical_clustering" target="_blank">clustering jerárquico</a>, para la clasificación de galaxias a partir de sus características, así como la formulación de reglas de decisión mediante <a href="https://scikit-learn.org/stable/modules/ensemble.html#random-forests" target="_blank">aprendizaje supervisado</a> con algoritmos como <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html" target="_blank">Random Forest</a>.  
+Además, se implementan técnicas de <a href="https://en.wikipedia.org/wiki/Interpolation" target="_blank">interpolación</a> para el ajuste de datos y herramientas de <a href="https://plotly.com/python/" target="_blank">visualización interactiva</a> que permiten explorar mapas espaciales, diagramas de fase y gráficos de densidad para identificar posibles subestructuras y patrones dentro de los cúmulos galácticos.
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

@@ -527,7 +527,7 @@ elif opcion == "Proceso":
                     #quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
                     #custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
                     # Ordena de mayor a menor para que Q1 sea más alto
-                    df_stars = df_stars.sort_values(by=selected_var, ascending=True).reset_index(drop=True)
+                    df_stars = df_stars.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
                     df_stars['cuartil'] = pd.qcut(
                         df_stars[selected_var],
                         q=4,

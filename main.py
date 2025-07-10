@@ -363,11 +363,11 @@ elif opcion == "Proceso":
 
             import plotly.express as px
             import plotly.graph_objects as go
+            import numpy as np
 
-        # -------------------------------
-        # 🌌 Expansor con mapa interactivo
-        # -------------------------------
-        #with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+            # -------------------------------
+            # 🌌 Expansor con mapa interactivo
+            # -------------------------------
             num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
             cat_vars = ['M(parn)', 'Act']
             all_vars = num_vars + cat_vars
@@ -403,7 +403,7 @@ elif opcion == "Proceso":
                 )
                 df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
 
-            # -------------------------------
+            # -------------------------------    
             # ✅ Hover enriquecido
             # -------------------------------
             hover_data = {
@@ -416,22 +416,30 @@ elif opcion == "Proceso":
             required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
 
             if required_cols.issubset(df.columns):
+
+                # -------------------------------
+                # ✅ Scatter principal con Plasma
+                # -------------------------------
                 fig = px.scatter(
                     df_filtered,
                     x="RA",
                     y="Dec",
                     color=selected_var,
+                    color_continuous_scale='plasma',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"
                 )
 
+                # -------------------------------
+                # ✅ Contornos de densidad
+                # -------------------------------
                 fig.add_trace(
                     go.Histogram2dContour(
                         x=df_filtered['RA'],
                         y=df_filtered['Dec'],
                         ncontours=10,
-                        colorscale='Viridis',
+                        colorscale='plasma',
                         contours_coloring='lines',
                         line_width=2,
                         opacity=0.5,
@@ -439,46 +447,54 @@ elif opcion == "Proceso":
                         hoverinfo='skip'
                     )
                 )
-                #fig.update_yaxes(autorange="reversed")
 
                 # -------------------------------
-                # ⭐️ Añadir puntos destacados
+                # ⭐️ Selección automática de N galaxias destacadas
                 # -------------------------------
-                st.write("Opcional: Escribe los ID de galaxias a destacar separados por comas:")
-                ids_input = st.text_input("Ejemplo: SDSS J004150.46-091811.2, SDSS J003849.01-094722.4")
+                num_stars = 7
 
-                df_stars = pd.DataFrame()  # Inicializa
+                if selected_var in num_vars:
+                    if selected_var == 'Rf':
+                        df_stars = df_filtered.sort_values('Rf').head(num_stars).copy()  # Más brillante = más negativo
+                    else:
+                        df_stars = df_filtered.sort_values(selected_var, ascending=False).head(num_stars).copy()
+                else:
+                    df_stars = pd.DataFrame()  # No destaca nada para categóricas
 
-                if ids_input:
-                    ids_to_star = [x.strip() for x in ids_input.split(",")]
-                    df_stars = df[df['ID'].isin(ids_to_star)].copy()
+                color_map = [
+                    "#FFD700", "#C0C0C0", "#CD7F32", "#FF69B4",
+                    "#00FFFF", "#00FF00", "#FF4500"
+                ]
+                sizes = np.linspace(20, 10, num_stars)
 
-                    color_map = px.colors.qualitative.Safe
-
-                    for i, (_, star_row) in enumerate(df_stars.iterrows()):
-                        fig.add_trace(
-                            go.Scatter(
-                                x=[star_row['RA']],
-                                y=[star_row['Dec']],
-                                mode="markers+text",
-                                marker=dict(symbol="star", size=16, color=color_map[i % len(color_map)],
-                                            line=dict(width=1, color="black")),
-                                text=[star_row['ID']],
-                                textposition="top center",
-                                name=f"Destacado: {star_row['ID']}",
-                                showlegend=False,
-                                hovertemplate="<br>".join([
-                                    f"ID: {star_row['ID']}",
-                                    f"RA: {star_row['RA']:.5f}",
-                                    f"Dec: {star_row['Dec']:.5f}",
-                                    f"Vel: {star_row['Vel']}",
-                                    f"Delta: {star_row['Delta']}"
-                                ])
-                            )
+                for i, (_, row) in enumerate(df_stars.iterrows()):
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[row['RA']],
+                            y=[row['Dec']],
+                            mode="markers+text",
+                            marker=dict(
+                                symbol="star",
+                                size=sizes[i],
+                                color=color_map[i % len(color_map)],
+                                line=dict(width=1, color="black")
+                            ),
+                            text=[row['ID']],
+                            textposition="top center",
+                            name=f"Destacado: {row['ID']}",
+                            hovertemplate="<br>".join([
+                                f"ID: {row['ID']}",
+                                f"RA: {row['RA']:.5f}",
+                                f"Dec: {row['Dec']:.5f}",
+                                f"Vel: {row['Vel']}",
+                                f"{selected_var}: {row[selected_var]}"
+                            ]),
+                            showlegend=False
                         )
+                    )
 
-                #fig.update_yaxes(autorange="reversed")
                 fig.update_xaxes(autorange="reversed")
+                fig.update_yaxes(autorange="reversed")
                 fig.update_layout(
                     xaxis_title="Ascensión Recta (RA, grados)",
                     yaxis_title="Declinación (Dec, grados)",
@@ -488,9 +504,6 @@ elif opcion == "Proceso":
 
                 st.plotly_chart(fig)
 
-                # -------------------------------
-                # 💾 Botones de descarga
-                # -------------------------------
                 st.download_button(
                     "💾 Descargar tabla filtrada",
                     df_filtered.to_csv(index=False).encode('utf-8'),
@@ -511,7 +524,6 @@ elif opcion == "Proceso":
                     f"Faltan columnas necesarias para el mapa interactivo: "
                     f"{required_cols - set(df.columns)}"
                 )
-
 
 
             import numpy as np

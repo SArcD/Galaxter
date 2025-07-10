@@ -513,12 +513,27 @@ elif opcion == "Proceso":
 
                 # Asigna cuartiles
                 df_stars = df_stars.copy()
-                df_stars['cuartil'] = pd.qcut(
-                    df_stars[selected_var],
-                    q=4,
-                    labels=[1, 2, 3, 4]
-                ).astype(int)
+                #df_stars['cuartil'] = pd.qcut(
+                #    df_stars[selected_var],
+                #    q=4,
+                #    labels=[1, 2, 3, 4]
+                #).astype(int)
+                # Lógica adaptativa de colores
+                custom_colors = []
+                if len(df_stars) == 1:
+                    custom_colors = ['gold']
+                elif len(df_stars) == 2:
+                    custom_colors = ['gold', 'silver']
+                elif len(df_stars) == 3:
+                    custom_colors = ['gold', 'silver', '#cd7f32']
+                else:
+                    # Si son 4 o más, usa cuartiles
+                    df_stars['cuartil'] = pd.qcut(df_stars[selected_var], q=4, labels=[1, 2, 3, 4]).astype(int)
+                    quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
+                    custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
 
+
+                
                 quartile_colors = ['gold', 'silver', '#cd7f32', 'lightskyblue']
 
                 for i, (_, star_row) in enumerate(df_stars.iterrows()):

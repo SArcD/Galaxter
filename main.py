@@ -357,7 +357,7 @@ elif opcion == "Proceso":
 #                st.warning(
 #                    f"Faltan columnas necesarias para el mapa interactivo: "
 #                    f"{required_cols - set(df.columns)}"
-                )
+#                )
 
 
 

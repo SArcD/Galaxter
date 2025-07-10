@@ -263,6 +263,111 @@ elif opcion == "Proceso":
 
         # Expansor cpm el mapa de Abell 85
         with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+#            num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta']
+#            cat_vars = ['M(parn)', 'Act']
+#            all_vars = num_vars + cat_vars
+
+#            selected_var = st.selectbox(
+#                "Variable para filtrar y colorear puntos:",
+#                options=all_vars
+#            )
+
+#            df_filtered = df.copy()
+
+#            # Filtrado según tipo
+#            if selected_var in num_vars:
+#                try:
+#                    df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
+#                    labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
+#                    #labels = fcluster(Z, t=num_clusters, criterion=criterion)
+                    #df.loc[data.index, 'Subcluster'] = labels
+#                    selected_labels = st.multiselect(
+#                        "Selecciona uno o varios rangos:",
+#                        options=labels,
+#                        default=labels
+#                    )
+#                    df_filtered = df_filtered[df_filtered['range_label'].astype(str).isin(selected_labels)]
+#                except Exception as e:
+#                    st.warning(f"No se pudieron crear rangos para esta variable. Detalle: {e}")
+#            elif selected_var in cat_vars:
+#                labels = df_filtered[selected_var].dropna().unique().tolist()
+#                selected_labels = st.multiselect(
+#                    "Selecciona una o varias categorías:",
+#                    options=labels,
+#                    default=labels
+#                )
+#                df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
+
+#            # Hover enriquecido
+#            hover_data = {
+#                "RA": True, "Dec": True,
+#                "Vel": True, "Cl_d": True, "Delta": True,
+#                "(u-g)": True, "(g-r)": True, "(r-i)": True, "(i-z)": True,
+#                "M(IP)": True, "M(ave)": True, "Act": True
+#            }
+
+#            # Columnas necesarias para asegurar que existan
+#            required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
+
+#            if required_cols.issubset(df.columns):
+#                fig = px.scatter(
+#                    df_filtered,
+#                    x="RA",
+#                    y="Dec",
+#                    color=selected_var,
+#                    hover_name="ID",
+#                    hover_data=hover_data,
+#                    title=f"Mapa filtrado por: {selected_var}"
+#                )
+
+#                fig.add_trace(
+#                    go.Histogram2dContour(
+#                        x=df_filtered['RA'],
+#                        y=df_filtered['Dec'],
+#                        ncontours=10,
+#                        colorscale='Viridis',
+#                        contours_coloring='lines',
+#                        line_width=2,
+#                        opacity=0.5,
+#                        showscale=False,
+#                        hoverinfo='skip'
+#                    )
+#                )
+
+#                fig.update_yaxes(autorange="reversed")
+#                fig.update_layout(
+#                    xaxis_title="Ascensión Recta (RA, grados)",
+#                    yaxis_title="Declinación (Dec, grados)",
+#                    height=700,
+#                    width=900
+#                )
+#                fig.update_xaxes(autorange="reversed")
+
+            
+#                st.plotly_chart(fig)
+
+#                # Botón para descargar tabla filtrada
+#                st.download_button(
+#                    "💾 Descargar tabla filtrada",
+#                    df_filtered.to_csv(index=False).encode('utf-8'),
+#                    file_name="galaxias_filtradas.csv",
+#                    mime="text/csv"
+#                )
+#            else:
+#                st.warning(
+#                    f"Faltan columnas necesarias para el mapa interactivo: "
+#                    f"{required_cols - set(df.columns)}"
+                )
+
+
+
+            import plotly.express as px
+            import plotly.graph_objects as go
+
+        # -------------------------------
+        # 🌌 Expansor con mapa interactivo
+        # -------------------------------
+        #with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
             num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta']
             cat_vars = ['M(parn)', 'Act']
             all_vars = num_vars + cat_vars
@@ -274,13 +379,13 @@ elif opcion == "Proceso":
 
             df_filtered = df.copy()
 
-            # Filtrado según tipo
+            # -------------------------------
+            # 📌 Filtrado
+            # -------------------------------
             if selected_var in num_vars:
                 try:
                     df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
                     labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
-                    #labels = fcluster(Z, t=num_clusters, criterion=criterion)
-                    #df.loc[data.index, 'Subcluster'] = labels
                     selected_labels = st.multiselect(
                         "Selecciona uno o varios rangos:",
                         options=labels,
@@ -298,7 +403,9 @@ elif opcion == "Proceso":
                 )
                 df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
 
-            # Hover enriquecido
+            # -------------------------------
+            # ✅ Hover enriquecido
+            # -------------------------------
             hover_data = {
                 "RA": True, "Dec": True,
                 "Vel": True, "Cl_d": True, "Delta": True,
@@ -306,7 +413,6 @@ elif opcion == "Proceso":
                 "M(IP)": True, "M(ave)": True, "Act": True
             }
 
-            # Columnas necesarias para asegurar que existan
             required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
 
             if required_cols.issubset(df.columns):
@@ -334,31 +440,76 @@ elif opcion == "Proceso":
                     )
                 )
 
+                # -------------------------------
+                # ⭐️ Añadir puntos destacados
+                # -------------------------------
+                st.write("Opcional: Escribe los ID de galaxias a destacar separados por comas:")
+                ids_input = st.text_input("Ejemplo: SDSS J004150.46-091811.2, SDSS J003849.01-094722.4")
+
+                df_stars = pd.DataFrame()  # Inicializa
+
+                if ids_input:
+                    ids_to_star = [x.strip() for x in ids_input.split(",")]
+                    df_stars = df[df['ID'].isin(ids_to_star)].copy()
+
+                    color_map = px.colors.qualitative.Safe
+
+                    for i, (_, star_row) in enumerate(df_stars.iterrows()):
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[star_row['RA']],
+                                y=[star_row['Dec']],
+                                mode="markers+text",
+                                marker=dict(symbol="star", size=16, color=color_map[i % len(color_map)],
+                                            line=dict(width=1, color="black")),
+                                text=[star_row['ID']],
+                                textposition="top center",
+                                name=f"Destacado: {star_row['ID']}",
+                                showlegend=False,
+                                hovertemplate="<br>".join([
+                                    f"ID: {star_row['ID']}",
+                                    f"RA: {star_row['RA']:.5f}",
+                                    f"Dec: {star_row['Dec']:.5f}",
+                                    f"Vel: {star_row['Vel']}",
+                                    f"Delta: {star_row['Delta']}"
+                                ])
+                            )
+                        )
+
                 fig.update_yaxes(autorange="reversed")
+                fig.update_xaxes(autorange="reversed")
                 fig.update_layout(
                     xaxis_title="Ascensión Recta (RA, grados)",
                     yaxis_title="Declinación (Dec, grados)",
                     height=700,
                     width=900
                 )
-                fig.update_xaxes(autorange="reversed")
 
-            
                 st.plotly_chart(fig)
 
-                # Botón para descargar tabla filtrada
+                # -------------------------------
+                # 💾 Botones de descarga
+                # -------------------------------
                 st.download_button(
                     "💾 Descargar tabla filtrada",
                     df_filtered.to_csv(index=False).encode('utf-8'),
                     file_name="galaxias_filtradas.csv",
                     mime="text/csv"
                 )
+
+                if not df_stars.empty:
+                    st.download_button(
+                        "⭐️ Descargar tabla de galaxias destacadas",
+                        df_stars.to_csv(index=False).encode('utf-8'),
+                        file_name="galaxias_destacadas.csv",
+                        mime="text/csv"
+                    )
+
             else:
                 st.warning(
                     f"Faltan columnas necesarias para el mapa interactivo: "
                     f"{required_cols - set(df.columns)}"
                 )
-
 
 
 

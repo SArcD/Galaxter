@@ -426,7 +426,7 @@ elif opcion == "Proceso":
 #                    f"{required_cols - set(df.columns)}"
 #                )
 
-
+        # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
         with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
             import plotly.express as px
             import plotly.graph_objects as go
@@ -443,6 +443,7 @@ elif opcion == "Proceso":
 
             df_filtered = df.copy()
 
+            # ---- Filtrado ----
             if selected_var in num_vars:
                 try:
                     df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
@@ -464,6 +465,7 @@ elif opcion == "Proceso":
                 )
                 df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
 
+            # ---- Hover ----
             hover_data = {
                 "RA": True, "Dec": True,
                 "Vel": True, "Cl_d": True, "Delta": True,
@@ -479,7 +481,7 @@ elif opcion == "Proceso":
                     x="RA",
                     y="Dec",
                     color=selected_var,
-                    color_continuous_scale='viridis',
+                    color_continuous_scale='plasma',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"
@@ -490,7 +492,7 @@ elif opcion == "Proceso":
                         x=df_filtered['RA'],
                         y=df_filtered['Dec'],
                         ncontours=10,
-                        colorscale='viridis',
+                        colorscale='plasma',
                         contours_coloring='lines',
                         line_width=2,
                         opacity=0.5,
@@ -503,8 +505,9 @@ elif opcion == "Proceso":
                 fig.update_xaxes(showgrid=False)
                 fig.update_yaxes(showgrid=False)
 
-                st.write("Número de galaxias a destacar (por valor más extremo de la variable seleccionada):")
-                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=100, value=3)
+                # === ⭐️ ESTRELLAS ===
+                st.write("Número de galaxias destacadas por variable seleccionada:")
+                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=50, value=3)
 
                 if selected_var in num_vars:
                     df_stars = df_filtered.nsmallest(num_highlight, 'Rf') if selected_var == 'Rf' else df_filtered.nlargest(num_highlight, selected_var)
@@ -513,7 +516,7 @@ elif opcion == "Proceso":
 
                 df_stars = df_stars.copy()
 
-                # Lógica adaptativa de colores
+                # Lógica adaptativa colores estrellas
                 custom_colors = []
                 if len(df_stars) == 1:
                     custom_colors = ['gold']
@@ -522,27 +525,24 @@ elif opcion == "Proceso":
                 elif len(df_stars) == 3:
                     custom_colors = ['gold', 'silver', '#cd7f32']
                 else:
-                    # Si son 4 o más, usa cuartiles
-                    #df_stars['cuartil'] = pd.qcut(df_stars[selected_var], q=4, labels=[1, 2, 3, 4]).astype(int)
-                    #quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
-                    #custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
-                    # Ordena de mayor a menor para que Q1 sea más alto
                     df_stars = df_stars.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
-                    df_stars['cuartil'] = pd.qcut(
-                        df_stars[selected_var],
-                        q=4,
-                        labels=[4, 3, 2, 1]
-                    ).astype(int)
-                    quartile_colors = {
-                        1: 'gold',
-                        2: 'silver',
-                        3: '#cd7f32',  # bronce
-                        4: 'lightskyblue'
-                    }
+                    df_stars['cuartil'] = pd.qcut(df_stars[selected_var], q=4, labels=[4, 3, 2, 1]).astype(int)
+                    quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
                     custom_colors = [quartile_colors[q] for q in df_stars['cuartil']]
 
+                # === 💎 DIAMANTES ===
+                st.write("Número de galaxias más brillantes a destacar (Rf más bajo):")
+                num_bright = st.slider("Cantidad de galaxias brillantes", min_value=1, max_value=20, value=3)
 
-                
+                df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
+
+                # === Evitar duplicados ===
+                bright_ids = df_bright['ID'].tolist()
+                stars_ids = df_stars['ID'].tolist()
+                overlap_ids = set(bright_ids) & set(stars_ids)
+                df_bright = df_bright[~df_bright['ID'].isin(overlap_ids)]
+
+                # === Añadir ESTRELLAS ===
                 for i, (_, star_row) in enumerate(df_stars.iterrows()):
                     color = custom_colors[i] if len(custom_colors) >= len(df_stars) else 'gold'
                     fig.add_trace(
@@ -552,7 +552,7 @@ elif opcion == "Proceso":
                             mode="markers+text",
                             marker=dict(
                                 symbol="star",
-                                size=20,
+                                size=22,  # Más grande que diamante
                                 color=color,
                                 line=dict(width=1, color="black")
                             ),
@@ -574,17 +574,48 @@ elif opcion == "Proceso":
                         )
                     )
 
+                # === Añadir DIAMANTES ===
+                for i, (_, bright_row) in enumerate(df_bright.iterrows()):
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[bright_row['RA']],
+                            y=[bright_row['Dec']],
+                            mode="markers+text",
+                            marker=dict(
+                                symbol="diamond",
+                                size=18,  # Ligeramente más pequeño
+                                color="lightskyblue",
+                                line=dict(width=1, color="black")
+                            ),
+                            text=[f"B{i+1}"],
+                            textposition="middle center",
+                            textfont=dict(color="black", size=10),
+                            name=f"Brillante {i+1}",
+                            legendgroup="Brillantes",
+                            showlegend=False,
+                            hovertemplate="<br>".join([
+                                f"ID: {bright_row['ID']}",
+                                f"RA: {bright_row['RA']:.5f}",
+                                f"Dec: {bright_row['Dec']:.5f}",
+                                f"Vel: {bright_row['Vel']}",
+                                f"Delta: {bright_row['Delta']}",
+                                f"Rf: {bright_row['Rf']}"
+                            ])
+                        )
+                    )
+
                 fig.update_layout(
                     xaxis_title="Ascensión Recta (RA, grados)",
                     yaxis_title="Declinación (Dec, grados)",
                     height=700,
                     width=900,
                     font=dict(color="black"),
-                    legend_title="Destacadas por Cuartil"
+                    legend_title="Destacadas y Brillantes"
                 )
 
                 st.plotly_chart(fig)
 
+                # Botones de descarga
                 st.download_button(
                     "💾 Descargar tabla filtrada",
                     df_filtered.to_csv(index=False).encode('utf-8'),
@@ -600,11 +631,21 @@ elif opcion == "Proceso":
                         mime="text/csv"
                     )
 
+                if not df_bright.empty:
+                    st.download_button(
+                        "💎 Descargar tabla de galaxias brillantes",
+                        df_bright.to_csv(index=False).encode('utf-8'),
+                        file_name="galaxias_brillantes.csv",
+                        mime="text/csv"
+                    )
+
             else:
                 st.warning(
                     f"Faltan columnas necesarias para el mapa interactivo: "
                     f"{required_cols - set(df.columns)}"
                 )
+
+        
 
 
             

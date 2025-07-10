@@ -428,6 +428,7 @@ elif opcion == "Proceso":
 
 
         with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+        with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
             import plotly.express as px
             import plotly.graph_objects as go
             import pandas as pd
@@ -479,7 +480,7 @@ elif opcion == "Proceso":
                     x="RA",
                     y="Dec",
                     color=selected_var,
-                    color_continuous_scale='viridis',
+                    color_continuous_scale='plasma',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"
@@ -490,7 +491,7 @@ elif opcion == "Proceso":
                         x=df_filtered['RA'],
                         y=df_filtered['Dec'],
                         ncontours=10,
-                        colorscale='viridis',
+                        colorscale='plasma',
                         contours_coloring='lines',
                         line_width=2,
                         opacity=0.5,
@@ -504,20 +505,15 @@ elif opcion == "Proceso":
                 fig.update_yaxes(showgrid=False)
 
                 st.write("Número de galaxias a destacar (por valor más extremo de la variable seleccionada):")
-                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=100, value=5)
+                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=100, value=3)
 
                 if selected_var in num_vars:
                     df_stars = df_filtered.nsmallest(num_highlight, 'Rf') if selected_var == 'Rf' else df_filtered.nlargest(num_highlight, selected_var)
                 else:
                     df_stars = df_filtered.head(num_highlight)
 
-                # Asigna cuartiles
                 df_stars = df_stars.copy()
-                #df_stars['cuartil'] = pd.qcut(
-                #    df_stars[selected_var],
-                #    q=4,
-                #    labels=[1, 2, 3, 4]
-                #).astype(int)
+
                 # Lógica adaptativa de colores
                 custom_colors = []
                 if len(df_stars) == 1:
@@ -532,13 +528,8 @@ elif opcion == "Proceso":
                     quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
                     custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
 
-
-                
-                quartile_colors = ['gold', 'silver', '#cd7f32', 'lightskyblue']
-
                 for i, (_, star_row) in enumerate(df_stars.iterrows()):
-                    cuartil_idx = star_row['cuartil'] - 1  # 0-index
-                    color = quartile_colors[cuartil_idx]
+                    color = custom_colors[i] if len(custom_colors) >= len(df_stars) else 'gold'
                     fig.add_trace(
                         go.Scatter(
                             x=[star_row['RA']],
@@ -563,7 +554,7 @@ elif opcion == "Proceso":
                                 f"Vel: {star_row['Vel']}",
                                 f"Delta: {star_row['Delta']}",
                                 f"{selected_var}: {star_row[selected_var]}",
-                                f"Cuartil: {star_row['cuartil']}"
+                                f"{'Cuartil: ' + str(star_row['cuartil']) if 'cuartil' in star_row else ''}"
                             ])
                         )
                     )
@@ -574,7 +565,7 @@ elif opcion == "Proceso":
                     height=700,
                     width=900,
                     font=dict(color="black"),
-                    legend_title="Destacadas por Cuartil:<br>Q1=Dorado, Q2=Plata, Q3=Cobre, Q4=Azul claro"
+                    legend_title="Destacadas por Cuartil"
                 )
 
                 st.plotly_chart(fig)
@@ -593,6 +584,7 @@ elif opcion == "Proceso":
                         file_name="galaxias_destacadas.csv",
                         mime="text/csv"
                     )
+
             else:
                 st.warning(
                     f"Faltan columnas necesarias para el mapa interactivo: "

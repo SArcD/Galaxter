@@ -479,7 +479,7 @@ elif opcion == "Proceso":
                     x="RA",
                     y="Dec",
                     color=selected_var,
-                    color_continuous_scale='plasma',
+                    color_continuous_scale='viridis',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"
@@ -490,7 +490,7 @@ elif opcion == "Proceso":
                         x=df_filtered['RA'],
                         y=df_filtered['Dec'],
                         ncontours=10,
-                        colorscale='plasma',
+                        colorscale='viridis',
                         contours_coloring='lines',
                         line_width=2,
                         opacity=0.5,
@@ -531,7 +531,7 @@ elif opcion == "Proceso":
                     df_stars['cuartil'] = pd.qcut(
                         df_stars[selected_var],
                         q=4,
-                        labels=[1, 2, 3, 4]
+                        labels=[4, 3, 2, 1]
                     ).astype(int)
                     quartile_colors = {
                         1: 'gold',

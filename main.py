@@ -394,8 +394,8 @@ elif opcion == "Proceso":
                     yaxis_title="Declinación (Dec, grados)",
                     height=700,
                     width=900,
-                    plot_bgcolor='gray',
-                    paper_bgcolor='black',
+                    #plot_bgcolor='gray',
+                    #paper_bgcolor='black',
                     font=dict(color="white")
                 )
                 fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales

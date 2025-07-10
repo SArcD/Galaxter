@@ -439,6 +439,7 @@ elif opcion == "Proceso":
                         hoverinfo='skip'
                     )
                 )
+                fig.update_yaxes(autorange="reversed")
 
                 # -------------------------------
                 # ⭐️ Añadir puntos destacados

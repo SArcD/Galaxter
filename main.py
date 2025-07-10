@@ -428,7 +428,6 @@ elif opcion == "Proceso":
 
 
         with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-        with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
             import plotly.express as px
             import plotly.graph_objects as go
             import pandas as pd

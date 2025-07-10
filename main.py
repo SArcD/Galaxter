@@ -444,6 +444,8 @@ elif opcion == "Proceso":
 
                 fig.update_xaxes(autorange="reversed")
                 fig.update_yaxes(autorange="reversed")
+                fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
+                fig.update_yaxes(showgrid=False)  # Oculta solo las líneas horizontales
 
                 # -------------------------------
                 # ⭐️ Destacar N galaxias más brillantes o altas en la variable

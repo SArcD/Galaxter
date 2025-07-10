@@ -494,6 +494,7 @@ elif opcion == "Proceso":
                     paper_bgcolor='black',
                     font=dict(color="white")
                 )
+                fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
 
                 st.plotly_chart(fig)
 

@@ -394,7 +394,7 @@ elif opcion == "Proceso":
                     yaxis_title="Declinación (Dec, grados)",
                     height=700,
                     width=900,
-                    plot_bgcolor='blue',
+                    plot_bgcolor='gray',
                     paper_bgcolor='black',
                     font=dict(color="white")
                 )

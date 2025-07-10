@@ -523,10 +523,26 @@ elif opcion == "Proceso":
                     custom_colors = ['gold', 'silver', '#cd7f32']
                 else:
                     # Si son 4 o más, usa cuartiles
-                    df_stars['cuartil'] = pd.qcut(df_stars[selected_var], q=4, labels=[1, 2, 3, 4]).astype(int)
-                    quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
-                    custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
+                    #df_stars['cuartil'] = pd.qcut(df_stars[selected_var], q=4, labels=[1, 2, 3, 4]).astype(int)
+                    #quartile_colors = {1: 'gold', 2: 'silver', 3: '#cd7f32', 4: 'lightskyblue'}
+                    #custom_colors = [quartile_colors[cuartil] for cuartil in df_stars['cuartil']]
+                    # Ordena de mayor a menor para que Q1 sea más alto
+                    df_stars = df_stars.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
+                    df_stars['cuartil'] = pd.qcut(
+                        df_stars[selected_var],
+                        q=4,
+                        labels=[1, 2, 3, 4]
+                    ).astype(int)
+                    quartile_colors = {
+                        1: 'gold',
+                        2: 'silver',
+                        3: '#cd7f32',  # bronce
+                        4: 'lightskyblue'
+                    }
+                    custom_colors = [quartile_colors[q] for q in df_stars['cuartil']]
 
+
+                
                 for i, (_, star_row) in enumerate(df_stars.iterrows()):
                     color = custom_colors[i] if len(custom_colors) >= len(df_stars) else 'gold'
                     fig.add_trace(

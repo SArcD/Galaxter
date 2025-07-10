@@ -345,7 +345,7 @@ elif opcion == "Proceso":
                 )
 
                 fig.update_xaxes(autorange="reversed")
-                fig.update_yaxes(autorange="reversed")
+                #fig.update_yaxes(autorange="reversed")
                 fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
                 fig.update_yaxes(showgrid=False)  # Oculta solo las líneas horizontales
 
@@ -398,7 +398,7 @@ elif opcion == "Proceso":
                     #paper_bgcolor='black',
                     font=dict(color="white")
                 )
-                fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
+                #fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
 
                 st.plotly_chart(fig)
 

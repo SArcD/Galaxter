@@ -479,7 +479,7 @@ elif opcion == "Proceso":
                     x="RA",
                     y="Dec",
                     color=selected_var,
-                    color_continuous_scale='plasma',
+                    color_continuous_scale='viridis',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"
@@ -490,7 +490,7 @@ elif opcion == "Proceso":
                         x=df_filtered['RA'],
                         y=df_filtered['Dec'],
                         ncontours=10,
-                        colorscale='plasma',
+                        colorscale='viridis',
                         contours_coloring='lines',
                         line_width=2,
                         opacity=0.5,

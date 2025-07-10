@@ -439,7 +439,7 @@ elif opcion == "Proceso":
                         hoverinfo='skip'
                     )
                 )
-                fig.update_yaxes(autorange="reversed")
+                #fig.update_yaxes(autorange="reversed")
 
                 # -------------------------------
                 # ⭐️ Añadir puntos destacados
@@ -477,7 +477,7 @@ elif opcion == "Proceso":
                             )
                         )
 
-                fig.update_yaxes(autorange="reversed")
+                #fig.update_yaxes(autorange="reversed")
                 fig.update_xaxes(autorange="reversed")
                 fig.update_layout(
                     xaxis_title="Ascensión Recta (RA, grados)",

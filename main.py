@@ -368,7 +368,7 @@ elif opcion == "Proceso":
         # 🌌 Expansor con mapa interactivo
         # -------------------------------
         #with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-            num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta']
+            num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
             cat_vars = ['M(parn)', 'Act']
             all_vars = num_vars + cat_vars
 

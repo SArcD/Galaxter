@@ -353,7 +353,7 @@ elif opcion == "Proceso":
                 # ⭐️ Destacar N galaxias más brillantes o altas en la variable
                 # -------------------------------
                 st.write("Número de galaxias a destacar (por valor más extremo de la variable seleccionada):")
-                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=30, value=5)
+                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=100, value=5)
 
                 if selected_var in num_vars:
                     df_stars = df_filtered.nsmallest(num_highlight, 'Rf') if selected_var == 'Rf' else df_filtered.nlargest(num_highlight, selected_var)

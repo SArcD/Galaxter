@@ -486,19 +486,35 @@ elif opcion == "Proceso":
                         title=f"Mapa filtrado por: {selected_var}"
                     )
 
+                    #kde_contours = px.density_contour(
+                   #     df_filtered,
+                  #      x="RA",
+                   #     y="Dec",
+                   #     nbinsx=50,
+                   #     nbinsy=50,
+                   #     color_continuous_scale="plasma"
+                   # )
+                   # kde_contours.update_traces(
+                   #     contours_coloring="fill",
+                   #     showscale=True
+                   # )
+
                     kde_contours = px.density_contour(
-                        df_filtered,
-                        x="RA",
-                        y="Dec",
-                        nbinsx=50,
-                        nbinsy=50,
-                        color_continuous_scale="plasma"
+                    df_filtered,
+                    x="RA",
+                    y="Dec",
+                    nbinsx=50,
+                    nbinsy=50,
+                    color_discrete_sequence=["black"]  # o ["white"] si el fondo es oscuro
                     )
                     kde_contours.update_traces(
-                        contours_coloring="fill",
-                        showscale=True
+                        contours_coloring="lines",
+                        line_width=2,
+                        showscale=False
                     )
 
+
+                    
                     for trace in kde_contours.data:
                         fig.add_trace(trace)
 

@@ -494,8 +494,8 @@ elif opcion == "Proceso":
                     df_filtered,
                     x="RA",
                     y="Dec",
-                    nbinsx=50,
-                    nbinsy=50,
+                    nbinsx=20,
+                    nbinsy=20,
                 )
                 kde_contours.update_traces(
                     contours_coloring="lines",
@@ -535,7 +535,7 @@ elif opcion == "Proceso":
                     df_extreme['cuartil'] = pd.qcut(
                         df_extreme[selected_var],
                         q=4,
-                        labels=[1, 2, 3, 4]
+                        labels=[4, 3, 2, 1]
                     ).astype(int)
                     quartile_colors = {
                         1: 'gold',

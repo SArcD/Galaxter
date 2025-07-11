@@ -428,6 +428,8 @@ elif opcion == "Proceso":
 
         # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
         with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+        # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
+        #with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
             import plotly.express as px
             import plotly.graph_objects as go
             import pandas as pd
@@ -486,91 +488,107 @@ elif opcion == "Proceso":
                     title=f"Mapa filtrado por: {selected_var}"
                 )
 
+                # 👇 KDE con suavizado real
+                bw = st.slider("Ajusta el suavizado KDE (bandwidth)", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
 
                 kde_contours = px.density_contour(
-                df_filtered,
-                x="RA",
-                y="Dec",
-                nbinsx=50,
-                nbinsy=50,
-                color_discrete_sequence=["black"]  # o ["white"] si el fondo es oscuro
+                    df_filtered,
+                    x="RA",
+                    y="Dec",
+                    nbinsx=50,
+                    nbinsy=50,
+                    color_continuous_scale="plasma",
+                    # 👇 Opción interna: se usa solo en seaborn, Plotly lo aplica por defecto:
+                    # Puedes experimentar con `bw_adjust` si usas seaborn
                 )
                 kde_contours.update_traces(
                     contours_coloring="lines",
                     line_width=2,
                     showscale=False
                 )
-
-
-                    
                 for trace in kde_contours.data:
                     fig.add_trace(trace)
 
                 fig.update_xaxes(autorange="reversed")
                 fig.update_yaxes(showgrid=False)
-                fig.update_xaxes(showgrid=False)
-                    
-                # ⭐️ Selección de galaxias extremas
+
+                # ⭐ y 💎 sliders
                 st.write("Número de galaxias a destacar por variable seleccionada:")
                 num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)
 
                 st.write("Número de galaxias a destacar por brillo (Rf):")
                 num_bright = st.slider("Cantidad de galaxias brillantes", min_value=1, max_value=100, value=5)
 
-                df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
                 df_extreme = (
                     df_filtered.nsmallest(num_extreme, 'Rf') if selected_var == 'Rf'
                     else df_filtered.nlargest(num_extreme, selected_var)
                 ).copy()
+                df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
 
-                # ⭐️ Añadir símbolos con numeración dual
-                for i, (_, row) in enumerate(df_extreme.iterrows(), 1):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[row['RA']],
-                            y=[row['Dec']],
-                            mode="markers+text",
-                            marker=dict(symbol="star", size=24, color="gold", line=dict(width=1, color="black")),
-                            text=[str(i)],
-                            textposition="middle center",
-                            textfont=dict(color="black", size=10),
-                            name=f"Extremo {i}",
-                            legendgroup="Extremos",
-                            showlegend=False,
-                            hovertemplate="<br>".join([
-                                f"ID: {row['ID']}",
-                                f"RA: {row['RA']:.5f}",
-                                f"Dec: {row['Dec']:.5f}",
-                                f"Vel: {row['Vel']}",
-                                f"Delta: {row['Delta']}",
-                                f"{selected_var}: {row[selected_var]}"
-                            ])
-                        )
-                    )
+                # ⭐ Colores adaptativos
+                custom_colors = []
+                if len(df_extreme) == 1:
+                    custom_colors = ['gold']
+                elif len(df_extreme) == 2:
+                    custom_colors = ['gold', 'silver']
+                elif len(df_extreme) == 3:
+                    custom_colors = ['gold', 'silver', '#cd7f32']
+                elif len(df_extreme) >= 4:
+                    df_extreme = df_extreme.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
+                    df_extreme['cuartil'] = pd.qcut(
+                        df_extreme[selected_var],
+                        q=4,
+                        labels=[1, 2, 3, 4]
+                    ).astype(int)
+                    quartile_colors = {
+                        1: 'gold',
+                        2: 'silver',
+                        3: '#cd7f32',
+                        4: 'lightskyblue'
+                    }
+                    custom_colors = [quartile_colors[q] for q in df_extreme['cuartil']]
 
-                for i, (_, row) in enumerate(df_bright.iterrows(), 1):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[row['RA']],
-                            y=[row['Dec']],
-                            mode="markers+text",
-                            marker=dict(symbol="diamond", size=18, color="deepskyblue", line=dict(width=1, color="black")),
-                            text=[f"B{i}"],
-                            textposition="middle center",
-                            textfont=dict(color="black", size=10),
-                            name=f"Brillante B{i}",
-                            legendgroup="Brillantes",
-                            showlegend=False,
-                            hovertemplate="<br>".join([
-                                f"ID: {row['ID']}",
-                                f"RA: {row['RA']:.5f}",
-                                f"Dec: {row['Dec']:.5f}",
-                                f"Vel: {row['Vel']}",
-                                f"Delta: {row['Delta']}",
-                                f"Rf: {row['Rf']}"
-                            ])
+                # ⭐ + 💎 combinado con numeraciones dobles
+                ids_extreme = df_extreme['ID'].tolist()
+                ids_bright = df_bright['ID'].tolist()
+
+                for _, row in df_filtered.iterrows():
+                    is_extreme = row['ID'] in ids_extreme
+                    is_bright = row['ID'] in ids_bright
+
+                    labels = []
+                    if is_extreme:
+                        idx_ext = ids_extreme.index(row['ID']) + 1
+                        labels.append(f"{idx_ext}")
+                        color = custom_colors[idx_ext - 1] if idx_ext - 1 < len(custom_colors) else 'gold'
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[row['RA']],
+                                y=[row['Dec']],
+                                mode="markers+text",
+                                marker=dict(symbol="star", size=24, color=color, line=dict(width=1, color="black")),
+                                text=[labels[-1]],
+                                textposition="middle center",
+                                textfont=dict(color="black", size=10),
+                                showlegend=False
+                            )
                         )
-                    )
+
+                    if is_bright:
+                        idx_bright = ids_bright.index(row['ID']) + 1
+                        labels.append(f"B{idx_bright}")
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[row['RA']],
+                                y=[row['Dec']],
+                                mode="markers+text",
+                                marker=dict(symbol="diamond", size=18, color="deepskyblue", line=dict(width=1, color="black")),
+                                text=[labels[-1]],
+                                textposition="middle center",
+                                textfont=dict(color="black", size=10),
+                                showlegend=False
+                            )
+                        )
 
                 fig.update_layout(
                     xaxis_title="Ascensión Recta (RA, grados)",
@@ -603,6 +621,7 @@ elif opcion == "Proceso":
                     f"Faltan columnas necesarias para el mapa interactivo: "
                     f"{required_cols - set(df.columns)}"
                 )
+
 
 
         

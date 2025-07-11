@@ -595,6 +595,7 @@ elif opcion == "Proceso":
                     font=dict(color="black"),
                     legend_title="Destacadas"
                 )
+                fig.update_xaxes(autorange="reversed")   # 🗺️ Invierte RA (Ascensión Recta)
 
                 st.plotly_chart(fig)
 

@@ -621,38 +621,37 @@ elif opcion == "Proceso":
                 )
 
 
-
             # ✅ Librerías necesarias
             import numpy as np
             import streamlit as st
             import plotly.graph_objects as go
-            import seaborn as sns
             from scipy.stats import gaussian_kde
             from statsmodels.nonparametric.kernel_density import KDEMultivariate
 
             # ✅ Encabezado
             st.subheader("🗺️ Mapa KDE avanzado (fijo/adaptativo + opciones log/hover)")
 
-            # ✅ Variables
+            # ✅ Variables disponibles
             smooth_var = st.selectbox(
                 "Variable para mapa suavizado:",
                 options=['Delta', 'Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)'],
                 index=0
             )
 
+            # ✅ Datos filtrados válidos
             df_smooth = df_filtered[df_filtered[smooth_var].notna()]
             if df_smooth.empty:
                 st.warning("No hay datos válidos para suavizar.")
                 st.stop()
 
-            # ✅ Configuraciones
+            # ✅ Configuración interactiva
             kde_type = st.radio("Tipo de KDE:", ["Fijo (gaussian_kde)", "Adaptativo (KDEMultivariate)"])
             bw = st.slider("Ajuste de ancho de banda:", 0.1, 2.0, 0.3, step=0.05)
             use_log = st.toggle("Usar escala logarítmica para contornos", value=True)
             cmap = st.selectbox("Colormap:", ["viridis", "plasma", "magma", "cividis"])
             grid_size = st.slider("Resolución de la malla:", 50, 500, 200, step=50)
 
-            #         ✅ Datos
+            # ✅ Variables para malla
             ra = df_smooth['RA'].values
             dec = df_smooth['Dec'].values
             weights = df_smooth[smooth_var].values
@@ -660,7 +659,7 @@ elif opcion == "Proceso":
             xi, yi = np.mgrid[ra.min():ra.max():grid_size*1j, dec.min():dec.max():grid_size*1j]
 
             # ✅ KDE fijo o adaptativo
-            if kde_type == "Fijo (gaussian_kde)":
+            if kde_type.startswith("Fijo"):
                 kde = gaussian_kde(np.vstack([ra, dec]), weights=weights, bw_method=bw)
                 zi = kde(np.vstack([xi.ravel(), yi.ravel()]))
             else:
@@ -671,10 +670,10 @@ elif opcion == "Proceso":
             if use_log:
                 zi = np.log1p(zi)
 
-            # ✅ Plotly interactivo
+            # ✅ Gráfico interactivo
             fig = go.Figure()
 
-            # Contornos
+            # ✅ Contornos
             fig.add_trace(go.Contour(
                 z=zi,
                 x=xi[:,0],
@@ -688,7 +687,7 @@ elif opcion == "Proceso":
                 line_width=2
             ))
 
-            # Puntos originales
+            # ✅ Puntos originales con hover robusto
             fig.add_trace(go.Scatter(
                 x=ra,
                 y=dec,
@@ -707,20 +706,20 @@ elif opcion == "Proceso":
                 ])
             ))
 
-            # Ejes y layout
+            # ✅ Layout
             fig.update_layout(
                 title=f"KDE {'Adaptativo' if kde_type.startswith('Adaptativo') else 'Fijo'} • Escala {'Log' if use_log else 'Lineal'} • {smooth_var}",
                 xaxis_title="Ascensión Recta (RA, grados)",
-                    yaxis_title="Declinación (Dec, grados)",
-                    xaxis=dict(autorange="reversed"),
-                    template='plotly_white',
-                    height=700,
+                yaxis_title="Declinación (Dec, grados)",
+                xaxis=dict(autorange="reversed"),
+                template='plotly_white',
+                height=700,
                 width=900
-                )
+            )
 
             st.plotly_chart(fig, use_container_width=True)
 
-            # ✅ Opcional: exporta tabla usada    
+            # ✅ Tabla y exportación
             with st.expander("🔍 Ver datos suavizados"):
                 st.dataframe(df_smooth)
                 st.download_button(
@@ -729,6 +728,8 @@ elif opcion == "Proceso":
                     file_name="datos_suavizados.csv",
                     mime="text/csv"
                 )
+
+
 
 
 

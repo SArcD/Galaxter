@@ -724,6 +724,24 @@ elif opcion == "Proceso":
                 line_width=2
             ))
 
+#            fig.add_trace(go.Scatter(
+#                x=ra,
+#                y=dec,
+#                mode='markers',
+#                marker=dict(
+#                    size=6,
+#                    color=z_weights,
+#                    colorscale=cmap,
+#                    showscale=False,
+#                    line=dict(width=0.5, color='black')
+#                ),
+#                hovertemplate="<br>".join([
+#                    "RA: %{x:.3f}",
+#                    "Dec: %{y:.3f}",
+#                    f"{smooth_var}: %{marker.color:.3f}"
+#                ])
+#            ))
+
             fig.add_trace(go.Scatter(
                 x=ra,
                 y=dec,
@@ -738,10 +756,10 @@ elif opcion == "Proceso":
                 hovertemplate="<br>".join([
                     "RA: %{x:.3f}",
                     "Dec: %{y:.3f}",
-                    f"{smooth_var}: %{marker.color:.3f}"
+                    f"{smooth_var}: %{{marker.color:.3f}}"
                 ])
             ))
-
+            
             fig.update_layout(
                 title=f"{method} • {'Log' if use_log else 'Lineal'} • {smooth_var}",
                 xaxis_title="Ascensión Recta (RA, grados)",

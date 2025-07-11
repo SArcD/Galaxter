@@ -426,187 +426,182 @@ elif opcion == "Proceso":
 #                    f"{required_cols - set(df.columns)}"
 #                )
 
-        # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
-        with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-            import plotly.express as px
-            import plotly.graph_objects as go
-            import pandas as pd
+            # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
+            with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+                import plotly.express as px
+                import plotly.graph_objects as go
+                import pandas as pd
 
-            num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
-            cat_vars = ['M(parn)', 'Act']
-            all_vars = num_vars + cat_vars
+                num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
+                cat_vars = ['M(parn)', 'Act']
+                all_vars = num_vars + cat_vars
 
-            selected_var = st.selectbox(
-                "Variable para filtrar y colorear puntos:",
-                options=all_vars
-            )
+                selected_var = st.selectbox(
+                    "Variable para filtrar y colorear puntos:",
+                    options=all_vars
+                )
 
-            df_filtered = df.copy()
+                df_filtered = df.copy()
 
-            # Filtrado
-            if selected_var in num_vars:
-                try:
-                    df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
-                    labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
+                # 📌 Filtrado
+                if selected_var in num_vars:
+                    try:
+                        df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
+                        labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
+                        selected_labels = st.multiselect(
+                            "Selecciona uno o varios rangos:",
+                            options=labels,
+                            default=labels
+                        )
+                        df_filtered = df_filtered[df_filtered['range_label'].astype(str).isin(selected_labels)]
+                    except Exception as e:
+                        st.warning(f"No se pudieron crear rangos para esta variable. Detalle: {e}")
+                elif selected_var in cat_vars:
+                    labels = df_filtered[selected_var].dropna().unique().tolist()
                     selected_labels = st.multiselect(
-                        "Selecciona uno o varios rangos:",
+                        "Selecciona una o varias categorías:",
                         options=labels,
                         default=labels
                     )
-                    df_filtered = df_filtered[df_filtered['range_label'].astype(str).isin(selected_labels)]
-                except Exception as e:
-                    st.warning(f"No se pudieron crear rangos para esta variable. Detalle: {e}")
-            elif selected_var in cat_vars:
-                labels = df_filtered[selected_var].dropna().unique().tolist()
-                selected_labels = st.multiselect(
-                    "Selecciona una o varias categorías:",
-                    options=labels,
-                    default=labels
-                )
-                df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
+                    df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
 
-            hover_data = {
-                "RA": True, "Dec": True,
-                "Vel": True, "Cl_d": True, "Delta": True,
-                "(u-g)": True, "(g-r)": True, "(r-i)": True, "(i-z)": True,
-                "M(IP)": True, "M(ave)": True, "Act": True
-            }
+                hover_data = {
+                    "RA": True, "Dec": True,
+                    "Vel": True, "Cl_d": True, "Delta": True,
+                    "(u-g)": True, "(g-r)": True, "(r-i)": True, "(i-z)": True,
+                    "M(IP)": True, "M(ave)": True, "Act": True
+                }
 
-            required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
+                required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
 
-            if required_cols.issubset(df.columns):
-                fig = px.scatter(
-                    df_filtered,
-                    x="RA",
-                    y="Dec",
-                    color=selected_var,
-                    color_continuous_scale='plasma',
-                    hover_name="ID",
-                    hover_data=hover_data,
-                    title=f"Mapa filtrado por: {selected_var}"
-                )
-
-                # 👇 KDE contornos con suavizado Gaussiano real
-                kde_contours = px.density_contour(
-                    df_filtered,
-                    x="RA",
-                    y="Dec",
-                    nbinsx=50,  # Controla la resolución
-                    nbinsy=50,
-                    color_continuous_scale="plasma"
-                )
-                kde_contours.update_traces(
-                    contours_coloring="lines",
-                    line_width=2,
-                    showscale=False
-                )
-
-                # 👇 Agrega los contornos KDE a tu fig principal
-                for trace in kde_contours.data:
-                    fig.add_trace(trace)
-    
-                # 👇 Ejes y ajustes
-                fig.update_xaxes(autorange="reversed")
-                fig.update_yaxes(showgrid=False)
-
-                # -------------------------------
-                # ⭐ Extremos por variable
-                st.write("Número de galaxias a destacar por variable seleccionada:")
-                num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)
-
-                # 💎 Brillantes por Rf
-                st.write("Número de galaxias a destacar por brillo (Rf):")
-                num_bright = st.slider("Cantidad de galaxias brillantes", min_value=1, max_value=100, value=5)
-
-                # Dataframes
-                df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
-                df_extreme = (
-                    df_filtered.nsmallest(num_extreme, 'Rf') if selected_var == 'Rf'
-                    else df_filtered.nlargest(num_extreme, selected_var)
-                ).copy()
-
-                # -------------------------------
-                # ⭐ Estrellas
-                for i, (_, row) in enumerate(df_extreme.iterrows(), 1):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[row['RA']],
-                            y=[row['Dec']],
-                            mode="markers+text",
-                            marker=dict(symbol="star", size=24, color="gold", line=dict(width=1, color="black")),
-                            text=[str(i)],
-                            textposition="middle center",
-                            textfont=dict(color="black", size=10),
-                            name=f"Extremo {i}",
-                            legendgroup="Extremos",
-                            showlegend=False,
-                            hovertemplate="<br>".join([
-                                f"ID: {row['ID']}",
-                                f"RA: {row['RA']:.5f}",
-                                f"Dec: {row['Dec']:.5f}",
-                                f"Vel: {row['Vel']}",
-                                f"Delta: {row['Delta']}",
-                                f"{selected_var}: {row[selected_var]}"
-                            ])
-                        )
+                if required_cols.issubset(df.columns):
+                    fig = px.scatter(
+                        df_filtered,
+                        x="RA",
+                        y="Dec",
+                        color=selected_var,
+                        color_continuous_scale='plasma',
+                        hover_name="ID",
+                        hover_data=hover_data,
+                        title=f"Mapa filtrado por: {selected_var}"
                     )
 
-                # 💎 Diamantes
-                for i, (_, row) in enumerate(df_bright.iterrows(), 1):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[row['RA']],
-                            y=[row['Dec']],
-                            mode="markers+text",
-                            marker=dict(symbol="diamond", size=18, color="deepskyblue", line=dict(width=1, color="black")),
-                            text=[f"B{i}"],
-                            textposition="middle center",
-                            textfont=dict(color="black", size=10),
-                            name=f"Brillante B{i}",
-                            legendgroup="Brillantes",
-                            showlegend=False,
-                            hovertemplate="<br>".join([
-                                f"ID: {row['ID']}",
-                                f"RA: {row['RA']:.5f}",
-                                f"Dec: {row['Dec']:.5f}",
-                                f"Vel: {row['Vel']}",
-                                f"Delta: {row['Delta']}",
-                                f"Rf: {row['Rf']}"
-                            ])
-                        )
+                    # 👇 KDE contornos con suavizado Gaussiano
+                    kde_contours = px.density_contour(
+                        df_filtered,
+                        x="RA",
+                        y="Dec",
+                        nbinsx=50,  # Ajusta resolución
+                        nbinsy=50,
+                        contours_coloring="lines",
+                        color_continuous_scale="plasma"
+                    )
+                    kde_contours.update_traces(
+                        line_width=2,
+                        showscale=False
                     )
 
-                fig.update_layout(
-                    xaxis_title="Ascensión Recta (RA, grados)",
-                    yaxis_title="Declinación (Dec, grados)",
-                    height=700,
-                    width=900,
-                    font=dict(color="black"),
-                    legend_title="Destacadas"
-                )
+                    for trace in kde_contours.data:
+                        fig.add_trace(trace)
 
-                st.plotly_chart(fig)
+                    fig.update_xaxes(autorange="reversed")
+                    fig.update_yaxes(showgrid=False)
+                    fig.update_xaxes(showgrid=False)
 
-                st.download_button(
-                    "💾 Descargar tabla filtrada",
-                    df_filtered.to_csv(index=False).encode('utf-8'),
-                    file_name="galaxias_filtradas.csv",
-                    mime="text/csv"
-                )
+                    # ⭐️ Selección de galaxias extremas
+                    st.write("Número de galaxias a destacar por variable seleccionada:")
+                    num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)
 
-                if not df_extreme.empty or not df_bright.empty:
-                    df_combined = pd.concat([df_extreme, df_bright]).drop_duplicates().reset_index(drop=True)
+                    st.write("Número de galaxias a destacar por brillo (Rf):")
+                    num_bright = st.slider("Cantidad de galaxias brillantes", min_value=1, max_value=100, value=5)
+
+                    df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
+                    df_extreme = (
+                        df_filtered.nsmallest(num_extreme, 'Rf') if selected_var == 'Rf'
+                        else df_filtered.nlargest(num_extreme, selected_var)
+                    ).copy()
+
+                    # ⭐️ Añadir símbolos con numeración dual
+                    for i, (_, row) in enumerate(df_extreme.iterrows(), 1):
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[row['RA']],
+                                y=[row['Dec']],
+                                mode="markers+text",
+                                marker=dict(symbol="star", size=24, color="gold", line=dict(width=1, color="black")),
+                                text=[str(i)],
+                                textposition="middle center",
+                                textfont=dict(color="black", size=10),
+                                name=f"Extremo {i}",
+                                legendgroup="Extremos",
+                                showlegend=False,
+                                hovertemplate="<br>".join([
+                                    f"ID: {row['ID']}",
+                                    f"RA: {row['RA']:.5f}",
+                                    f"Dec: {row['Dec']:.5f}",
+                                    f"Vel: {row['Vel']}",
+                                    f"Delta: {row['Delta']}",
+                                    f"{selected_var}: {row[selected_var]}"
+                                ])
+                            )
+                        )
+
+                    for i, (_, row) in enumerate(df_bright.iterrows(), 1):
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[row['RA']],
+                                y=[row['Dec']],
+                                mode="markers+text",
+                                marker=dict(symbol="diamond", size=18, color="deepskyblue", line=dict(width=1, color="black")),
+                                text=[f"B{i}"],
+                                textposition="middle center",
+                                textfont=dict(color="black", size=10),
+                                name=f"Brillante B{i}",
+                                legendgroup="Brillantes",
+                                showlegend=False,
+                                hovertemplate="<br>".join([
+                                    f"ID: {row['ID']}",
+                                    f"RA: {row['RA']:.5f}",
+                                    f"Dec: {row['Dec']:.5f}",
+                                    f"Vel: {row['Vel']}",
+                                    f"Delta: {row['Delta']}",
+                                    f"Rf: {row['Rf']}"
+                                ])
+                            )
+                        )
+
+                    fig.update_layout(
+                        xaxis_title="Ascensión Recta (RA, grados)",
+                        yaxis_title="Declinación (Dec, grados)",
+                        height=700,
+                        width=900,
+                        font=dict(color="black"),
+                        legend_title="Destacadas"
+                    )
+
+                    st.plotly_chart(fig)
+
                     st.download_button(
-                        "⭐️ Descargar tabla de galaxias destacadas",
-                        df_combined.to_csv(index=False).encode('utf-8'),
-                        file_name="galaxias_destacadas.csv",
+                        "💾 Descargar tabla filtrada",
+                        df_filtered.to_csv(index=False).encode('utf-8'),
+                        file_name="galaxias_filtradas.csv",
                         mime="text/csv"
                     )
-            else:
-                st.warning(
-                    f"Faltan columnas necesarias para el mapa interactivo: "
-                    f"{required_cols - set(df.columns)}"
-                )
+
+                    if not df_extreme.empty or not df_bright.empty:
+                        df_combined = pd.concat([df_extreme, df_bright]).drop_duplicates().reset_index(drop=True)
+                        st.download_button(
+                            "⭐️ Descargar tabla de galaxias destacadas",
+                            df_combined.to_csv(index=False).encode('utf-8'),
+                            file_name="galaxias_destacadas.csv",
+                            mime="text/csv"
+                        )
+                else:
+                    st.warning(
+                        f"Faltan columnas necesarias para el mapa interactivo: "
+                        f"{required_cols - set(df.columns)}"
+                    )
+
 
         
 

@@ -496,7 +496,6 @@ elif opcion == "Proceso":
                     y="Dec",
                     nbinsx=50,
                     nbinsy=50,
-                    color_continuous_scale="plasma"
                 )
                 kde_contours.update_traces(
                     contours_coloring="lines",
@@ -504,6 +503,7 @@ elif opcion == "Proceso":
                     showscale=False
                 )
 
+                
                 # Añade cada traza de contorno KDE al scatter principal
                 for trace in kde_contours.data:
                     fig.add_trace(trace)

@@ -681,20 +681,19 @@ elif opcion == "Proceso":
             # ✅ Gráfico interactivo
             fig = go.Figure()
 
-            # ✅ Contornos
+
             fig.add_trace(go.Contour(
                 z=zi,
                 x=xi[:,0],
                 y=yi[0],
                 contours=dict(
-                    coloring='lines',
+                    coloring='heatmap',   # 👈 Superficie coloreada
                     showlabels=True
                 ),
                 colorscale=cmap,
                 showscale=True,
-                line_width=2
+                line_width=1
             ))
-
 
             # ✅ Puntos originales con hover robusto
             fig.add_trace(go.Scatter(

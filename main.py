@@ -622,56 +622,117 @@ elif opcion == "Proceso":
 
 
 
-        
-
-
-            
+            # ✅ Librerías necesarias
             import numpy as np
-            import matplotlib.pyplot as plt
+            import streamlit as st
+            import plotly.graph_objects as go
             import seaborn as sns
             from scipy.stats import gaussian_kde
+            from statsmodels.nonparametric.kernel_density import KDEMultivariate
 
-            # ✅ Sub-sección para suavizar
-            st.subheader("🗺️ Mapa suavizado de densidad para variable seleccionada")
+            # ✅ Encabezado
+            st.subheader("🗺️ Mapa KDE avanzado (fijo/adaptativo + opciones log/hover)")
 
-            # Ofrece solo numéricas que tengan sentido
+            # ✅ Variables
             smooth_var = st.selectbox(
                 "Variable para mapa suavizado:",
                 options=['Delta', 'Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)'],
                 index=0
             )
 
-            # Filtrar puntos con datos válidos
             df_smooth = df_filtered[df_filtered[smooth_var].notna()]
-
             if df_smooth.empty:
                 st.warning("No hay datos válidos para suavizar.")
+                st.stop()
+
+            # ✅ Configuraciones
+            kde_type = st.radio("Tipo de KDE:", ["Fijo (gaussian_kde)", "Adaptativo (KDEMultivariate)"])
+            bw = st.slider("Ajuste de ancho de banda:", 0.1, 2.0, 0.3, step=0.05)
+            use_log = st.toggle("Usar escala logarítmica para contornos", value=True)
+            cmap = st.selectbox("Colormap:", ["viridis", "plasma", "magma", "cividis"])
+            grid_size = st.slider("Resolución de la malla:", 50, 500, 200, step=50)
+
+            #         ✅ Datos
+            ra = df_smooth['RA'].values
+            dec = df_smooth['Dec'].values
+            weights = df_smooth[smooth_var].values
+
+            xi, yi = np.mgrid[ra.min():ra.max():grid_size*1j, dec.min():dec.max():grid_size*1j]
+
+            # ✅ KDE fijo o adaptativo
+            if kde_type == "Fijo (gaussian_kde)":
+                kde = gaussian_kde(np.vstack([ra, dec]), weights=weights, bw_method=bw)
+                zi = kde(np.vstack([xi.ravel(), yi.ravel()]))
             else:
-                # Crear malla
-                ra = df_smooth['RA'].values
-                dec = df_smooth['Dec'].values
-                z = df_smooth[smooth_var].values
+                kde = KDEMultivariate(data=[ra, dec], var_type='cc', bw=[bw, bw])
+                zi = kde.pdf(np.vstack([xi.ravel(), yi.ravel()]))
 
-                # Grid para interpolar
-                xi, yi = np.mgrid[ra.min():ra.max():200j, dec.min():dec.max():200j]
+            zi = np.reshape(zi, xi.shape)
+            if use_log:
+                zi = np.log1p(zi)
 
-                # KDE 2D ponderada por variable
-                positions = np.vstack([ra, dec])
-                kernel = gaussian_kde(positions, weights=z, bw_method=0.3)
+            # ✅ Plotly interactivo
+            fig = go.Figure()
 
-                zi = np.reshape(kernel(np.vstack([xi.ravel(), yi.ravel()])), xi.shape)
+            # Contornos
+            fig.add_trace(go.Contour(
+                z=zi,
+                x=xi[:,0],
+                y=yi[0],
+                contours=dict(
+                    coloring='lines',
+                    showlabels=True
+                ),
+                colorscale=cmap,
+                showscale=True,
+                line_width=2
+            ))
 
-                fig_smooth, ax = plt.subplots(figsize=(8, 6))
-                cf = ax.contourf(xi, yi, zi, levels=15, cmap='viridis')
-                scatter = ax.scatter(ra, dec, c=z, cmap='viridis', edgecolor='k', s=20)
+            # Puntos originales
+            fig.add_trace(go.Scatter(
+                x=ra,
+                y=dec,
+                mode='markers',
+                marker=dict(
+                    size=6,
+                    color=weights,
+                    colorscale=cmap,
+                    showscale=False,
+                    line=dict(width=0.5, color='black')
+                ),
+                hovertemplate="<br>".join([
+                    "RA: %{x:.3f}",
+                    "Dec: %{y:.3f}",
+                    f"{smooth_var}: %{marker.color:.3f}"
+                ])
+            ))
 
-                ax.set_title(f"Mapa suavizado (KDE) — {smooth_var}")
-                ax.set_xlabel("Ascensión Recta (RA, grados)")
-                ax.set_ylabel("Declinación (Dec, grados)")
-                ax.invert_xaxis()  # Invertir RA como en tus otros mapas
-                fig_smooth.colorbar(cf, ax=ax, label=smooth_var)
+            # Ejes y layout
+            fig.update_layout(
+                title=f"KDE {'Adaptativo' if kde_type.startswith('Adaptativo') else 'Fijo'} • Escala {'Log' if use_log else 'Lineal'} • {smooth_var}",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                    yaxis_title="Declinación (Dec, grados)",
+                    xaxis=dict(autorange="reversed"),
+                    template='plotly_white',
+                    height=700,
+                width=900
+                )
 
-                st.pyplot(fig_smooth)
+            st.plotly_chart(fig, use_container_width=True)
+
+            # ✅ Opcional: exporta tabla usada    
+            with st.expander("🔍 Ver datos suavizados"):
+                st.dataframe(df_smooth)
+                st.download_button(
+                    "💾 Descargar tabla usada",
+                    df_smooth.to_csv(index=False).encode('utf-8'),
+                    file_name="datos_suavizados.csv",
+                    mime="text/csv"
+                )
+
+
+
+            
 
 
 

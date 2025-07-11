@@ -702,9 +702,10 @@ elif opcion == "Proceso":
                 hovertemplate="<br>".join([
                     "RA: %{x:.3f}",
                     "Dec: %{y:.3f}",
-                    f"{smooth_var}: %{marker.color:.3f}"
+                    f"{smooth_var}: %{{marker.color:.3f}}"
                 ])
             ))
+
 
             # ✅ Layout
             fig.update_layout(

@@ -10,4 +10,4 @@ seaborn
 astropy
 statsmodels
 scikit-gstat
-
+pykrige

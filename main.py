@@ -476,6 +476,7 @@ elif opcion == "Proceso":
 
             if required_cols.issubset(df.columns):
                 fig = px.scatter(
+                fig = px.scatter(
                     df_filtered,
                     x="RA",
                     y="Dec",
@@ -486,23 +487,27 @@ elif opcion == "Proceso":
                     title=f"Mapa filtrado por: {selected_var}"
                 )
 
-                # Suavizado Gaussiano (efecto visual usando más contornos)
-                fig.add_trace(
-                    go.Histogram2dContour(
-                        x=df_filtered['RA'],
-                        y=df_filtered['Dec'],
-                        ncontours=15,  # Más contornos = más suave
-                        colorscale='plasma',
-                        contours=dict(smoothing=1.2),  # smoothing>1 usa kernel Gaussiano básico
-                        contours_coloring='lines',
-                        line_width=2,
-                        opacity=0.4,
-                        showscale=False,
-                        hoverinfo='skip'
-                    )
+                # 👇 KDE contornos con suavizado Gaussiano real
+                kde_contours = px.density_contour(
+                    df_filtered,
+                    x="RA",
+                    y="Dec",
+                    nbinsx=50,  # Controla la resolución
+                    nbinsy=50,
+                    color_continuous_scale="plasma"
+                )
+                kde_contours.update_traces(
+                    contours_coloring="lines",
+                    line_width=2,
+                    showscale=False
                 )
 
-                fig.update_xaxes(autorange="reversed", showgrid=False)
+                # 👇 Agrega los contornos KDE a tu fig principal
+                for trace in kde_contours.data:
+                    fig.add_trace(trace)
+    
+                # 👇 Ejes y ajustes
+                fig.update_xaxes(autorange="reversed")
                 fig.update_yaxes(showgrid=False)
 
                 # -------------------------------

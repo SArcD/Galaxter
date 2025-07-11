@@ -678,8 +678,12 @@ elif opcion == "Proceso":
                 z=zi,
                 x=xi[:,0],
                 y=yi[0],
+                #contours=dict(
+                #    coloring='lines',
+                #    showlabels=True
+                #),
                 contours=dict(
-                    coloring='lines',
+                    coloring='heatmap',   # o 'fill'
                     showlabels=True
                 ),
                 colorscale=cmap,

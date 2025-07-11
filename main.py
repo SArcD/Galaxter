@@ -664,6 +664,23 @@ elif opcion == "Proceso":
             dec = df_smooth['Dec'].values
             weights = df_smooth[smooth_var].values
 
+
+            # ============================
+            # 🔑 Peso inteligente
+            # ============================
+            if smooth_var in ['Cl_d', 'Rf']:
+                # Invertir pesos: menor Cl_d o Rf = más peso
+                max_val = np.nanmax(weights)
+                min_val = np.nanmin(weights)
+                weights = max_val - weights + min_val + 1e-6  # Evita división por cero
+                weights = weights / weights.sum()  # Normaliza
+            else:
+                # Variables directas: normaliza para estabilidad
+                weights = weights - np.nanmin(weights)
+                weights = weights / weights.sum() if weights.sum() != 0 else np.ones_like(weights) / len(weights)
+
+
+            
             xi, yi = np.mgrid[ra.min():ra.max():grid_size*1j, dec.min():dec.max():grid_size*1j]
 
             # ✅ KDE fijo o adaptativo

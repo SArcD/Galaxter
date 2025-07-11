@@ -476,7 +476,6 @@ elif opcion == "Proceso":
 
             if required_cols.issubset(df.columns):
                 fig = px.scatter(
-                fig = px.scatter(
                     df_filtered,
                     x="RA",
                     y="Dec",

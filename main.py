@@ -622,76 +622,110 @@ elif opcion == "Proceso":
 
 
             # ✅ Librerías necesarias
+            #import numpy as np
+            #import streamlit as st
+            #import plotly.graph_objects as go
+           # from scipy.stats import gaussian_kde
+           # from statsmodels.nonparametric.kernel_density import KDEMultivariate
+
+            # ✅ Encabezado
+            st.subheader("🗺️ Mapa KDE avanzado (fijo/adaptativo + opciones log/hover)")
+
             import numpy as np
             import streamlit as st
             import plotly.graph_objects as go
             from scipy.stats import gaussian_kde
             from statsmodels.nonparametric.kernel_density import KDEMultivariate
+            from sklearn.ensemble import RandomForestRegressor
+            from pykrige.ok import OrdinaryKriging
 
-            # ✅ Encabezado
-            st.subheader("🗺️ Mapa KDE avanzado (fijo/adaptativo + opciones log/hover)")
+            # ----------------------------------------
+            # ENCABEZADO
+            st.subheader("🗺️ Mapa suavizado 2D (4 métodos + pesos inteligentes)")
 
-            # ✅ Variables disponibles
             smooth_var = st.selectbox(
                 "Variable para mapa suavizado:",
-                options=['Delta', 'Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)'],
+                options=['Rf', 'Cl_d', 'Vel', 'Delta', '(u-g)', '(g-r)', '(r-i)', '(i-z)'],
                 index=0
             )
 
-            # ✅ Datos filtrados válidos
             df_smooth = df_filtered[df_filtered[smooth_var].notna()]
             if df_smooth.empty:
                 st.warning("No hay datos válidos para suavizar.")
                 st.stop()
 
-            # ✅ Configuración interactiva
-            kde_type = st.radio("Tipo de KDE:", ["Fijo (gaussian_kde)", "Adaptativo (KDEMultivariate)"])
-            bw = st.slider("Ajuste de ancho de banda:", 0.1, 2.0, 0.3, step=0.05)
-            use_log = st.toggle("Usar escala logarítmica para contornos", value=True)
-            cmap = st.selectbox("Colormap:", ["viridis", "plasma", "magma", "cividis"])
-            grid_size = st.slider("Resolución de la malla:", 50, 500, 200, step=50)
+            # ----------------------------------------
+            # PESOS INTELIGENTES
+            if smooth_var == 'Cl_d':
+                weights = 1 / (df_smooth[smooth_var].values + 1e-3)
+            elif smooth_var == 'Rf':
+                weights = -df_smooth[smooth_var].values
+                weights -= np.min(weights)
+                weights /= np.max(weights)
+            else:
+                weights = df_smooth[smooth_var].values
+                if np.min(weights) < 0:
+                    weights -= np.min(weights)
+                weights /= np.max(weights)
 
-            # ✅ Variables para malla
+            df_smooth['peso_kde'] = weights
+
+            # ----------------------------------------
+            # PARÁMETROS INTERACTIVOS
+            method = st.radio("Método:", ["KDE Fijo", "KDE Adaptativo", "Random Forest", "Kriging"])
+            bw = st.slider("Ancho de banda:", 0.1, 2.0, 0.3, step=0.05)
+            grid_size = st.slider("Resolución de la malla:", 50, 500, 200, step=50)
+            use_log = st.toggle("Usar contornos logarítmicos", value=True)
+            cmap = st.selectbox("Colormap:", ["viridis", "plasma", "magma", "cividis"])
+
+            # ----------------------------------------
+            # DATOS
             ra = df_smooth['RA'].values
             dec = df_smooth['Dec'].values
-            weights = df_smooth[smooth_var].values
+            z = df_smooth[smooth_var].values
 
             xi, yi = np.mgrid[ra.min():ra.max():grid_size*1j, dec.min():dec.max():grid_size*1j]
 
-            # ✅ KDE fijo o adaptativo
-            if kde_type.startswith("Fijo"):
+            # ----------------------------------------
+            # MODELOS
+            if method == "KDE Fijo":
                 kde = gaussian_kde(np.vstack([ra, dec]), weights=weights, bw_method=bw)
                 zi = kde(np.vstack([xi.ravel(), yi.ravel()]))
-            else:
+            elif method == "KDE Adaptativo":
                 kde = KDEMultivariate(data=[ra, dec], var_type='cc', bw=[bw, bw])
                 zi = kde.pdf(np.vstack([xi.ravel(), yi.ravel()]))
+            elif method == "Random Forest":
+                X = np.vstack([ra, dec]).T
+                rf = RandomForestRegressor(n_estimators=100)
+                rf.fit(X, z)
+                zi = rf.predict(np.vstack([xi.ravel(), yi.ravel()]))
+            elif method == "Kriging":
+                OK = OrdinaryKriging(
+                    ra, dec, z,
+                    variogram_model='gaussian',
+                    verbose=False,
+                    enable_plotting=False
+                )
+                zi, _ = OK.execute('grid', xi[0], yi[:,0])
 
             zi = np.reshape(zi, xi.shape)
             if use_log:
                 zi = np.log1p(zi)
 
-            # ✅ Gráfico interactivo
+            # ----------------------------------------
+            # PLOTLY INTERACTIVO
             fig = go.Figure()
 
-            # ✅ Contornos
             fig.add_trace(go.Contour(
                 z=zi,
                 x=xi[:,0],
                 y=yi[0],
-                #contours=dict(
-                #    coloring='lines',
-                #    showlabels=True
-                #),
-                contours=dict(
-                    coloring='heatmap',   # o 'fill'
-                    showlabels=True
-                ),
+                contours=dict(coloring='lines', showlabels=True),
                 colorscale=cmap,
                 showscale=True,
                 line_width=2
             ))
 
-            # ✅ Puntos originales con hover robusto
             fig.add_trace(go.Scatter(
                 x=ra,
                 y=dec,
@@ -703,37 +737,37 @@ elif opcion == "Proceso":
                     showscale=False,
                     line=dict(width=0.5, color='black')
                 ),
+                customdata=df_smooth[[smooth_var, 'peso_kde']].values,
                 hovertemplate="<br>".join([
                     "RA: %{x:.3f}",
                     "Dec: %{y:.3f}",
-                    f"{smooth_var}: %{{marker.color:.3f}}"
+                    f"{smooth_var}: %{{customdata[0]:.3f}}",
+                    "Peso: %{customdata[1]:.3f}"
                 ])
             ))
 
-
-            # ✅ Layout
             fig.update_layout(
-                title=f"KDE {'Adaptativo' if kde_type.startswith('Adaptativo') else 'Fijo'} • Escala {'Log' if use_log else 'Lineal'} • {smooth_var}",
+                title=f"{method} • Escala {'Log' if use_log else 'Lineal'} • {smooth_var}",
                 xaxis_title="Ascensión Recta (RA, grados)",
                 yaxis_title="Declinación (Dec, grados)",
                 xaxis=dict(autorange="reversed"),
                 template='plotly_white',
                 height=700,
-                width=900
+                width=900    
             )
 
             st.plotly_chart(fig, use_container_width=True)
 
-            # ✅ Tabla y exportación
-            with st.expander("🔍 Ver datos suavizados"):
+            # ----------------------------------------
+            # EXPORTA TABLA USADA
+            with st.expander("📄 Ver tabla suavizada"):
                 st.dataframe(df_smooth)
                 st.download_button(
-                    "💾 Descargar tabla usada",
+                    "💾 Descargar tabla suavizada + pesos",
                     df_smooth.to_csv(index=False).encode('utf-8'),
                     file_name="datos_suavizados.csv",
                     mime="text/csv"
                 )
-
 
 
 

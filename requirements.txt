@@ -9,3 +9,5 @@ tqdm
 seaborn
 astropy
 statsmodels
+scikit-gstat
+

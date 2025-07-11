@@ -486,19 +486,17 @@ elif opcion == "Proceso":
                         title=f"Mapa filtrado por: {selected_var}"
                     )
 
-                    # 👇 KDE contornos con suavizado Gaussiano
                     kde_contours = px.density_contour(
                         df_filtered,
                         x="RA",
                         y="Dec",
-                        nbinsx=50,  # Ajusta resolución
+                        nbinsx=50,
                         nbinsy=50,
-                        contours_coloring="lines",
                         color_continuous_scale="plasma"
                     )
                     kde_contours.update_traces(
-                        line_width=2,
-                        showscale=False
+                        contours_coloring="fill",
+                        showscale=True
                     )
 
                     for trace in kde_contours.data:
@@ -507,7 +505,7 @@ elif opcion == "Proceso":
                     fig.update_xaxes(autorange="reversed")
                     fig.update_yaxes(showgrid=False)
                     fig.update_xaxes(showgrid=False)
-
+                    
                     # ⭐️ Selección de galaxias extremas
                     st.write("Número de galaxias a destacar por variable seleccionada:")
                     num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)

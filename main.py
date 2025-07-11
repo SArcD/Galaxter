@@ -488,30 +488,27 @@ elif opcion == "Proceso":
                     title=f"Mapa filtrado por: {selected_var}"
                 )
 
-                # 👇 KDE con suavizado real
-                bw = st.slider("Ajusta el suavizado KDE (bandwidth)", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
-
+                # ===============================================
+                # 2️⃣ Agrega contornos KDE (Plotly density_contour)
                 kde_contours = px.density_contour(
                     df_filtered,
                     x="RA",
                     y="Dec",
                     nbinsx=50,
                     nbinsy=50,
-                    color_continuous_scale="plasma",
-                    # 👇 Opción interna: se usa solo en seaborn, Plotly lo aplica por defecto:
-                    # Puedes experimentar con `bw_adjust` si usas seaborn
+                    color_continuous_scale="plasma"
                 )
                 kde_contours.update_traces(
                     contours_coloring="lines",
                     line_width=2,
                     showscale=False
                 )
+
+                # Añade cada traza de contorno KDE al scatter principal
                 for trace in kde_contours.data:
                     fig.add_trace(trace)
 
-                fig.update_xaxes(autorange="reversed")
-                fig.update_yaxes(showgrid=False)
-
+                
                 # ⭐ y 💎 sliders
                 st.write("Número de galaxias a destacar por variable seleccionada:")
                 num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)

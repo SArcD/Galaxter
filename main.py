@@ -1192,7 +1192,197 @@ elif opcion == "Proceso":
 
         
     
-    
+        import numpy as np    
+        import pandas as pd
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+        from scipy.cluster.hierarchy import linkage, fcluster
+        from scipy.spatial import KDTree
+        import plotly.express as px
+        import plotly.graph_objects as go
+        import streamlit as st
+
+        # ================================
+        # 📌 Clustering jerárquico interno
+        # ================================
+        def run_subclustering_iterative(df, parent_col, parent_label, selected_cols, num_clusters, level):
+            df_sub = df[df[parent_col] == parent_label].copy()
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
+            Z = linkage(scaled_data, method='ward')
+
+            cluster_col = f'Subcluster_{level}'
+            labels = fcluster(Z, t=num_clusters, criterion='maxclust')
+            df_sub[cluster_col] = labels
+            df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
+
+            # PCA + t-SNE
+            n_points = scaled_data.shape[0]
+            perplexity = max(5, min(30, n_points - 1))
+            pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+            tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
+            df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
+            df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
+            df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
+            df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
+
+            return df
+
+        # ================================
+        # 📌 Dressler–Shectman (DS) test
+        # ================================
+        def run_ds_iterative(df, cluster_col, level, n_permutations=500, alpha=0.05):
+            delta_col = f'Delta_{level}'
+            cat_col = f'Delta_cat_{level}'
+            pass_col = f'DS_Pass_{level}'
+
+            df[delta_col] = np.nan
+            df[cat_col] = np.nan
+            df[pass_col] = np.nan
+
+            passed = []
+            clusters = df[cluster_col].dropna().unique()
+
+            for cluster in clusters:
+                df_sub = df[df[cluster_col] == cluster].copy()
+                if df_sub.shape[0] < 5:
+                    continue
+
+                coords = df_sub[['RA', 'Dec']].values
+                velocities = df_sub['Vel'].values
+
+                N = int(np.sqrt(len(coords)))
+                tree = KDTree(coords)
+                neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+
+                Vg, sg = np.mean(velocities), np.std(velocities)
+                delta = []
+                for i, n in enumerate(neighbors_idx):
+                    lv, ls = np.mean(velocities[n]), np.std(velocities[n])
+                    d_i = ((N+1)/sg**2) * ((lv-Vg)**2 + (ls-sg)**2)
+                    delta.append(np.sqrt(d_i))
+                df_sub[delta_col] = delta
+                DS_real = np.sum(delta)
+
+                DS_permuted = []
+                for _ in range(n_permutations):
+                    v_perm = np.random.permutation(velocities)
+                    dp = []
+                    for i, n in enumerate(neighbors_idx):
+                        lv, ls = np.mean(v_perm[n]), np.std(v_perm[n])
+                        d_i = ((N+1)/sg**2) * ((lv-Vg)**2 + (ls-sg)**2)
+                        dp.append(np.sqrt(d_i))
+                    DS_permuted.append(np.sum(dp))
+
+                p_val = np.sum(np.array(DS_permuted) >= DS_real) / n_permutations
+                df_sub[cat_col] = pd.cut(df_sub[delta_col], [0,1,2,3,5], labels=['Bajo','Medio','Alto','Muy Alto'])
+                df.loc[df[cluster_col] == cluster, delta_col] = df_sub[delta_col]
+                df.loc[df[cluster_col] == cluster, cat_col] = df_sub[cat_col]
+                df.loc[df[cluster_col] == cluster, pass_col] = int(p_val < alpha)
+
+                if p_val < alpha:
+                    passed.append(cluster)
+
+            return df, passed
+
+        # ================================
+        # 📌 Panel PCA+t-SNE + Boxplots
+        # ================================
+        def plot_tsne_and_boxplots(df, cluster_col, selected_cols, level):
+            tsne1 = f'TSNE1_{level}'
+            tsne2 = f'TSNE2_{level}'
+            unique_clusters = sorted(df[cluster_col].dropna().unique())
+            colors = px.colors.qualitative.Set2
+
+            fig = go.Figure()
+            for i, cl in enumerate(unique_clusters):
+                d = df[df[cluster_col] == cl]
+                fig.add_trace(go.Scatter(
+                    x=d[tsne1], y=d[tsne2],
+                    mode='markers',
+                    marker=dict(size=7, color=colors[i % len(colors)]),
+                    name=f'{cluster_col} {cl}',
+                    hovertext=d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1),
+                    hoverinfo='text'
+                ))
+
+            fig.add_trace(go.Histogram2dContour(
+                x=df[tsne1], y=df[tsne2],
+                colorscale='Greys',
+                showscale=False, reversescale=True, opacity=0.2, ncontours=15,
+                hoverinfo='skip'
+            ))
+
+            fig.update_layout(
+                title=f"PCA+t-SNE nivel {level}",
+                template='plotly_white', height=600, width=800,
+                xaxis_title=tsne1, yaxis_title=tsne2
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            for var in selected_cols:
+                fig_box = px.box(df, x=cluster_col, y=var, color=cluster_col, notched=True,
+                         points='all', color_discrete_sequence=colors)
+                fig_box.update_layout(title=f"Boxplot {var} nivel {level}")
+                st.plotly_chart(fig_box, use_container_width=True)
+
+        # ================================
+        # 📌 Mapa validado final
+        # ================================
+        def plot_validated_map(df, level):
+            cluster_col = f'Subcluster_{level}'
+            pass_col = f'DS_Pass_{level}'
+            df_pass = df[df[pass_col] == 1].copy()
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=df['RA'], y=df['Dec'],
+                mode='markers',
+                marker=dict(size=4, color='lightgrey', opacity=0.3),
+                name="Fondo"
+            ))
+
+            colors = px.colors.qualitative.Set2
+            for i, cluster in enumerate(df_pass[cluster_col].unique()):
+                d = df_pass[df_pass[cluster_col] == cluster]
+                hover = d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1)
+                fig.add_trace(go.Scatter(
+                    x=d['RA'], y=d['Dec'],
+                    mode='markers', name=f'{cluster_col} {cluster}',
+                    marker=dict(size=8, color=colors[i % len(colors)], line=dict(width=0.5)),
+                    text=hover, hoverinfo='text'
+                ))
+                fig.add_trace(go.Histogram2dContour(
+                    x=d['RA'], y=d['Dec'],
+                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
+                    showscale=False, opacity=0.3, ncontours=10
+                ))
+
+            fig.update_layout(title=f"Mapa nivel {level}: estructuras validadas DS",
+                              template='plotly_white', xaxis=dict(autorange='reversed'))
+            st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+        current_level = 1
+        parent_col = 'Subcluster'
+        while True:
+            st.subheader(f"🔄 Clustering nivel {current_level}")
+            num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 3)
+            df = run_subclustering_iterative(df, parent_col, None, selected_cols, num_clusters, current_level)
+
+            df, passed = run_ds_iterative(df, f'Subcluster_{current_level}', current_level)
+            plot_tsne_and_boxplots(df, f'Subcluster_{current_level}', selected_cols, current_level)
+            plot_validated_map(df, current_level)
+
+            if not st.checkbox(f"➡️ Clustering otro nivel basado en nivel {current_level}?", value=False):
+                break
+
+            parent_col = f'Subcluster_{current_level}'
+            current_level += 1
 
 
 

@@ -1843,105 +1843,112 @@ elif opcion == "Proceso":
 
 
         with st.expander("📊 Prueba DS + Bootstrapping AUTOMÁTICO para TODOS los sub-subclusters"):
-            st.subheader("🧪 Análisis Dressler–Shectman (DS) automático para sub-subclusters")
+        with st.expander("📊 Dressler–Shectman para TODOS los Sub-Subclusters"):
+            st.subheader("🧪 Análisis DS masivo + Bootstrapping")
 
             if 'Subcluster_sub' in df.columns:
-                unique_subsubs = sorted(df['Subcluster_sub'].dropna().unique())
+                unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
 
-                if not unique_subsubs:
-                    st.info("No hay sub-subclusters generados.")
-                else:
-                    st.info(f"Se encontraron {len(unique_subsubs)} sub-subclusters únicos para evaluar.")
+                # ✅ 1️⃣ Inicializa columnas globales
+                df['Delta_sub'] = np.nan
+                df['Delta_sub_cat'] = np.nan
+                df['SubSub_DS_Pass'] = np.nan
 
-                    n_permutations = st.slider(
-                        "Número de permutaciones para Monte Carlo:",
-                        100, 2000, 500, step=100, key="DS_auto_perm"
+                # ✅ Umbral de significancia
+                alpha = 0.05
+
+                # ✅ Controles
+                n_permutations = st.slider(
+                    "Número de permutaciones por sub-subcluster:",
+                    min_value=100, max_value=2000, value=500, step=100
+                )
+
+                passed_list = []
+
+                for sub in unique_sub_subclusters:
+                    df_sub_sub = df[df['Subcluster_sub'] == sub].copy()
+                    if df_sub_sub.shape[0] < 5:
+                        continue  # Demasiado pequeño
+
+                    coords = df_sub_sub[['RA', 'Dec']].values
+                    velocities = df_sub_sub['Vel'].values
+
+                    N = int(np.sqrt(len(coords)))
+                    tree = KDTree(coords)
+                    neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+
+                    V_global = np.mean(velocities)
+                    sigma_global = np.std(velocities)
+
+                    delta = []
+                    for i, neighbors in enumerate(neighbors_idx):
+                        local_vel = np.mean(velocities[neighbors])
+                        local_sigma = np.std(velocities[neighbors])
+                        d_i = ((N + 1) / sigma_global**2) * (
+                            (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                        )
+                        delta.append(np.sqrt(d_i))
+
+                    df_sub_sub['Delta_sub'] = delta
+                    DS_stat_real = np.sum(delta)
+
+                    # ✅ Bootstrapping
+                    DS_stats_permuted = []
+                    for _ in range(n_permutations):
+                        velocities_perm = np.random.permutation(velocities)
+                        delta_perm = []
+                        for i, neighbors in enumerate(neighbors_idx):
+                            local_vel = np.mean(velocities_perm[neighbors])
+                            local_sigma = np.std(velocities_perm[neighbors])
+                            d_i = ((N + 1) / sigma_global**2) * (
+                                (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
+                            )
+                            delta_perm.append(np.sqrt(d_i))
+                        DS_stats_permuted.append(np.sum(delta_perm))
+
+                    DS_stats_permuted = np.array(DS_stats_permuted)
+                    p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
+
+                    # ✅ Clasifica por rangos Delta
+                    bins = [0, 1, 2, 3, 5]
+                    labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
+                    df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
+
+                    # ✅ 2️⃣ Guarda resultados globales
+                    df.loc[df['Subcluster_sub'] == sub, 'Delta_sub'] = df_sub_sub['Delta_sub'].values
+                    df.loc[df['Subcluster_sub'] == sub, 'Delta_sub_cat'] = df_sub_sub['Delta_sub_cat'].values
+                    df.loc[df['Subcluster_sub'] == sub, 'SubSub_DS_Pass'] = int(p_value < alpha)
+
+                    if p_value < alpha:
+                        passed_list.append(sub)
+
+                st.success(f"Sub-subclusters que PASAN la prueba DS (p < {alpha}): {passed_list}")
+
+                # ✅ Hover detallado y export
+                df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
+                if not df_pass.empty:
+                    df_pass['hover_text'] = df_pass.apply(
+                        lambda row:
+                        f"ID: {row['ID']}<br>"
+                        f"RA: {row['RA']:.3f}<br>"
+                        f"Dec: {row['Dec']:.3f}<br>"
+                        f"Vel: {row['Vel']:.1f}<br>"
+                        f"Delta_sub: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
+                        f"Sub-subcluster: {row['Subcluster_sub']}",
+                        axis=1
                     )
 
-                    # Inicializa columna de resultados
-                    df['SubSub_DS_Pass'] = 0
-                    resultados = []
-
-                    for sub in unique_subsubs:
-                        df_sub = df[df['Subcluster_sub'] == sub].copy()
-
-                        if df_sub.shape[0] < 5:
-                            st.warning(f"Sub-subcluster {sub} tiene menos de 5 galaxias. Se omite.")
-                            continue
-
-                        coords = df_sub[['RA', 'Dec']].values
-                        velocities = df_sub['Vel'].values
-
-                        N = int(np.sqrt(len(coords)))
-                        tree = KDTree(coords)
-                        neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
-
-                        V_global = np.mean(velocities)
-                        sigma_global = np.std(velocities)
-
-                        delta = []
-                        for i, neighbors in enumerate(neighbors_idx):
-                            local_vel = np.mean(velocities[neighbors])
-                            local_sigma = np.std(velocities[neighbors])
-
-                            d_i = ((N + 1) / sigma_global**2) * (
-                                (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
-                            )
-                            delta.append(np.sqrt(d_i))
-
-                        DS_stat_real = np.sum(delta)
-
-                        DS_stats_permuted = []
-                        for _ in range(n_permutations):
-                            velocities_perm = np.random.permutation(velocities)
-                            delta_perm = []
-                            for i, neighbors in enumerate(neighbors_idx):
-                                local_vel = np.mean(velocities_perm[neighbors])
-                                local_sigma = np.std(velocities_perm[neighbors])
-                                d_i = ((N + 1) / sigma_global**2) * (
-                                    (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
-                                )
-                                delta_perm.append(np.sqrt(d_i))
-                            DS_stats_permuted.append(np.sum(delta_perm))
-
-                        DS_stats_permuted = np.array(DS_stats_permuted)
-                        p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
-
-                        passed = int(p_value < 0.05)
-
-                        # Guarda flags en df principal
-                        df.loc[df['Subcluster_sub'] == sub, 'SubSub_DS_Pass'] = passed
-
-                        resultados.append({
-                            "Sub-subcluster": sub,
-                            "N Galaxias": len(df_sub),
-                            "DS_real": round(DS_stat_real, 2),
-                            "p-value": round(p_value, 4),
-                            "Pass": passed
-                        })
-
-                        st.write(f"**Sub-subcluster {sub}** → DS: {DS_stat_real:.2f} | p-valor: {p_value:.4f} | {'✅ PASA' if passed else '❌ NO PASA'}")
-
-                    # Tabla resumen
-                    df_resumen = pd.DataFrame(resultados)
-                    st.dataframe(df_resumen)
-
-                    # Exporta tabla solo con los que pasan
-                    df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
-                    if not df_pass.empty:
-                        st.download_button(
-                            "💾 Descargar galaxias que PASAN DS",
-                            df_pass.to_csv(index=False).encode('utf-8'),
-                            file_name="Galaxias_SubSub_DS_PASS.csv",
-                            mime="text/csv"
-                        )
-                        st.success(f"Total galaxias que PASAN: {len(df_pass)}")
-
-                    else:
-                        st.info("Ningún sub-subcluster pasó la prueba DS.")
+                    st.dataframe(df_pass[['ID', 'RA', 'Dec', 'Vel', 'Delta_sub', 'Delta_sub_cat', 'Subcluster_sub']])
+                    st.download_button(
+                        "💾 Descargar galaxias que PASAN DS",
+                        df_pass.to_csv(index=False).encode('utf-8'),
+                        file_name="Galaxias_Pasan_DS.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.info("Ningún sub-subcluster pasó la prueba DS.")
             else:
-                st.info("No se ha generado la columna 'Subcluster_sub'. Ejecuta primero el sub-subclustering.")
-
+                st.warning("No se encontró la columna 'Subcluster_sub'. Ejecuta primero el sub-subclustering.")
 
 
 

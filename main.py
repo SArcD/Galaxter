@@ -1079,6 +1079,83 @@ elif opcion == "Proceso":
                 template='plotly_white')
             return fig
 
+
+
+        
+        import plotly.graph_objects as go
+        import plotly.express as px
+
+        def plot_final_map_subclusters(df):
+            """
+            Muestra mapa RA-Dec para todos los subclusters con KDE + hover completo.
+            """
+            if 'Subcluster' not in df.columns:
+                st.warning("No se encontró la columna 'Subcluster'. Ejecuta primero el clustering.")
+                return
+
+            df_plot = df[df['Subcluster'].notna()].copy()
+            if df_plot.empty:
+                st.info("No hay subclusters asignados para mostrar.")
+                return
+
+            unique_clusters = sorted(df_plot['Subcluster'].unique())
+            colores = px.colors.qualitative.Set2
+
+            fig = go.Figure()
+
+            for i, cluster in enumerate(unique_clusters):
+                cl_data = df_plot[df_plot['Subcluster'] == cluster].copy()
+                color = colores[i % len(colores)]
+                cl_str = f"Subcluster {cluster}"
+
+                # Genera hover detallado con TODAS las columnas
+                hover_text = cl_data.apply(
+                    lambda row: "<br>".join([f"{col}: {row[col]}" for col in cl_data.columns]),
+                    axis=1
+                )
+
+                # Puntos
+                fig.add_trace(go.Scatter(
+                    x=cl_data['RA'],
+                    y=cl_data['Dec'],
+                    mode='markers',
+                    marker=dict(size=6, color=color, line=dict(width=0.5, color='DarkSlateGrey')),
+                    name=cl_str,
+                    legendgroup=cl_str,
+                    text=hover_text,
+                    hoverinfo='text'
+                ))
+
+                # Contorno KDE
+                fig.add_trace(go.Histogram2dContour(
+                    x=cl_data['RA'],
+                    y=cl_data['Dec'],
+                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
+                    showscale=False,
+                    opacity=0.3,
+                    ncontours=10,
+                    line=dict(width=1),
+                    name=f"{cl_str} Contorno",
+                    legendgroup=cl_str,
+                    hoverinfo='skip',
+                    showlegend=False  # Para que solo la traza principal aparezca en leyenda
+                ))
+
+            fig.update_layout(
+                title="Mapa Abell 85 por Subestructura • RA–Dec + KDE",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                yaxis_title="Declinación (Dec, grados)",
+                legend_title="Subclusters",
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                xaxis=dict(autorange="reversed"),
+                template='plotly_white',
+                height=800, width=1000
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+ 
+        
         # ================================================
         # ✅ FUNCIÓN: Procesar TODO AUTOMÁTICO
         # ================================================
@@ -1109,6 +1186,8 @@ elif opcion == "Proceso":
             selected_cols = st.multiselect("Variables numéricas:", df.select_dtypes(include='number').columns.tolist())
             num_clusters = st.slider("Número de clusters:", 2, 10, 4)
             df = full_pipeline(df, selected_cols, num_clusters)
+            # Y muestra el mapa final interactivo:
+            plot_final_map_subclusters(df)
 
 
         

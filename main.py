@@ -1699,56 +1699,57 @@ elif opcion == "Proceso":
 
 
         import numpy as np
-        import streamlit as st
         import pandas as pd
-        import plotly.express as px
-        import plotly.graph_objects as go
-        from sklearn.preprocessing import StandardScaler    
+        from sklearn.preprocessing import StandardScaler
         from sklearn.decomposition import PCA
         from sklearn.manifold import TSNE
-        from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
+        from scipy.cluster.hierarchy import linkage, fcluster
         from scipy.spatial import KDTree
         from tqdm import tqdm
+        import plotly.express as px
+        import plotly.graph_objects as go
 
-    
         # ============================================
-        # ✅ 1️⃣ FUNCIÓN DE CLUSTERING JERÁRQUICO INTERNO
+        # ✅ 1️⃣ FUNCIÓN: Sub-subclustering para 1 Subcluster
         # ============================================
-        def run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub):
-            df_sub = df[df['Subcluster'] == selected_parent].copy()
+        def run_subsub_clustering_one(df, parent, selected_cols, num_clusters_sub):
+            df_sub = df[df['Subcluster'] == parent].copy()
+            if df_sub.shape[0] < 5:
+                return df  # Saltar si muy pocos
+
             scaler = StandardScaler()
-            scaled_data_sub = scaler.fit_transform(df_sub[selected_cols].dropna())
-            Z_sub = linkage(scaled_data_sub, method='ward')
-
+            scaled = scaler.fit_transform(df_sub[selected_cols].dropna())
+            Z_sub = linkage(scaled, method='ward')
             labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion='maxclust')
+
             df_sub['Subcluster_sub'] = labels_sub
             df.loc[df_sub.index, 'Subcluster_sub'] = df_sub['Subcluster_sub']
 
             # t-SNE seguro
-            n_points = scaled_data_sub.shape[0]
+            n_points = scaled.shape[0]
             max_perplexity = max(5, min(30, n_points - 1))
-            pca_sub = PCA(n_components=min(20, scaled_data_sub.shape[1])).fit_transform(scaled_data_sub)
+            pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
             tsne = TSNE(n_components=2, perplexity=max_perplexity, random_state=42)
-            tsne_result_sub = tsne.fit_transform(pca_sub)
+            tsne_result = tsne.fit_transform(pca)
 
-            df_sub['TSNE1_sub'] = tsne_result_sub[:, 0]
-            df_sub['TSNE2_sub'] = tsne_result_sub[:, 1]
+            df_sub['TSNE1_sub'] = tsne_result[:, 0]
+            df_sub['TSNE2_sub'] = tsne_result[:, 1]
+
             df.loc[df_sub.index, 'TSNE1_sub'] = df_sub['TSNE1_sub']
             df.loc[df_sub.index, 'TSNE2_sub'] = df_sub['TSNE2_sub']
 
             return df
 
-
         # ============================================
-        # ✅ 2️⃣ FUNCIÓN DE PRUEBA DS MASIVA AUTOMÁTICA
+        # ✅ 2️⃣ FUNCIÓN: DS masivo
         # ============================================
-        def run_ds_test(df, n_permutations=500, alpha=0.05):
+        def run_ds_test_all(df, n_permutations=500, alpha=0.05):
             df['Delta_sub'] = np.nan
             df['Delta_sub_cat'] = np.nan
             df['SubSub_DS_Pass'] = np.nan
 
-            unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
             passed_list = []
+            unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
 
             for sub in unique_sub_subclusters:
                 df_sub_sub = df[df['Subcluster_sub'] == sub].copy()
@@ -1791,6 +1792,7 @@ elif opcion == "Proceso":
                     DS_stats_permuted.append(np.sum(delta_perm))
 
                 p_value = np.sum(np.array(DS_stats_permuted) >= DS_stat_real) / n_permutations
+
                 bins = [0, 1, 2, 3, 5]
                 labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
                 df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
@@ -1804,15 +1806,13 @@ elif opcion == "Proceso":
 
             return df, passed_list
 
-
-        # ============================================
-        # ✅ 3️⃣ FUNCIÓN PARA GRAFICAR TODAS + VALIDAS
+        # ============================================        
+        # ✅ 3️⃣ FUNCIÓN: Mapa final global
         # ============================================
         def plot_all_with_valids(df, passed_list):
             df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
             fig = go.Figure()
 
-            # Fondo gris
             fig.add_trace(go.Scatter(
                 x=df['RA'],
                 y=df['Dec'],
@@ -1860,7 +1860,7 @@ elif opcion == "Proceso":
                 ))
 
             fig.update_layout(
-                title="Mapa completo Abell 85: fondo + Sub-subclusters validados DS",
+                title="Mapa Abell 85: fondo + Sub-subclusters validados DS",
                 xaxis_title="Ascensión Recta (RA, grados)",
                 yaxis_title="Declinación (Dec, grados)",
                 xaxis=dict(autorange='reversed'),
@@ -1877,18 +1877,26 @@ elif opcion == "Proceso":
                 mime="text/csv"
             )
 
-        # ============================================        
-        # ✅ 4️⃣ EJECUCIÓN AUTOMÁTICA
         # ============================================
+        # ✅ 4️⃣ Pipeline AUTOMÁTICO
+        # ============================================
+        with st.expander("🚀 Pipeline Automático para TODOS"):
+            st.subheader("🔁 Sub-subclustering + DS + Mapa Global")
 
-        # 1) Corre clustering interno
-        df = run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub)
+            if 'Subcluster' in df.columns:
+                numeric_cols = df.select_dtypes(include='number').columns.tolist()
+                num_clusters_sub = st.slider("Número de sub-subclusters por Subcluster:", 2, 10, 3)
+                selected_cols = st.multiselect("Variables numéricas:", numeric_cols, default=numeric_cols)
 
-        # 2) Corre DS
-        df, passed_list = run_ds_test(df, n_permutations=500)
+                if st.button("🔄 Ejecutar todo"):
+                    unique_parents = sorted(df['Subcluster'].dropna().unique())
+                    for parent in unique_parents:
+                        df = run_subsub_clustering_one(df, parent, selected_cols, num_clusters_sub)
+                    df, passed_list = run_ds_test_all(df, n_permutations=500)
+                    plot_all_with_valids(df, passed_list)
+            else:
+                st.warning("Ejecuta primero el clustering jerárquico principal.")
 
-        # 3) Grafica TODO
-        plot_all_with_valids(df, passed_list)
 
 
 

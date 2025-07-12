@@ -1448,7 +1448,11 @@ elif opcion == "Proceso":
 
                     scaled = scaler.fit_transform(data)
                     pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
-                    perplexity = min(30, max(5, scaled.shape[0] - 1))
+                    #perplexity = min(30, max(5, scaled.shape[0] - 1))
+                    # Perplexity dinámico
+                    n_points = pca.shape[0]
+                    perplexity = max(5, min(30, n_points - 1))
+
                     tsne = TSNE(n_components=2, perplexity=perplexity, random_state=42)
                     result = tsne.fit_transform(pca)
 

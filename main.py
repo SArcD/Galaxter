@@ -1702,7 +1702,7 @@ elif opcion == "Proceso":
             # ⚙️ Visualiza mapa con galaxias validadas en este nivel
             plot_validated_map(
                 df,
-                level=current_level
+                current_level
             )
 
             # 🔄 ¿Quieres otro nivel?

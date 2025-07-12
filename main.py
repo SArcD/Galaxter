@@ -1882,13 +1882,13 @@ elif opcion == "Proceso":
         # ============================================
 
         # 1) Corre clustering interno
-         df = run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub)
+        df = run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub)
 
         # 2) Corre DS
-         df, passed_list = run_ds_test(df, n_permutations=500)
+        df, passed_list = run_ds_test(df, n_permutations=500)
 
         # 3) Grafica TODO
-         plot_all_with_valids(df, passed_list)
+        plot_all_with_valids(df, passed_list)
 
 
 

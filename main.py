@@ -1406,8 +1406,10 @@ elif opcion == "Proceso":
         while True:
             st.subheader(f"🔄 Clustering nivel {current_level}")
             num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 3)
-            df = run_subclustering_iterative(df, parent_col, None, selected_cols, num_clusters, current_level)
-
+#            df = run_subclustering_iterative(df, parent_col, None, selected_cols, num_clusters, current_level)
+#parent_col = 'Subcluster'
+#while True:
+            df = run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, current_level)
             df, passed = run_ds_iterative(df, f'Subcluster_{current_level}', current_level)
             plot_tsne_and_boxplots(df, f'Subcluster_{current_level}', selected_cols, current_level)
             plot_validated_map(df, current_level)

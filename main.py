@@ -873,829 +873,170 @@ elif opcion == "Proceso":
                 """, unsafe_allow_html=True)
 
 
-    
-    
-        with st.expander("🔍 Buscar subestructuras"):
-            st.subheader("🧬 Clustering Jerárquico")
-
-            numeric_cols = df.select_dtypes(include='number').columns.tolist()
-            selected_cols = st.multiselect(
-                "Selecciona variables numéricas para clustering:",
-                options=numeric_cols,
-                default=numeric_cols
-            )
-
-            if selected_cols:
-                data = df[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
-
-                if data.shape[0] < 2:
-                    st.warning("No hay suficientes datos después de limpiar filas para clustering.")
-                else:
-                    scaler = StandardScaler()
-                    scaled_data = scaler.fit_transform(data)
-
-                    Z = linkage(scaled_data, method='ward')
-
-                #     ✅ Controles interactivos
-                    num_clusters = st.slider(
-                        "Número de subestructuras (clusters):",
-                        min_value=2, max_value=10, value=4
-                    )
-                    criterion = st.selectbox(
-                        "Criterio de corte para fcluster:",
-                        options=['maxclust', 'distance'],
-                        index=0
-                    )
-
-                    from scipy.cluster.hierarchy import fcluster
-
-                    if criterion == 'maxclust':
-                        labels = fcluster(Z, t=num_clusters, criterion=criterion)
-                    else:
-                        distance_threshold = st.number_input(
-                            "Umbral de distancia:", min_value=0.0, value=10.0, step=0.5
-                        )
-                        labels = fcluster(Z, t=distance_threshold, criterion=criterion)
-
-                    df.loc[data.index, 'Subcluster'] = labels
-
-                    # ✅ Dendrograma
-                    fig_dendro, ax = plt.subplots(figsize=(10, 5))
-                    dendrogram(Z, labels=data.index.tolist(), ax=ax)
-                    ax.set_title("Dendrograma de Clustering Jerárquico")
-                    ax.set_xlabel("Índices de galaxias")
-                    ax.set_ylabel("Distancia")
-                    st.pyplot(fig_dendro)
-    
-                    # ✅ Generar TSNE1 y TSNE2 si faltan
-                    if 'TSNE1' not in df.columns or 'TSNE2' not in df.columns:
-                        st.info("Generando TSNE1 y TSNE2 dinámicamente con PCA + t-SNE...")
-                        from sklearn.decomposition import PCA
-                        from sklearn.manifold import TSNE
-
-                        pca = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-                        tsne = TSNE(n_components=2, random_state=42)
-                        tsne_result = tsne.fit_transform(pca)
-
-                        df.loc[data.index, 'TSNE1'] = tsne_result[:, 0]
-                        df.loc[data.index, 'TSNE2'] = tsne_result[:, 1]
-
-                    # ✅ PANEL t-SNE + Boxplots
-                    import plotly.graph_objects as go
-                    from plotly.subplots import make_subplots
-
-                    #vars_phys = selected_cols
-                    vars_phys = numeric_cols
-                    colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
-
-                    if 'Subcluster' in df.columns and 'TSNE1' in df.columns and 'TSNE2' in df.columns:
-                        unique_clusters = sorted(df.loc[data.index, 'Subcluster'].dropna().unique())
-
-                        n_cols = 3
-                        n_rows = (len(vars_phys) + n_cols - 1) // n_cols
-                        total_rows = n_rows + 1
-
-                        specs = [[{"colspan": n_cols}] + [None]*(n_cols-1)]
-                        for _ in range(n_rows):
-                            specs.append([{} for _ in range(n_cols)])
-
-                        subplot_titles = ["PCA + t-SNE Clustering"] + vars_phys
-
-                        fig = make_subplots(
-                            rows=total_rows, cols=n_cols,
-                            specs=specs,
-                            subplot_titles=subplot_titles
-                        )
-
-                    # Scatter t-SNE
-                        for i, cluster in enumerate(unique_clusters):
-                            cluster_data = df.loc[data.index][df.loc[data.index, 'Subcluster'] == cluster]
-                            hover_text = (
-                                "<b>ID:</b> " + cluster_data['ID'].astype(str) +
-                                "<br><b>RA:</b> " + cluster_data['RA'].round(4).astype(str) +
-                                "<br><b>Dec:</b> " + cluster_data['Dec'].round(4).astype(str) +
-                                "<br><b>Vel:</b> " + cluster_data['Vel'].round(1).astype(str) +
-                                "<br><b>Cl_d:</b> " + cluster_data['Cl_d'].round(3).astype(str) +
-                                "<br><b>Delta:</b> " + cluster_data['Delta'].round(3).astype(str) +
-                                "<br><b>M(IPn):</b> " + cluster_data['M(IPn)'].astype(str) +
-                                "<br><b>TSNE1:</b> " + cluster_data['TSNE1'].round(3).astype(str) +
-                                "<br><b>TSNE2:</b> " + cluster_data['TSNE2'].round(3).astype(str)
-                            )
-
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=cluster_data['TSNE1'],
-                                    y=cluster_data['TSNE2'],
-                                    mode='markers',
-                                    name=f'Subcluster {cluster}',
-                                    legendgroup=f'Subcluster {cluster}',
-                                    showlegend=True,
-                                    marker=dict(
-                                        size=6,
-                                        color=colors[i % len(colors)],
-                                        line=dict(width=1, color='DarkSlateGrey')
-                                    ),
-                                    text=hover_text,
-                                    hoverinfo='text'
-                                ),
-                                row=1, col=1
-                            )
-
-                        fig.add_trace(
-                            go.Histogram2dContour(
-                                x=df.loc[data.index, 'TSNE1'],
-                                y=df.loc[data.index, 'TSNE2'],
-                                colorscale='Greys',
-                                reversescale=True,
-                                opacity=0.2,
-                                showscale=False,
-                                hoverinfo='skip',
-                                showlegend=False
-                            ),
-                            row=1, col=1
-                        )
-
-                        # Boxplots
-                        for idx, var in enumerate(vars_phys):
-                            row = (idx // n_cols) + 2
-                            col = (idx % n_cols) + 1
-                            for j, cluster in enumerate(unique_clusters):
-                                cluster_data = df.loc[data.index][df.loc[data.index, 'Subcluster'] == cluster]
-                                hover_text = (
-                                    "<b>ID:</b> " + cluster_data['ID'].astype(str) +
-                                    f"<br><b>{var}:</b> " + cluster_data[var].astype(str) +
-                                    "<br><b>Subcluster:</b> " + cluster_data['Subcluster'].astype(str)
-                                )
-
-                                fig.add_trace(
-                                    go.Box(
-                                        y=cluster_data[var],
-                                        x=[f'Subcluster {cluster}'] * len(cluster_data),
-                                        name=f'Subcluster {cluster}',
-                                        legendgroup=f'Subcluster {cluster}',
-                                        showlegend=False,
-                                        boxpoints='all',
-                                        jitter=0.5,
-                                        pointpos=-1.8,
-                                        marker_color=colors[j % len(colors)],
-                                        notched=True,
-                                        text=hover_text,
-                                        hoverinfo='text',
-                                        width=0.6
-                                    ),
-                                    row=row, col=col
-                                )
-
-                        fig.update_layout(
-                            title="Panel interactivo: PCA + t-SNE + Boxplots",
-                            template='plotly_white',
-                            width=400 * n_cols,
-                            height=400 * total_rows,
-                            boxmode='group',
-                            legend_title="Subclusters"
-                        )
-
-                        fig.update_xaxes(title="t-SNE 1", row=1, col=1)
-                        fig.update_yaxes(title="t-SNE 2", row=1, col=1)
-
-                        for idx, var in enumerate(vars_phys):
-                            row = (idx // n_cols) + 2
-                            col = (idx % n_cols) + 1
-                            fig.update_xaxes(title="Subcluster", row=row, col=col)
-                            fig.update_yaxes(title=var, row=row, col=col)
-
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        st.warning("Faltan columnas 'Subcluster', 'TSNE1' o 'TSNE2' para el panel interactivo.")
-            else:
-                st.info("Selecciona al menos una variable numérica para generar el dendrograma y panel t-SNE.")
-
-
-            # ✅ Visualizar tabla filtrada por subcluster específico
-            st.subheader("🔍 Explora los datos de un subcluster específico")
-
-            if 'Subcluster' in df.columns:
-                unique_subclusters = sorted(df.loc[data.index, 'Subcluster'].dropna().unique())
-                selected_sub = st.selectbox(
-                    "Selecciona un Subcluster para mostrar sus filas:",
-                    options=unique_subclusters
-                )
-
-                filtered_df = df.loc[
-                    (df.index.isin(data.index)) & (df['Subcluster'] == selected_sub)
-                ]
-
-                st.dataframe(filtered_df)
-
-                # Botón para descargar CSV de este subcluster
-                st.download_button(
-                    "💾 Descargar CSV de este Subcluster",
-                    filtered_df.to_csv(index=False).encode('utf-8'),
-                    file_name=f"Subcluster_{selected_sub}.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.info("No se ha generado la columna 'Subcluster'.")
-
-
-            import plotly.graph_objects as go
-            import plotly.express as px
-
-        with st.expander("🗺️ Mapa final Abell 85 por Subestructura"):
-            import plotly.graph_objects as go
-            import plotly.express as px
-
-            df_plot = df[df['Subcluster'].notna()].copy()  # ✅ Solo puntos con Subcluster
-
-            if not df_plot.empty:
-                unique_clusters = sorted(df_plot['Subcluster'].unique())
-                colores = px.colors.qualitative.Set2
-
-                fig = go.Figure()
-
-                for i, cluster in enumerate(unique_clusters):
-                    cl_data = df_plot[df_plot['Subcluster'] == cluster]
-                    color = colores[i % len(colores)]
-                    cl_str = f"Subestructura {cluster}"
-
-                    # Curvas de contorno
-                    fig.add_trace(go.Histogram2dContour(
-                        x=cl_data['RA'],
-                        y=cl_data['Dec'],
-                        colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
-                        showscale=False,
-                        opacity=0.3,
-                        ncontours=8,
-                        line=dict(width=1, color=color),
-                        name=cl_str,
-                        legendgroup=cl_str,
-                        hoverinfo="skip",
-                        showlegend=False
-                    ))
-
-                    # Puntos
-                    fig.add_trace(go.Scatter(
-                        x=cl_data['RA'],
-                        y=cl_data['Dec'],
-                        mode='markers',
-                        marker=dict(size=6, color=color),
-                        name=cl_str,
-                        legendgroup=cl_str,
-                        hovertemplate="<br>".join([
-                            "ID: %{customdata[0]}",
-                            "RA: %{x}",
-                            "Dec: %{y}",
-                            "Vel: %{customdata[1]}",
-                            "Delta: %{customdata[2]}"
-                        ]),
-                        customdata=cl_data[['ID', 'Vel', 'Delta']],
-                        showlegend=True
-                    ))
-
-                    # Estrella centro
-                    ra_centro = cl_data['RA'].mean()
-                    dec_centro = cl_data['Dec'].mean()
-
-                    fig.add_trace(go.Scatter(
-                        x=[ra_centro],
-                        y=[dec_centro],
-                        mode="markers",
-                        marker=dict(symbol="star", size=14, color=color, line=dict(width=1, color="black")),
-                        name=f"{cl_str} (Centro)",
-                        legendgroup=cl_str,
-                        showlegend=False,
-                        hoverinfo="skip"
-                    ))
-
-                fig.update_layout(
-                    title="Mapa RA–Dec por Subcluster con Curvas QS y Centros",
-                    xaxis_title="Ascensión Recta (RA, grados)",
-                    yaxis_title="Declinación (Dec, grados)",
-                    legend_title="Subestructura",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    xaxis=dict(
-                        showgrid=False,
-                        autorange="reversed"  # 🔥 Invierte RA
-                    ),
-                    yaxis=dict(showgrid=False),
-                    font=dict(color="black")
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No hay datos con Subcluster asignado para mostrar el mapa.")
-
-
-#with st.expander("📊 Diagramas de caja por Subestructura"):
-            import plotly.express as px
-            import pandas as pd
-
-            # 1️⃣ Variables candidatas
-            vars_candidates = [
-                'RA', 'Dec', 'Vel', 'Delta', 'Cl_d',
-                'Rf', 'C(index)', '(u-g)', '(g-r)', 'M(IPn)', 'Act'
-            ]
-
-            selected_vars = st.multiselect(
-                "Selecciona variables para analizar evidencias de subestructuras:",
-                options=vars_candidates,
-                default=['RA', 'Dec', 'Vel', 'Delta']
-            )
-
-            # 2️⃣ Tabla de interpretación
-            st.markdown("**🔍 Sugerencias para interpretar cada variable:**")
-
-            table_data = [
-                ["RA, Dec", "Distribución espacial: busca agrupaciones locales."],
-                ["Vel", "Picos secundarios o colas: indica grupos cinemáticamente distintos."],
-                ["Delta", "Desviación local: zonas con dinámica diferente."],
-                ["Cl_d", "Distancia al centro: grupos externos o desplazados radialmente."],
-                ["Rf", "Magnitud: galaxias brillantes dominantes en subcúmulos."],
-                ["C(index)", "Concentración de luz: relación con morfología."],
-                ["(u-g), (g-r)", "Colores: poblaciones estelares jóvenes/viejas."],
-                ["M(IPn)", "Morfología interna: coherencia morfológica."],
-                ["Act", "Actividad nuclear: AGN/starburst asociados a interacción."]
-            ]
-            df_tips = pd.DataFrame(table_data, columns=["Variable", "¿Qué observar?"])
-            st.table(df_tips)
-
-            # 3️⃣ Boxplots dinámicos
-            if 'Subcluster' in df.columns:
-                df_box = df[df['Subcluster'].notna()].copy()
-
-                if selected_vars and not df_box.empty:
-                    st.info("Observa si los diagramas muestran distribuciones diferenciadas entre subestructuras.")
-                    for var in selected_vars:
-                        fig = px.box(
-                            df_box,
-                            x='Subcluster',
-                            y=var,
-                            color='Subcluster',
-                            points='all',
-                            notched=True,
-                            title=f"Distribución de {var} por Subestructura",
-                            labels={'Subcluster': 'Subestructura', var: var},
-                            color_discrete_sequence=px.colors.qualitative.Safe
-                        )
-                        fig.update_traces(width=0.6, jitter=0.3)
-                        fig.update_layout(
-                            yaxis_title=var,
-                            xaxis_title='Subestructura',
-                            legend_title='Subestructura',
-                            boxmode='group',
-                            boxgap=0.1
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("No se seleccionaron variables o no hay datos para graficar.")
-            else:
-                st.info("No se ha generado la columna 'Subcluster'.")
-
-#with st.expander("📊 Barras estratificadas por Subestructura"):
-            import plotly.express as px
-
-            # Variables categóricas posibles
-            cat_candidates = ['Act', 'M(IPn)', 'M(IP)', 'M(ave)', 'M(C)']
-
-            selected_cats = st.multiselect(
-                "Selecciona variables categóricas para ver proporciones por Subestructura:",
-                options=cat_candidates,
-                default=['Act']
-            )
-
-            if 'Subcluster' in df.columns and selected_cats:
-                df_cat = df[df['Subcluster'].notna()].copy()
-
-                for cat_var in selected_cats:
-                    if cat_var in df_cat.columns:
-                        # Asegúrate de tratar como categórica
-                        cat_name = f"{cat_var}_cat"
-                        df_cat[cat_name] = df_cat[cat_var].astype(str)
-
-                        # Proporciones
-                        df_prop = (
-                            df_cat.groupby(['Subcluster', cat_name])
-                            .size()
-                            .reset_index(name='Count')
-                        )
-
-                        totals = df_prop.groupby('Subcluster')['Count'].transform('sum')
-                        df_prop['Proportion'] = df_prop['Count'] / totals
-                        df_prop['Percent'] = (df_prop['Proportion'] * 100).round(1)
-
-                        fig_bar = px.bar(
-                            df_prop,
-                            x='Subcluster',
-                            y='Proportion',
-                            color=cat_name,
-                            text=df_prop['Percent'].astype(str) + '%',
-                            color_discrete_sequence=px.colors.qualitative.Safe,
-                            title=f'Proporción por categoría {cat_var} en cada Subestructura',
-                            barmode='stack',
-                            height=600
-                        )
-
-                        fig_bar.update_layout(
-                            yaxis=dict(title='Proporción'),
-                            xaxis=dict(title='Subestructura'),
-                            legend_title=cat_var,
-                            uniformtext_minsize=8,
-                            uniformtext_mode='hide'
-                        )
-
-                        st.plotly_chart(fig_bar, use_container_width=True)
-                    else:
-                        st.warning(f"La columna '{cat_var}' no existe en tu DataFrame.")
-            else:
-                st.info("No se encuentran las columnas necesarias o no se seleccionó ninguna variable.")
-
-
 
 
 
 
         import numpy as np
-        import plotly.express as px
-        from astropy.cosmology import FlatLambdaCDM
-
-        st.subheader("🌌 Mapa 3D comóvil por Subestructura y Variable")
-
-        # ✅ Cosmología y centro interactivos
-        col1, col2, col3 = st.columns(3)
-        H0_3d = col1.number_input("H0 (km/s/Mpc)", value=70.0, min_value=50.0, max_value=80.0, step=0.5)
-        Om0_3d = col2.number_input("Ωm", value=0.3, min_value=0.0, max_value=1.0, step=0.01)
-        z_cluster_3d = col3.number_input("Redshift para referencia", value=0.0555, step=0.001)
-
-        ra0_default_3d = float(df['RA'].mean()) if not df.empty else 0.0
-        dec0_default_3d = float(df['Dec'].mean()) if not df.empty else 0.0
-
-        ra0_3d = st.number_input("Centro RA (°)", value=ra0_default_3d, step=0.1)
-        dec0_3d = st.number_input("Centro Dec (°)", value=dec0_default_3d, step=0.1)
-
-        # ✅ Filtrado de Subestructura
-        df_sub = df[df['Subcluster'].notna()].copy()
-        if df_sub.empty:
-            st.warning("No hay subestructuras detectadas.")
-        else:
-            unique_subs = sorted(df_sub['Subcluster'].unique())
-            selected_subs = st.multiselect(
-                "Selecciona una o varias Subestructuras:",
-                options=unique_subs,
-                default=unique_subs
-            )
-
-            df_3d = df_sub[df_sub['Subcluster'].isin(selected_subs)].copy()
-
-            # ✅ Variable numérica para rangos
-            num_vars_3d = ['Vel', 'Delta', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)']
-            var_selected_3d = st.selectbox("Variable que agrupar rangos:", options=num_vars_3d, index=1)
-
-            # Crear rangos dinámicos
-            n_bins_3d = st.slider("Número de rangos a usar:", min_value=2, max_value=6, value=4)
-            df_3d['Var_bin'] = pd.qcut(df_3d[var_selected_3d], q=n_bins_3d, duplicates='drop')
-            df_3d['Var_bin_str'] = df_3d['Var_bin'].astype(str)
-
-            # Cosmología
-            cosmo = FlatLambdaCDM(H0=H0_3d, Om0=Om0_3d)
-            c = 3e5  # km/s
-
-            # Calcular z_gal y D_C
-            df_3d['z_gal'] = z_cluster_3d + (df_3d['Vel'] / c) * (1 + z_cluster_3d)
-            df_3d['D_C'] = cosmo.comoving_distance(df_3d['z_gal']).value  # Mpc
-
-            # Coordenadas comóviles
-            df_3d['X'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.cos(np.radians(df_3d['RA'] - ra0_3d))
-            df_3d['Y'] = df_3d['D_C'] * np.cos(np.radians(df_3d['Dec'])) * np.sin(np.radians(df_3d['RA'] - ra0_3d))
-            df_3d['Z'] = df_3d['D_C'] * np.sin(np.radians(df_3d['Dec'] - dec0_3d))
-
-            # Tamaño basado en rango (más alto → mayor)
-            bin_map = {k: i+1 for i, k in enumerate(sorted(df_3d['Var_bin_str'].unique()))}
-            df_3d['Size'] = df_3d['Var_bin_str'].map(lambda x: 4 + bin_map[x]*3)
-
-            # Hover enriquecido
-            hover_3d = ["ID", "Subcluster", "RA", "Dec", "Vel", "Delta", "Cl_d",
-                    "(u-g)", "(g-r)", "(r-i)", "(i-z)", "Act"]
-
-            fig_3d = px.scatter_3d(
-                df_3d,
-                x='X', y='Y', z='Z',
-                color='Var_bin_str',
-                size='Size',
-                hover_data=hover_3d,
-                opacity=0.7,
-                title=f"Mapa 3D comóvil | Subestructura(s): {selected_subs} | Rango: {var_selected_3d}",
-            )
-
-            fig_3d.update_layout(
-                scene=dict(
-                    xaxis_title="X [Mpc]",
-                    yaxis_title="Y [Mpc]",
-                    zaxis_title="Z [Mpc]"
-                ),
-                height=800,
-                margin=dict(l=0, r=0, b=0, t=50)
-            )
-
-            st.plotly_chart(fig_3d, use_container_width=True)
-
-            st.markdown(f"""
-            <div style="text-align: justify;">
-            <strong> Cómo interpretarlo:</strong><br>
-            - Cada punto es una galaxia en coordenadas comóviles X, Y, Z.<br>
-            - El color indica el rango de {var_selected_3d}.<br>
-            - El tamaño refleja su posición dentro del rango: más grande = rango más alto.<br>
-            - Puedes girar, acercar y ocultar rangos usando la leyenda.<br>
-            </div>
-            """, unsafe_allow_html=True)
-
-
-    
-        import numpy as np
-        from scipy.spatial import KDTree
-        import plotly.graph_objects as go
-        import plotly.figure_factory as ff
-
-        import numpy as np
-        from scipy.spatial import KDTree
-        import plotly.graph_objects as go
-        from tqdm import tqdm
-
-        import numpy as np
-        from scipy.spatial import KDTree
-        import plotly.graph_objects as go
         import pandas as pd
+        import streamlit as st
+        import plotly.express as px
+        import plotly.graph_objects as go
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+        from scipy.cluster.hierarchy import linkage, fcluster
+        from scipy.spatial import KDTree
         from tqdm import tqdm
 
-        with st.expander("📊 Prueba Dressler–Shectman Interactiva + Bootstrapping"):
-            st.subheader("🧪 Análisis DS + Densidad Local + p-valor (Monte Carlo)")
+        # ================================================
+        # ✅ FUNCIÓN: Clustering jerárquico
+        # ================================================
+        def run_hierarchical_clustering(df, selected_cols, num_clusters):
+            scaler = StandardScaler()
+            data_clean = df[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
+            scaled_data = scaler.fit_transform(data_clean)
+            Z = linkage(scaled_data, method='ward')
+            labels = fcluster(Z, t=num_clusters, criterion='maxclust')
+            df.loc[data_clean.index, 'Subcluster'] = labels
+            return df, Z, scaled_data, data_clean.index
 
-            if 'Subcluster' in df.columns:
-                unique_subclusters = sorted(df['Subcluster'].dropna().unique())
-                selected_sub = st.selectbox(
-                    "Selecciona una Subestructura para la prueba DS:",
-                    options=unique_subclusters
-                )
+        # ================================================    
+        # ✅ FUNCIÓN: t-SNE
+        # ================================================
+        def add_tsne(df, scaled_data, idx):
+            pca = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+            tsne = TSNE(n_components=2, random_state=42)
+            tsne_result = tsne.fit_transform(pca)
+            df.loc[idx, 'TSNE1'] = tsne_result[:, 0]
+            df.loc[idx, 'TSNE2'] = tsne_result[:, 1]
+            return df
 
-                df_sub = df[df['Subcluster'] == selected_sub].copy()
+        # ================================================
+        # ✅ FUNCIÓN: DS TEST para subcluster
+        # ================================================
+        def run_ds(df_sub, n_permutations=500):
+            coords = df_sub[['RA', 'Dec']].values
+            velocities = df_sub['Vel'].values
+            N = int(np.sqrt(len(coords)))
+            tree = KDTree(coords)
+            neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+            V_global = np.mean(velocities)
+            sigma_global = np.std(velocities)
+            delta = []
+            for i, neighbors in enumerate(neighbors_idx):
+                local_vel = np.mean(velocities[neighbors])
+                local_sigma = np.std(velocities[neighbors])
+                d_i = ((N + 1) / sigma_global**2) * ((local_vel - V_global)**2 + (local_sigma - sigma_global)**2)
+                delta.append(np.sqrt(d_i))
+            df_sub['Delta'] = delta
+            DS_stat_real = np.sum(delta)
+            DS_stats_permuted = []
+            for _ in range(n_permutations):
+                velocities_perm = np.random.permutation(velocities)
+                delta_perm = []
+                for i, neighbors in enumerate(neighbors_idx):
+                    local_vel = np.mean(velocities_perm[neighbors])
+                    local_sigma = np.std(velocities_perm[neighbors])
+                    d_i = ((N + 1) / sigma_global**2) * ((local_vel - V_global)**2 + (local_sigma - sigma_global)**2)
+                    delta_perm.append(np.sqrt(d_i))
+                DS_stats_permuted.append(np.sum(delta_perm))
+            p_value = np.sum(np.array(DS_stats_permuted) >= DS_stat_real) / n_permutations
+            return df_sub, DS_stats_permuted, DS_stat_real, p_value
 
-                if df_sub.empty or df_sub.shape[0] < 5:
-                    st.warning("No hay suficientes galaxias para aplicar la prueba.")
-                else:
-                    st.success(f"Galaxias seleccionadas: {len(df_sub)}")
+        # ================================================
+        # ✅ FUNCIÓN: Histograma DS
+        # ================================================
+        def plot_ds_histogram(DS_stats_permuted, DS_stat_real):
+            fig = go.Figure()
+            fig.add_trace(go.Histogram(x=DS_stats_permuted, nbinsx=30, marker_color='lightgrey'))
+            fig.add_trace(go.Scatter(x=[DS_stat_real, DS_stat_real],
+                                     y=[0, np.histogram(DS_stats_permuted, bins=30)[0].max()],
+                                     mode='lines', line=dict(color='red', dash='dash', width=3)))
+            fig.update_layout(title="DS: Distribución nula vs. Δ real",
+                              xaxis_title='Δ', yaxis_title='Frecuencia',
+                              template='plotly_white')
+            return fig
 
-                    coords = df_sub[['RA', 'Dec']].values
-                    velocities = df_sub['Vel'].values
+        # ================================================
+        # ✅ FUNCIÓN: Mapas RA-Dec + DS
+        # ================================================
+        def plot_ra_dec_ds(df_sub):
+            color_map = {
+                'Bajo': '#1f77b4',
+                'Medio': '#2ca02c',
+                'Alto': '#ff7f0e',
+                'Muy Alto': '#d62728'
+            }
+            bins = [0, 1, 2, 3, 5]
+            labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
+            df_sub['Delta_cat'] = pd.cut(df_sub['Delta'], bins=bins, labels=labels)
+            df_sub['color'] = df_sub['Delta_cat'].map(color_map)
+            fig = go.Figure()
+            for cat, color in color_map.items():
+                sub_cat = df_sub[df_sub['Delta_cat'] == cat]
+                fig.add_trace(go.Scatter(
+                    x=sub_cat['RA'],
+                    y=sub_cat['Dec'],
+                    mode='markers',
+                    name=f'Delta: {cat}',
+                    marker=dict(size=8, color=color),
+                    hovertext=sub_cat.apply(
+                        lambda row: f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}<br>Vel: {row['Vel']:.1f}<br>Δ: {row['Delta']:.3f} ({row['Delta_cat']})",
+                        axis=1),
+                    hoverinfo='text'))
+            fig.add_trace(go.Histogram2dContour(
+                x=df_sub['RA'],
+                y=df_sub['Dec'],
+                colorscale='Blues',
+                reversescale=True,
+                showscale=False,
+                opacity=0.3,
+                ncontours=15))
+            fig.update_layout(
+                title="Mapa RA-Dec por Delta",
+                xaxis_title="RA",
+                yaxis_title="Dec",
+                xaxis=dict(autorange='reversed'),
+                template='plotly_white')
+            return fig
 
-                    N = int(np.sqrt(len(coords)))
-                    tree = KDTree(coords)
-                    neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+        # ================================================
+        # ✅ FUNCIÓN: Procesar TODO AUTOMÁTICO
+        # ================================================
+        def full_pipeline(df, selected_cols, num_clusters, n_permutations=500):
+            df, Z, scaled_data, idx = run_hierarchical_clustering(df, selected_cols, num_clusters)
+            df = add_tsne(df, scaled_data, idx)
+            tsne_fig = plot_tsne_and_boxplots(df, idx, selected_cols)
+            st.plotly_chart(tsne_fig)
+            unique_clusters = sorted(df.loc[idx, 'Subcluster'].dropna().unique())
+            for sub in unique_clusters:
+                df_sub = df[df['Subcluster'] == sub].copy()
+                if df_sub.shape[0] < 5:
+                    continue
+                df_sub, DS_stats_permuted, DS_stat_real, p_value = run_ds(df_sub, n_permutations)
+                st.write(f"Subcluster {sub}: p-valor DS = {p_value:.4f}")
+                hist_fig = plot_ds_histogram(DS_stats_permuted, DS_stat_real)
+                st.plotly_chart(hist_fig)
+                map_fig = plot_ra_dec_ds(df_sub)
+                st.plotly_chart(map_fig)
+                st.download_button(f"Descargar tabla Subcluster {sub}",
+                                   df_sub.to_csv(index=False).encode('utf-8'),
+                                   file_name=f"DS_Subcluster_{sub}.csv",
+                                   mime="text/csv")
 
-                    V_global = np.mean(velocities)
-                    sigma_global = np.std(velocities)
+            return df
 
-                    delta = []
-                    for i, neighbors in enumerate(neighbors_idx):
-                        local_vel = np.mean(velocities[neighbors])
-                        local_sigma = np.std(velocities[neighbors])
-
-                        d_i = ((N + 1) / sigma_global**2) * (
-                            (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
-                        )
-                        delta.append(np.sqrt(d_i))
-
-                    df_sub['Delta'] = delta
-                    DS_stat_real = np.sum(delta)
-                    st.write(f"**Estadístico Dressler–Shectman Δ real:** {DS_stat_real:.2f}")
-
-                    # ✅ Bootstrapping / Monte Carlo
-                    st.info("Calculando distribución nula con permutaciones (Monte Carlo)...")
-                    n_permutations = st.slider("Número de permutaciones:", 100, 2000, 500, step=100)
-
-                    DS_stats_permuted = []
-                    for _ in tqdm(range(n_permutations), desc="Permutando"):
-                        velocities_perm = np.random.permutation(velocities)
-                        delta_perm = []
-                        for i, neighbors in enumerate(neighbors_idx):
-                            local_vel = np.mean(velocities_perm[neighbors])
-                            local_sigma = np.std(velocities_perm[neighbors])
-                            d_i = ((N + 1) / sigma_global**2) * (
-                                (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
-                            )
-                            delta_perm.append(np.sqrt(d_i))
-                        DS_stats_permuted.append(np.sum(delta_perm))
-
-                    DS_stats_permuted = np.array(DS_stats_permuted)
-                    p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
-                    st.write(f"**p-valor empírico:** {p_value:.4f}")
-
-                    # ✅ Histograma nulo vs. real
-                    fig_hist = go.Figure()
-                    fig_hist.add_trace(go.Histogram(
-                        x=DS_stats_permuted,
-                        nbinsx=30,
-                        name="Δ permutado",
-                        marker_color='lightgrey'
-                    ))
-
-                    fig_hist.add_trace(go.Scatter(
-                        x=[DS_stat_real, DS_stat_real],
-                        y=[0, np.histogram(DS_stats_permuted, bins=30)[0].max()],
-                        mode='lines',
-                        line=dict(color='red', width=3, dash='dash'),
-                        name='Δ real'
-                    ))
-
-                    fig_hist.update_layout(
-                        title="Distribución nula (Δ permutado) vs. Δ real",
-                        xaxis_title='Δ',
-                        yaxis_title='Frecuencia',
-                        template='plotly_white'
-                    )
-
-                    st.plotly_chart(fig_hist, use_container_width=True)
-
-                    # ✅ Clasifica Delta en rangos y hover detallado
-                    bins = [0, 1, 2, 3, 5]
-                    labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
-
-                    df_sub['Delta_cat'] = pd.cut(df_sub['Delta'], bins=bins, labels=labels)
-
-                    color_map = {
-                        'Bajo': '#1f77b4',
-                        'Medio': '#2ca02c',
-                        'Alto': '#ff7f0e',
-                        'Muy Alto': '#d62728'
-                    }
-
-                    df_sub['color'] = df_sub['Delta_cat'].map(color_map)
-
-                    hover_text = df_sub.apply(
-                        lambda row:
-                        f"SDSS: {row['SDSS']}<br>"
-                        f"ID: {row['ID']}<br>"
-                        f"RA: {row['RA']:.3f}°<br>"
-                        f"Dec: {row['Dec']:.3f}°<br>"
-                        f"Velocidad (km/s): {row['Vel']:.1f}<br>"
-                        f"Rf: {row['Rf']:.2f}<br>"
-                        f"Cl_d (Dist. centro): {row['Cl_d']:.2f}<br>"
-                        f"Delta: {row['Delta']:.3f} ({row['Delta_cat']})<br>"
-                        f"C(index): {row['C(index)']:.2f}<br>"
-                        f"Morfología M(C): {row['M(C)']}<br>"
-                        f"(u-g): {row['(u-g)']:.2f}, M(u-g): {row['M(u-g)']}<br>"
-                        f"(g-r): {row['(g-r)']:.2f}, M(g-r): {row['M(g-r)']}<br>"
-                        f"Actividad: {row['Act']}",
-                        axis=1
-                    )
+        with st.expander("🚀 Ejecución Pipeline Automático"):
+            selected_cols = st.multiselect("Variables numéricas:", df.select_dtypes(include='number').columns.tolist())
+            num_clusters = st.slider("Número de clusters:", 2, 10, 4)
+            df = full_pipeline(df, selected_cols, num_clusters)
 
 
-                    fig = go.Figure()
-
-                    # 1️⃣ Puntos: una traza por categoría Delta
-                    for cat, color in color_map.items():
-                        df_cat = df_sub[df_sub['Delta_cat'] == cat]
-                        if not df_cat.empty:
-                            hover_text_cat = df_cat.apply(
-                                lambda row:
-                                f"SDSS: {row['SDSS']}<br>"
-                                f"ID: {row['ID']}<br>"
-                                f"RA: {row['RA']:.3f}°<br>"
-                                f"Dec: {row['Dec']:.3f}°<br>"
-                                f"Velocidad (km/s): {row['Vel']:.1f}<br>"
-                                f"Rf: {row['Rf']:.2f}<br>"
-                                f"Cl_d (Dist. centro): {row['Cl_d']:.2f}<br>"
-                                f"Delta: {row['Delta']:.3f} ({row['Delta_cat']})<br>"
-                                f"C(index): {row['C(index)']:.2f}<br>"
-                                f"Morfología M(C): {row['M(C)']}<br>"
-                                f"(u-g): {row['(u-g)']:.2f}, M(u-g): {row['M(u-g)']}<br>"
-                                f"(g-r): {row['(g-r)']:.2f}, M(g-r): {row['M(g-r)']}<br>"
-                                f"Actividad: {row['Act']}",
-                                axis=1
-                            )
         
-                            fig.add_trace(go.Scatter(
-                                x=df_cat['RA'],
-                                y=df_cat['Dec'],
-                                mode='markers',
-                                name=f'Delta: {cat}',
-                                marker=dict(size=8, color=color, line=dict(width=0.5, color='DarkSlateGrey')),
-                                text=hover_text_cat,
-                                hoverinfo='text'
-                            ))
+    
+    
 
-                    # 2️⃣ Contorno KDE (sin hover)
-                    fig.add_trace(go.Histogram2dContour(
-                        x=df_sub['RA'],
-                        y=df_sub['Dec'],
-                        colorscale='Blues',
-                        reversescale=True,
-                        showscale=False,
-                        opacity=0.3,
-                        name='Densidad Local',
-                        hoverinfo='skip',
-                        ncontours=15
-                    ))
-
-                    # 3️⃣ Layout
-                    fig.update_layout(
-                        title=f'DS + Densidad Local — Subestructura {selected_sub}',
-                        xaxis_title='Ascensión Recta (RA, grados)',
-                        yaxis_title='Declinación (Dec, grados)',
-                        xaxis=dict(autorange='reversed'),
-                        template='plotly_white',
-                        height=700,
-                        width=900
-                    )
-
-                    st.plotly_chart(fig, use_container_width=True)
-
-                
-                    # ✅ Exporta resultados
-                    with st.expander("📄 Ver tabla de galaxias con Delta"):
-                        st.dataframe(df_sub[['SDSS', 'ID', 'RA', 'Dec', 'Vel', 'Rf', 'Cl_d',
-                                         'Delta', 'Delta_cat', 'C(index)', 'M(C)',
-                                         '(u-g)', 'M(u-g)', '(g-r)', 'M(g-r)', 'Act']])
-                        st.download_button(
-                            "💾 Descargar resultados DS",
-                            df_sub.to_csv(index=False).encode('utf-8'),
-                            file_name=f"DS_Subcluster_{selected_sub}.csv",
-                            mime="text/csv"
-                        )
-            else:
-                st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico primero.")
-
-
-            st.subheader("📑 Evidencias de coherencia morfológica y dinámica")
-
-            if 'Delta_cat' in df_sub.columns:
-                unique_cats = df_sub['Delta_cat'].dropna().unique()
-                selected_cat = st.selectbox(
-                    "Selecciona un rango de Delta:",
-                    options=unique_cats
-                )
-
-                df_cat = df_sub[df_sub['Delta_cat'] == selected_cat].copy()
-
-                if df_cat.empty:
-                    st.warning("No hay datos para este rango.")
-                else:
-                    st.success(f"Galaxias en rango '{selected_cat}': {len(df_cat)}")
-
-                    # 1️⃣ Barras de M(C)
-                    fig_morph = px.histogram(
-                        df_cat,
-                        x='M(C)',
-                        color='M(C)',
-                        text_auto=True,
-                        title=f"Distribución morfológica M(C) para Delta: {selected_cat}",
-                        category_orders={"M(C)": sorted(df_cat['M(C)'].unique())}
-                    )
-                    fig_morph.update_layout(
-                        xaxis_title="Morfología M(C)",
-                        yaxis_title="Número de galaxias",
-                        showlegend=False
-                    )
-                    st.plotly_chart(fig_morph, use_container_width=True)
-
-                    # 2️⃣ Barras de Act (Actividad Nuclear)
-                    fig_act = px.histogram(
-                        df_cat,
-                        x='Act',
-                        color='Act',
-                        text_auto=True,
-                        title=f"Distribución de Actividad Nuclear para Delta: {selected_cat}",
-                        category_orders={"Act": sorted(df_cat['Act'].unique())}
-                    )
-                    fig_act.update_layout(
-                        xaxis_title="Actividad Nuclear",
-                        yaxis_title="Número de galaxias",
-                        showlegend=False
-                    )
-                    st.plotly_chart(fig_act, use_container_width=True)
-
-                    # 3️⃣ Boxplots de Vel y Delta
-                    fig_vel = px.box(
-                        df_cat,
-                        y='Vel',
-                        points='all',
-                        notched=True,
-                        title=f"Distribución de Velocidad (km/s) para Delta: {selected_cat}",
-                        color_discrete_sequence=['#1f77b4']
-                    )
-                    st.plotly_chart(fig_vel, use_container_width=True)
-
-                    fig_delta = px.box(
-                        df_cat,
-                        y='Delta',
-                        points='all',
-                        notched=True,
-                        title=f"Distribución de Delta para Delta: {selected_cat}",
-                        color_discrete_sequence=['#ff7f0e']
-                    )
-                    st.plotly_chart(fig_delta, use_container_width=True)
-
-            else:
-                st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
 
 
         import numpy as np

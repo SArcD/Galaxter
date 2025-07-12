@@ -1752,8 +1752,19 @@ elif opcion == "Proceso":
                             from sklearn.decomposition import PCA
                             from sklearn.manifold import TSNE
                             pca_sub = PCA(n_components=min(20, scaled_data_sub.shape[1])).fit_transform(scaled_data_sub)
-                            tsne_sub = TSNE(n_components=2, random_state=42)
-                            tsne_result_sub = tsne_sub.fit_transform(pca_sub)
+                            #tsne_sub = TSNE(n_components=2, random_state=42)
+                            from sklearn.manifold import TSNE
+
+                            # Control seguro de perplexity
+                            n_points = scaled_data_sub.shape[0]
+                            max_perplexity = max(5, min(30, n_points - 1))  # no puede ser >= n_points
+
+                            st.info(f"Usando perplexity = {max_perplexity} para t-SNE (n puntos: {n_points})")
+
+                            tsne = TSNE(n_components=2, perplexity=max_perplexity, random_state=42)
+                            tsne_result_sub = tsne.fit_transform(pca_sub)
+
+                            #tsne_result_sub = tsne_sub.fit_transform(pca_sub)
                             df_sub['TSNE1_sub'] = tsne_result_sub[:, 0]
                             df_sub['TSNE2_sub'] = tsne_result_sub[:, 1]
 

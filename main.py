@@ -1842,7 +1842,7 @@ elif opcion == "Proceso":
                 st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico principal primero.")
 
 
-        with st.expander("📊 Prueba DS + Bootstrapping AUTOMÁTICO para TODOS los sub-subclusters"):
+        #with st.expander("📊 Prueba DS + Bootstrapping AUTOMÁTICO para TODOS los sub-subclusters"):
         with st.expander("📊 Dressler–Shectman para TODOS los Sub-Subclusters"):
             st.subheader("🧪 Análisis DS masivo + Bootstrapping")
 

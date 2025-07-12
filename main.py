@@ -1739,7 +1739,8 @@ elif opcion == "Proceso":
 
                             labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion='maxclust')
                             df_sub['Subcluster2'] = labels_sub
-
+                            # ✅ Guarda en df principal para que DS lo encuentre
+                            df.loc[df_sub.index, 'Subcluster_sub'] = df_sub['Subcluster2']
                             # ✅ Dendrograma
                             fig_dendro_sub, ax = plt.subplots(figsize=(10, 5))
                             dendrogram(Z_sub, labels=data_sub.index.tolist(), ax=ax)

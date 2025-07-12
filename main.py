@@ -1503,40 +1503,136 @@ elif opcion == "Proceso":
         # ================================
         # 📌 Mapa validado final
         # ================================
-        def plot_validated_map(df, level):
-            cluster_col = f'Subcluster_{level}'
-            pass_col = f'DS_Pass_{level}'
-            df_pass = df[df[pass_col] == 1].copy()
+ #       def plot_validated_map(df, level):
+ #           cluster_col = f'Subcluster_{level}'
+ #           pass_col = f'DS_Pass_{level}'
+ #           df_pass = df[df[pass_col] == 1].copy()
+
+ #           fig = go.Figure()
+ #           fig.add_trace(go.Scatter(
+ #               x=df['RA'], y=df['Dec'],
+ #               mode='markers',
+ #               marker=dict(size=4, color='lightgrey', opacity=0.3),
+ #               name="Fondo"
+ #           ))
+
+ #           colors = px.colors.qualitative.Set2
+ #           for i, cluster in enumerate(df_pass[cluster_col].unique()):
+ #               d = df_pass[df_pass[cluster_col] == cluster]
+ #               hover = d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1)
+ #               fig.add_trace(go.Scatter(
+ #                   x=d['RA'], y=d['Dec'],
+ #                   mode='markers', name=f'{cluster_col} {cluster}',
+ #                   marker=dict(size=8, color=colors[i % len(colors)], line=dict(width=0.5)),
+ #                   text=hover, hoverinfo='text'
+ #               ))
+ #               fig.add_trace(go.Histogram2dContour(
+ #                   x=d['RA'], y=d['Dec'],
+ #                   colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
+ #                   showscale=False, opacity=0.3, ncontours=10
+ #               ))
+
+ #           fig.update_layout(title=f"Mapa nivel {level}: estructuras validadas DS",
+ #                             template='plotly_white', xaxis=dict(autorange='reversed'))
+ #           st.plotly_chart(fig, use_container_width=True)
+
+        def plot_validated_map(df, current_level):
+            st.subheader(f"🗺️ Mapa nivel {current_level}: estructuras validadas DS")
+
+            # ✅ Opción para mostrar todos o solo los validados
+            show_all = st.checkbox("👀 Mostrar TODAS las galaxias (X = no validadas)", value=True)
+
+            if show_all:
+                df_show = df[df[f'Subcluster_{current_level}'].notna()].copy()
+            else:
+                df_show = df[df['SubSub_DS_Pass'] == 1].copy()
+
+            if df_show.empty:
+                st.info("⚠️ No hay sub-subclusters para mostrar en este nivel.")
+                return
 
             fig = go.Figure()
+
+            # 🗂️ Prepara colores
+            colors = px.colors.qualitative.Set2
+            passed_list = df[df['SubSub_DS_Pass'] == 1][f'Subcluster_{current_level}'].unique()
+
+            # ✅ Fondo: galaxias sin asignar en este nivel
+            df_fondo = df[df[f'Subcluster_{current_level}'].isna()]
             fig.add_trace(go.Scatter(
-                x=df['RA'], y=df['Dec'],
+                x=df_fondo['RA'], y=df_fondo['Dec'],
                 mode='markers',
-                marker=dict(size=4, color='lightgrey', opacity=0.3),
-                name="Fondo"
+                marker=dict(size=4, color='lightgrey', opacity=0.2),
+                name="Fondo",
+                hoverinfo='skip'
             ))
 
-            colors = px.colors.qualitative.Set2
-            for i, cluster in enumerate(df_pass[cluster_col].unique()):
-                d = df_pass[df_pass[cluster_col] == cluster]
-                hover = d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1)
-                fig.add_trace(go.Scatter(
-                    x=d['RA'], y=d['Dec'],
-                    mode='markers', name=f'{cluster_col} {cluster}',
-                    marker=dict(size=8, color=colors[i % len(colors)], line=dict(width=0.5)),
-                    text=hover, hoverinfo='text'
-                ))
-                fig.add_trace(go.Histogram2dContour(
-                    x=d['RA'], y=d['Dec'],
-                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
-                    showscale=False, opacity=0.3, ncontours=10
-                ))
+            for i, subsub in enumerate(sorted(df_show[f'Subcluster_{current_level}'].dropna().unique())):
+                data_sub = df_show[df_show[f'Subcluster_{current_level}'] == subsub]
 
-            fig.update_layout(title=f"Mapa nivel {level}: estructuras validadas DS",
-                              template='plotly_white', xaxis=dict(autorange='reversed'))
+                # Hover con todas las columnas principales
+                hover_text = data_sub.apply(
+                    lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]),
+                    axis=1
+                )
+
+                if subsub in passed_list:
+                    # ✅ Puntos normales para validados
+                    fig.add_trace(go.Scatter(
+                        x=data_sub['RA'],
+                        y=data_sub['Dec'],
+                        mode='markers',
+                        marker=dict(size=8, color=colors[i % len(colors)],
+                                    line=dict(width=0.5, color='DarkSlateGrey')),
+                        name=f"Subcluster_{current_level}_{subsub}",
+                        text=hover_text,
+                        hoverinfo='text'
+                    ))
+                    # ✅ Contorno KDE        
+                    fig.add_trace(go.Histogram2dContour(
+                        x=data_sub['RA'],
+                        y=data_sub['Dec'],
+                        colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
+                        showscale=False,        
+                        opacity=0.3,
+                        ncontours=10,
+                        line=dict(width=1),
+                        hoverinfo='skip',
+                        name=f'Contorno {subsub}'
+                    ))
+                else:
+                    # ❌ Puntos como X para NO validados
+                    fig.add_trace(go.Scatter(
+                        x=data_sub['RA'],
+                        y=data_sub['Dec'],
+                        mode='markers',
+                        marker=dict(size=8, symbol='x', color=colors[i % len(colors)],
+                                    line=dict(width=1, color='black'), opacity=0.6),
+                        name=f"Subcluster_{current_level}_{subsub} (No validado)",
+                        text=hover_text,
+                        hoverinfo='text'
+                    ))
+
+            fig.update_layout(
+                title=f"Mapa nivel {current_level}: {'TODOS' if show_all else 'Validados DS'}",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                yaxis_title="Declinación (Dec, grados)",
+                xaxis=dict(autorange='reversed'),
+                template='plotly_white',
+                height=800, width=1000
+            )
+
             st.plotly_chart(fig, use_container_width=True)
 
+            st.download_button(
+                "💾 Descargar tabla del mapa mostrado",
+                df_show.to_csv(index=False).encode('utf-8'),
+                file_name=f"Subclusters_Nivel_{current_level}_{'Todos' if show_all else 'Validados'}.csv",
+                mime="text/csv"
+            )
 
+
+        
 
 
 #        current_level = 1

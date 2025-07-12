@@ -1698,350 +1698,197 @@ elif opcion == "Proceso":
                 st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
 
 
-        #with st.expander("🧬 Buscar sub-subclusters dentro de un Subcluster"):
-        with st.expander("🧬 Buscar sub-subclusters dentro de un Subcluster"):
-            st.subheader("🔎 Clustering Jerárquico Interno con t-SNE + Contornos KDE + Boxplots")
+        import numpy as np
+        import streamlit as st
+        import pandas as pd
+        import plotly.express as px
+        import plotly.graph_objects as go
+        from sklearn.preprocessing import StandardScaler    
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+        from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
+        from scipy.spatial import KDTree
+        from tqdm import tqdm
 
-            if 'Subcluster' in df.columns:
-                unique_subclusters = sorted(df['Subcluster'].dropna().unique())
-                selected_parent = st.selectbox(
-                    "Selecciona un Subcluster principal para buscar sub-subclusters:",
-                    options=unique_subclusters
-                )
+    
+        # ============================================
+        # ✅ 1️⃣ FUNCIÓN DE CLUSTERING JERÁRQUICO INTERNO
+        # ============================================
+        def run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub):
+            df_sub = df[df['Subcluster'] == selected_parent].copy()
+            scaler = StandardScaler()
+            scaled_data_sub = scaler.fit_transform(df_sub[selected_cols].dropna())
+            Z_sub = linkage(scaled_data_sub, method='ward')
 
-                df_sub = df[df['Subcluster'] == selected_parent].copy()
+            labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion='maxclust')
+            df_sub['Subcluster_sub'] = labels_sub
+            df.loc[df_sub.index, 'Subcluster_sub'] = df_sub['Subcluster_sub']
 
-                if df_sub.empty or df_sub.shape[0] < 5:
-                    st.warning("No hay suficientes galaxias en este subcluster para subdividir.")
-                else:
-                    numeric_cols = df_sub.select_dtypes(include='number').columns.tolist()
-                    selected_cols = st.multiselect(
-                        "Selecciona variables numéricas para sub-subclustering:",
-                        options=numeric_cols,
-                        default=numeric_cols
+            # t-SNE seguro
+            n_points = scaled_data_sub.shape[0]
+            max_perplexity = max(5, min(30, n_points - 1))
+            pca_sub = PCA(n_components=min(20, scaled_data_sub.shape[1])).fit_transform(scaled_data_sub)
+            tsne = TSNE(n_components=2, perplexity=max_perplexity, random_state=42)
+            tsne_result_sub = tsne.fit_transform(pca_sub)
+
+            df_sub['TSNE1_sub'] = tsne_result_sub[:, 0]
+            df_sub['TSNE2_sub'] = tsne_result_sub[:, 1]
+            df.loc[df_sub.index, 'TSNE1_sub'] = df_sub['TSNE1_sub']
+            df.loc[df_sub.index, 'TSNE2_sub'] = df_sub['TSNE2_sub']
+
+            return df
+
+
+        # ============================================
+        # ✅ 2️⃣ FUNCIÓN DE PRUEBA DS MASIVA AUTOMÁTICA
+        # ============================================
+        def run_ds_test(df, n_permutations=500, alpha=0.05):
+            df['Delta_sub'] = np.nan
+            df['Delta_sub_cat'] = np.nan
+            df['SubSub_DS_Pass'] = np.nan
+
+            unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
+            passed_list = []
+
+            for sub in unique_sub_subclusters:
+                df_sub_sub = df[df['Subcluster_sub'] == sub].copy()
+                if df_sub_sub.shape[0] < 5:
+                    continue
+
+                coords = df_sub_sub[['RA', 'Dec']].values
+                velocities = df_sub_sub['Vel'].values
+
+                N = int(np.sqrt(len(coords)))
+                tree = KDTree(coords)
+                neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+
+                V_global = np.mean(velocities)
+                sigma_global = np.std(velocities)
+
+                delta = []
+                for i, neighbors in enumerate(neighbors_idx):
+                    local_vel = np.mean(velocities[neighbors])
+                    local_sigma = np.std(velocities[neighbors])
+                    d_i = ((N + 1) / sigma_global**2) * (
+                        (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
                     )
+                    delta.append(np.sqrt(d_i))
 
-                    if selected_cols:
-                        data_sub = df_sub[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
+                df_sub_sub['Delta_sub'] = delta
+                DS_stat_real = np.sum(delta)
 
-                        if data_sub.shape[0] < 2:
-                            st.warning("No hay suficientes datos limpios para el clustering interno.")
-                        else:
-                            # ✅ Clustering jerárquico interno
-                            scaler = StandardScaler()
-                            scaled_data_sub = scaler.fit_transform(data_sub)
-                            Z_sub = linkage(scaled_data_sub, method='ward')
-
-                            num_clusters_sub = st.slider(
-                                "Número de sub-subclusters:",
-                                min_value=2, max_value=10, value=3
-                            )
-
-                            labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion='maxclust')
-                            df_sub['Subcluster2'] = labels_sub
-                            # ✅ Guarda en df principal para que DS lo encuentre
-                            df.loc[df_sub.index, 'Subcluster_sub'] = df_sub['Subcluster2']
-                            # ✅ Dendrograma
-                            fig_dendro_sub, ax = plt.subplots(figsize=(10, 5))
-                            dendrogram(Z_sub, labels=data_sub.index.tolist(), ax=ax)
-                            ax.set_title(f"Dendrograma Sub-subclusters (Subcluster {selected_parent})")
-                            ax.set_xlabel("Índices de galaxias")
-                            ax.set_ylabel("Distancia")
-                            st.pyplot(fig_dendro_sub)
-
-                            # ✅ Generar TSNE1_sub y TSNE2_sub si faltan
-                            from sklearn.decomposition import PCA
-                            from sklearn.manifold import TSNE
-                            pca_sub = PCA(n_components=min(20, scaled_data_sub.shape[1])).fit_transform(scaled_data_sub)
-                            #tsne_sub = TSNE(n_components=2, random_state=42)
-                            from sklearn.manifold import TSNE
-
-                            # Control seguro de perplexity
-                            n_points = scaled_data_sub.shape[0]
-                            max_perplexity = max(5, min(30, n_points - 1))  # no puede ser >= n_points
-
-                            st.info(f"Usando perplexity = {max_perplexity} para t-SNE (n puntos: {n_points})")
-
-                            tsne = TSNE(n_components=2, perplexity=max_perplexity, random_state=42)
-                            tsne_result_sub = tsne.fit_transform(pca_sub)
-
-                            #tsne_result_sub = tsne_sub.fit_transform(pca_sub)
-                            df_sub['TSNE1_sub'] = tsne_result_sub[:, 0]
-                            df_sub['TSNE2_sub'] = tsne_result_sub[:, 1]
-
-                            # ✅ t-SNE con contornos KDE
-                            fig_tsne = go.Figure()
-
-                            unique_subsub = sorted(df_sub['Subcluster2'].dropna().unique())
-                            colors = px.colors.qualitative.Set2
-
-                            for i, cluster in enumerate(unique_subsub):
-                                sub_data = df_sub[df_sub['Subcluster2'] == cluster]
-                                fig_tsne.add_trace(
-                                    go.Scatter(
-                                        x=sub_data['TSNE1_sub'],
-                                        y=sub_data['TSNE2_sub'],
-                                        mode='markers',
-                                        marker=dict(size=6, color=colors[i % len(colors)]),
-                                        name=f'Sub-subcluster {cluster}'
-                                    )
-                                )
-
-                            # KDE de densidad sobre t-SNE
-                            fig_tsne.add_trace(go.Histogram2dContour(
-                                x=df_sub['TSNE1_sub'],
-                                y=df_sub['TSNE2_sub'],
-                                colorscale='Greys',
-                                reversescale=True,
-                                showscale=False,
-                                opacity=0.2,
-                                hoverinfo='skip',
-                                ncontours=15
-                            ))
-
-                            fig_tsne.update_layout(
-                                title=f"t-SNE Sub-subclusters (Subcluster {selected_parent})",
-                                xaxis_title="TSNE1_sub",
-                                yaxis_title="TSNE2_sub",
-                                template='plotly_white',
-                                height=600
-                            )
-
-                            st.plotly_chart(fig_tsne, use_container_width=True)
-
-                            # ✅ Boxplots para TODAS las variables seleccionadas
-                            for var in selected_cols:
-                                fig_box = px.box(
-                                    df_sub,
-                                    x='Subcluster2',
-                                    y=var,
-                                    color='Subcluster2',
-                                    points='all',
-                                    notched=True,
-                                    title=f"Distribución de {var} por Sub-subcluster (Subcluster {selected_parent})",
-                                    color_discrete_sequence=colors
-                                )
-                                fig_box.update_traces(width=0.6, jitter=0.3)
-                                fig_box.update_layout(
-                                    yaxis_title=var,
-                                    xaxis_title='Sub-subcluster',
-                                    legend_title='Sub-subcluster',
-                                    boxmode='group'
-                                )
-                                st.plotly_chart(fig_box, use_container_width=True)
-
-                            # ✅ Guardar
-                            st.session_state['df_subsub'] = df_sub
-                            st.download_button(
-                                "💾 Descargar tabla Sub-subclusters",
-                                df_sub.to_csv(index=False).encode('utf-8'),
-                                file_name=f"Subcluster_{selected_parent}_Subsubclusters.csv",
-                                mime="text/csv"
-                            )
-            else:
-                st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico principal primero.")
-
-
-        #with st.expander("📊 Prueba DS + Bootstrapping AUTOMÁTICO para TODOS los sub-subclusters"):
-        with st.expander("📊 Dressler–Shectman para TODOS los Sub-Subclusters"):
-            st.subheader("🧪 Análisis DS masivo + Bootstrapping")
-
-            if 'Subcluster_sub' in df.columns:
-                unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
-
-                # ✅ 1️⃣ Inicializa columnas globales
-                df['Delta_sub'] = np.nan
-                df['Delta_sub_cat'] = np.nan
-                df['SubSub_DS_Pass'] = np.nan
-
-                # ✅ Umbral de significancia
-                alpha = 0.05
-
-                # ✅ Controles
-                n_permutations = st.slider(
-                    "Número de permutaciones por sub-subcluster:",
-                    min_value=100, max_value=2000, value=500, step=100
-                )
-
-                passed_list = []
-
-                for sub in unique_sub_subclusters:
-                    df_sub_sub = df[df['Subcluster_sub'] == sub].copy()
-                    if df_sub_sub.shape[0] < 5:
-                        continue  # Demasiado pequeño
-
-                    coords = df_sub_sub[['RA', 'Dec']].values
-                    velocities = df_sub_sub['Vel'].values
-
-                    N = int(np.sqrt(len(coords)))
-                    tree = KDTree(coords)
-                    neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
-
-                    V_global = np.mean(velocities)
-                    sigma_global = np.std(velocities)
-
-                    delta = []
+                DS_stats_permuted = []
+                for _ in range(n_permutations):
+                    velocities_perm = np.random.permutation(velocities)
+                    delta_perm = []
                     for i, neighbors in enumerate(neighbors_idx):
-                        local_vel = np.mean(velocities[neighbors])
-                        local_sigma = np.std(velocities[neighbors])
+                        local_vel = np.mean(velocities_perm[neighbors])
+                        local_sigma = np.std(velocities_perm[neighbors])
                         d_i = ((N + 1) / sigma_global**2) * (
-                            (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                            (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
                         )
-                        delta.append(np.sqrt(d_i))
+                        delta_perm.append(np.sqrt(d_i))
+                    DS_stats_permuted.append(np.sum(delta_perm))
 
-                    df_sub_sub['Delta_sub'] = delta
-                    DS_stat_real = np.sum(delta)
+                p_value = np.sum(np.array(DS_stats_permuted) >= DS_stat_real) / n_permutations
+                bins = [0, 1, 2, 3, 5]
+                labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
+                df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
 
-                    # ✅ Bootstrapping
-                    DS_stats_permuted = []
-                    for _ in range(n_permutations):
-                        velocities_perm = np.random.permutation(velocities)
-                        delta_perm = []
-                        for i, neighbors in enumerate(neighbors_idx):
-                            local_vel = np.mean(velocities_perm[neighbors])
-                            local_sigma = np.std(velocities_perm[neighbors])
-                            d_i = ((N + 1) / sigma_global**2) * (
-                                (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
-                            )
-                            delta_perm.append(np.sqrt(d_i))
-                        DS_stats_permuted.append(np.sum(delta_perm))
+                df.loc[df['Subcluster_sub'] == sub, 'Delta_sub'] = df_sub_sub['Delta_sub'].values
+                df.loc[df['Subcluster_sub'] == sub, 'Delta_sub_cat'] = df_sub_sub['Delta_sub_cat'].values
+                df.loc[df['Subcluster_sub'] == sub, 'SubSub_DS_Pass'] = int(p_value < alpha)
 
-                    DS_stats_permuted = np.array(DS_stats_permuted)
-                    p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
+                if p_value < alpha:
+                    passed_list.append(sub)
 
-                    # ✅ Clasifica por rangos Delta
-                    bins = [0, 1, 2, 3, 5]
-                    labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
-                    df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
-
-                    # ✅ 2️⃣ Guarda resultados globales
-                    df.loc[df['Subcluster_sub'] == sub, 'Delta_sub'] = df_sub_sub['Delta_sub'].values
-                    df.loc[df['Subcluster_sub'] == sub, 'Delta_sub_cat'] = df_sub_sub['Delta_sub_cat'].values
-                    df.loc[df['Subcluster_sub'] == sub, 'SubSub_DS_Pass'] = int(p_value < alpha)
-
-                    if p_value < alpha:
-                        passed_list.append(sub)
-
-                st.success(f"Sub-subclusters que PASAN la prueba DS (p < {alpha}): {passed_list}")
-
-                # ✅ Hover detallado y export
-                df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
-                if not df_pass.empty:
-                    df_pass['hover_text'] = df_pass.apply(
-                        lambda row:
-                        f"ID: {row['ID']}<br>"
-                        f"RA: {row['RA']:.3f}<br>"
-                        f"Dec: {row['Dec']:.3f}<br>"
-                        f"Vel: {row['Vel']:.1f}<br>"
-                        f"Delta_sub: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
-                        f"Sub-subcluster: {row['Subcluster_sub']}",
-                        axis=1
-                    )
-
-                    st.dataframe(df_pass[['ID', 'RA', 'Dec', 'Vel', 'Delta_sub', 'Delta_sub_cat', 'Subcluster_sub']])
-                    st.download_button(
-                        "💾 Descargar galaxias que PASAN DS",
-                        df_pass.to_csv(index=False).encode('utf-8'),
-                        file_name="Galaxias_Pasan_DS.csv",
-                        mime="text/csv"
-                    )
-                else:
-                    st.info("Ningún sub-subcluster pasó la prueba DS.")
-            else:
-                st.warning("No se encontró la columna 'Subcluster_sub'. Ejecuta primero el sub-subclustering.")
+            return df, passed_list
 
 
+        # ============================================
+        # ✅ 3️⃣ FUNCIÓN PARA GRAFICAR TODAS + VALIDAS
+        # ============================================
+        def plot_all_with_valids(df, passed_list):
+            df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
+            fig = go.Figure()
 
-        with st.expander("🗺️ Mapa global de sub-subestructuras que pasan la prueba DS"):
-            st.subheader("✨ Sub-subestructuras validadas (p < umbral) + Contornos KDE + Hover detallado")
+            # Fondo gris
+            fig.add_trace(go.Scatter(
+                x=df['RA'],
+                y=df['Dec'],
+                mode='markers',
+                marker=dict(size=4, color='lightgrey', opacity=0.3),
+                name="Todas las galaxias",
+                hoverinfo='skip'
+            ))
 
-            if 'SubSub_DS_Pass' in df.columns and 'Subcluster_sub' in df.columns:
-                df_pass = df[(df['SubSub_DS_Pass'] == 1) & (df['Subcluster_sub'].notna())].copy()
+            colors = px.colors.qualitative.Set2
 
-                if df_pass.empty:
-                    st.info("No hay sub-subestructuras que pasen la prueba DS según el umbral actual.")
-                else:
-                    st.success(f"Sub-subestructuras validadas: {df_pass['Subcluster_sub'].nunique()}")
+            for i, subsub in enumerate(passed_list):
+                data_sub = df_pass[df_pass['Subcluster_sub'] == subsub].copy()
+                hover_text = data_sub.apply(
+                    lambda row: f"ID: {row['ID']}<br>"
+                                f"RA: {row['RA']:.3f}°<br>"
+                                f"Dec: {row['Dec']:.3f}°<br>"
+                                f"Vel: {row['Vel']:.1f} km/s<br>"
+                                f"Δ: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
+                                f"Subcluster_sub: {row['Subcluster_sub']}",
+                    axis=1
+                )
 
-                    # ✅ Hover detallado
-                    df_pass['hover_text'] = df_pass.apply(
-                        lambda row: f"ID: {row['ID']}<br>"
-                                    f"RA: {row['RA']:.3f}°<br>"
-                                    f"Dec: {row['Dec']:.3f}°<br>"
-                                    f"Vel: {row['Vel']:.1f}<br>"
-                                    f"Delta_sub: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
-                                    f"Subcluster: {row['Subcluster']}<br>"
-                                    f"Subcluster_sub: {row['Subcluster_sub']}",
-                        axis=1
-                    )
+                fig.add_trace(go.Scatter(
+                    x=data_sub['RA'],
+                    y=data_sub['Dec'],
+                    mode='markers',
+                    marker=dict(size=8, color=colors[i % len(colors)],
+                                line=dict(width=0.5, color='DarkSlateGrey')),
+                    name=f'Sub-subcluster {subsub}',
+                    text=hover_text,
+                    hoverinfo='text'
+                ))
 
-                    fig = go.Figure()
+                fig.add_trace(go.Histogram2dContour(
+                    x=data_sub['RA'],
+                    y=data_sub['Dec'],
+                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
+                    showscale=False,
+                    opacity=0.3,
+                    ncontours=10,
+                    line=dict(width=1),
+                    hoverinfo='skip',
+                    name=f'Contorno {subsub}'
+                ))
 
-                    # 1️⃣ Fondo: galaxias no asignadas o descartadas
-                    df_background = df[df['SubSub_DS_Pass'].isna()]
-                    fig.add_trace(go.Scatter(
-                        x=df_background['RA'],
-                        y=df_background['Dec'],
-                        mode='markers',
-                        marker=dict(size=4, color='lightgrey', opacity=0.2),
-                        name="Galaxias sin sub-subcluster",
-                        hoverinfo='skip'
-                    ))
+            fig.update_layout(
+                title="Mapa completo Abell 85: fondo + Sub-subclusters validados DS",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                yaxis_title="Declinación (Dec, grados)",
+                xaxis=dict(autorange='reversed'),
+                template='plotly_white',
+                height=800, width=1000
+            )
 
-                    # 2️⃣ Sub-subclusters validados
-                    unique_passed = sorted(df_pass['Subcluster_sub'].unique())
-                    colors = px.colors.qualitative.Set2
+            st.plotly_chart(fig, use_container_width=True)
 
-                    for i, subsub in enumerate(unique_passed):
-                        data_subsub = df_pass[df_pass['Subcluster_sub'] == subsub]
+            st.download_button(
+                "💾 Descargar galaxias validadas",
+                df_pass.to_csv(index=False).encode('utf-8'),
+                file_name="Galaxias_DS_Validadas.csv",
+                mime="text/csv"
+            )
 
-                        # Puntos
-                        fig.add_trace(go.Scatter(
-                            x=data_subsub['RA'],
-                            y=data_subsub['Dec'],
-                            mode='markers',
-                            marker=dict(size=8, color=colors[i % len(colors)],
-                                        line=dict(width=0.5, color='DarkSlateGrey')),
-                            name=f'Sub-subcluster {subsub}',
-                            text=data_subsub['hover_text'],
-                            hoverinfo='text'
-                        ))
+        # ============================================        
+        # ✅ 4️⃣ EJECUCIÓN AUTOMÁTICA
+        # ============================================
 
-                        # Contorno KDE para cada sub-subcluster
-                        fig.add_trace(go.Histogram2dContour(
-                            x=data_subsub['RA'],
-                            y=data_subsub['Dec'],
-                            colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
-                            showscale=False,
-                            opacity=0.3,
-                            name=f'Contorno {subsub}',
-                            hoverinfo='skip',
-                            ncontours=10,
-                            line=dict(width=1)
-                        ))
+        # 1) Corre clustering interno
+         df = run_subsub_clustering(df, selected_parent, selected_cols, num_clusters_sub)
 
-                    fig.update_layout(
-                        title="Mapa Abell 85: Sub-subclusters que pasan la prueba DS",
-                        xaxis_title="Ascensión Recta (RA, grados)",
-                        yaxis_title="Declinación (Dec, grados)",
-                        legend_title="Sub-subclusters validados",
-                        template='plotly_white',
-                        xaxis=dict(autorange='reversed'),
-                        height=800,
-                        width=1000
-                    )
+        # 2) Corre DS
+         df, passed_list = run_ds_test(df, n_permutations=500)
 
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    # ✅ Botón exportar solo galaxias validadas
-                    st.download_button(
-                        "💾 Descargar solo galaxias validadas",
-                        df_pass.to_csv(index=False).encode('utf-8'),
-                        file_name="Subclusters_DS_Validados.csv",
-                        mime="text/csv"
-                    )
-            else:
-                st.warning("No se encontró la columna 'SubSub_DS_Pass'. Ejecuta primero la prueba DS para los sub-subclusters.")
+        # 3) Grafica TODO
+         plot_all_with_valids(df, passed_list)
 
 
 

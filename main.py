@@ -1206,29 +1206,63 @@ elif opcion == "Proceso":
         # ================================
         # 📌 Clustering jerárquico interno
         # ================================
-        def run_subclustering_iterative(df, parent_col, parent_label, selected_cols, num_clusters, level):
-            df_sub = df[df[parent_col] == parent_label].copy()
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
-            Z = linkage(scaled_data, method='ward')
+        #def run_subclustering_iterative(df, parent_col, parent_label, selected_cols, num_clusters, level):
+        #    df_sub = df[df[parent_col] == parent_label].copy()
+        #    scaler = StandardScaler()
+        #    scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
+        #    Z = linkage(scaled_data, method='ward')
 
+        #    cluster_col = f'Subcluster_{level}'
+        #    labels = fcluster(Z, t=num_clusters, criterion='maxclust')
+        #    df_sub[cluster_col] = labels
+        #    df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
+
+        #    # PCA + t-SNE
+        #    n_points = scaled_data.shape[0]
+        #    perplexity = max(5, min(30, n_points - 1))
+        #    pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+        #    tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
+        #    df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
+        #    df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
+        #    df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
+        #    df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
+
+        #    return df
+
+
+        def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
             cluster_col = f'Subcluster_{level}'
-            labels = fcluster(Z, t=num_clusters, criterion='maxclust')
-            df_sub[cluster_col] = labels
-            df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
 
-            # PCA + t-SNE
-            n_points = scaled_data.shape[0]
-            perplexity = max(5, min(30, n_points - 1))
-            pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-            tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
-            df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
-            df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
-            df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
-            df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
+            unique_parents = df[parent_col].dropna().unique()
+
+            for parent_label in unique_parents:
+                df_sub = df[df[parent_col] == parent_label].copy()
+                if df_sub.shape[0] < 2:
+                    continue
+
+                scaler = StandardScaler()
+                scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
+                Z = linkage(scaled_data, method='ward')
+
+                labels = fcluster(Z, t=num_clusters, criterion='maxclust')
+                df_sub[cluster_col] = labels
+                df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
+
+                # PCA + t-SNE
+                n_points = scaled_data.shape[0]
+                perplexity = max(5, min(30, n_points - 1))
+                pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+                tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
+
+                df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
+                df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
+                df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
+                df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
 
             return df
 
+
+        
         # ================================
         # 📌 Dressler–Shectman (DS) test
         # ================================

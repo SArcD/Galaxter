@@ -901,6 +901,84 @@ elif opcion == "Proceso":
             df.loc[data_clean.index, 'Subcluster'] = labels
             return df, Z, scaled_data, data_clean.index
 
+
+        # ================================================    
+        # ✅ 3️⃣ FUNCIÓN: Gráfico t-SNE + Boxplots por Subcluster
+        # ================================================
+        def plot_tsne_and_boxplots(df, data_idx, selected_cols):
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+
+            unique_clusters = sorted(df.loc[data_idx, 'Subcluster'].dropna().unique())
+            vars_phys = selected_cols
+            n_cols = 3
+            n_rows = (len(vars_phys) + n_cols - 1) // n_cols
+            total_rows = n_rows + 1
+
+            specs = [[{"colspan": n_cols}] + [None]*(n_cols-1)]
+            for _ in range(n_rows):
+                specs.append([{} for _ in range(n_cols)])
+
+            subplot_titles = ["PCA + t-SNE Clustering"] + vars_phys
+            fig = make_subplots(rows=total_rows, cols=n_cols, specs=specs, subplot_titles=subplot_titles)
+            colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
+
+            for i, cluster in enumerate(unique_clusters):
+                cluster_data = df.loc[data_idx][df.loc[data_idx, 'Subcluster'] == cluster]
+                hover_text = ("<b>ID:</b> " + cluster_data['ID'].astype(str) +
+                              "<br><b>RA:</b> " + cluster_data['RA'].round(4).astype(str) +
+                              "<br><b>Dec:</b> " + cluster_data['Dec'].round(4).astype(str))
+                fig.add_trace(
+                    go.Scatter(x=cluster_data['TSNE1'], y=cluster_data['TSNE2'],
+                               mode='markers', name=f'Subcluster {cluster}',
+                               legendgroup=f'Subcluster {cluster}',
+                               marker=dict(size=6, color=colors[i % len(colors)],
+                                           line=dict(width=1, color='DarkSlateGrey')),
+                               text=hover_text, hoverinfo='text'),
+                    row=1, col=1)
+
+            fig.add_trace(
+                go.Histogram2dContour(
+                    x=df.loc[data_idx, 'TSNE1'],
+                    y=df.loc[data_idx, 'TSNE2'],
+                    colorscale='Greys',
+                    reversescale=True,
+                    opacity=0.2,
+                    showscale=False,
+                    hoverinfo='skip'),
+                row=1, col=1)
+
+            for idx, var in enumerate(vars_phys):
+                row = (idx // n_cols) + 2
+                col = (idx % n_cols) + 1
+                for j, cluster in enumerate(unique_clusters):
+                    cluster_data = df.loc[data_idx][df.loc[data_idx, 'Subcluster'] == cluster]
+                    fig.add_trace(
+                        go.Box(y=cluster_data[var],
+                               x=[f'Subcluster {cluster}'] * len(cluster_data),
+                               name=f'Subcluster {cluster}',
+                               legendgroup=f'Subcluster {cluster}',
+                               showlegend=False, boxpoints='all',
+                               jitter=0.5, pointpos=-1.8,
+                               marker_color=colors[j % len(colors)],
+                               notched=True, width=0.6),
+                        row=row, col=col)
+
+            fig.update_layout(
+                title="Panel interactivo: PCA + t-SNE + Boxplots",
+                template='plotly_white',
+                width=400 * n_cols,
+                height=400 * total_rows,
+                boxmode='group',
+                legend_title="Subclusters"
+            )
+
+            return fig
+
+
+
+
+        
         # ================================================    
         # ✅ FUNCIÓN: t-SNE
         # ================================================

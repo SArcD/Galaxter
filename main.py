@@ -1577,11 +1577,18 @@ elif opcion == "Proceso":
             )
 
             # ⚙️ Visualiza TSNE + boxplots del nivel actual
+            #plot_tsne_and_boxplots(
+            #    df,
+            #    cluster_col=f'Subcluster_{current_level}',
+            #    selected_cols=selected_cols,
+            #    level=current_level
+            #)
+
             plot_tsne_and_boxplots(
-                df,
-                cluster_col=f'Subcluster_{current_level}',
-                selected_cols=selected_cols,
-                level=current_level
+                df,              # ✅ df
+                parent_col,      # ✅ parent_col (string, ej: 'Subcluster_2')
+                selected_cols,   # ✅ lista de columnas numéricas
+                level            # ✅ nivel entero
             )
 
             # ⚙️ Visualiza mapa con galaxias validadas en este nivel

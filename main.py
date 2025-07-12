@@ -1842,6 +1842,162 @@ elif opcion == "Proceso":
 
 
 
+        with st.expander("📊 Prueba DS + Bootstrapping para sub-subclusters"):
+            st.subheader("🧪 Análisis Dressler–Shectman dentro de un Subcluster")
+
+            if 'Subcluster_sub' in df.columns:  # Asegúrate de haberlo guardado con nombre diferente
+                unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
+                selected_sub_sub = st.selectbox(
+                    "Selecciona un sub-subcluster para aplicar la prueba DS:",
+                    options=unique_sub_subclusters,
+                    key="DS_sub_sub"
+                )
+
+                df_sub_sub = df[df['Subcluster_sub'] == selected_sub_sub].copy()
+
+                if df_sub_sub.empty or df_sub_sub.shape[0] < 5:
+                    st.warning("No hay suficientes galaxias para esta prueba.")
+                else:
+                    st.success(f"Galaxias seleccionadas: {len(df_sub_sub)}")
+
+                    coords = df_sub_sub[['RA', 'Dec']].values
+                    velocities = df_sub_sub['Vel'].values
+
+                    N = int(np.sqrt(len(coords)))
+                    tree = KDTree(coords)
+                    neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
+
+                    V_global = np.mean(velocities)
+                    sigma_global = np.std(velocities)
+
+                    delta = []
+                    for i, neighbors in enumerate(neighbors_idx):
+                        local_vel = np.mean(velocities[neighbors])
+                        local_sigma = np.std(velocities[neighbors])
+
+                        d_i = ((N + 1) / sigma_global**2) * (
+                            (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                        )
+                        delta.append(np.sqrt(d_i))
+
+                    df_sub_sub['Delta_sub'] = delta
+                    DS_stat_real = np.sum(delta)
+                    st.write(f"**Estadístico DS real:** {DS_stat_real:.2f}")
+
+                    # ✅ Bootstrapping
+                    st.info("Calculando distribución nula (Monte Carlo)...")
+                    n_permutations = st.slider("Número de permutaciones:", 100, 2000, 500, step=100, key="DS_permut_sub")
+                    DS_stats_permuted = []
+                    for _ in tqdm(range(n_permutations), desc="Permutando"):
+                        velocities_perm = np.random.permutation(velocities)
+                        delta_perm = []
+                        for i, neighbors in enumerate(neighbors_idx):
+                            local_vel = np.mean(velocities_perm[neighbors])
+                            local_sigma = np.std(velocities_perm[neighbors])
+                            d_i = ((N + 1) / sigma_global**2) * (
+                                (local_vel - V_global)**2 + (local_sigma - sigma_global)**2
+                            )
+                            delta_perm.append(np.sqrt(d_i))
+                        DS_stats_permuted.append(np.sum(delta_perm))
+
+                    DS_stats_permuted = np.array(DS_stats_permuted)
+                    p_value = np.sum(DS_stats_permuted >= DS_stat_real) / n_permutations
+                    st.write(f"**p-valor empírico:** {p_value:.4f}")
+
+                    # ✅ Histograma nulo
+                    fig_hist = go.Figure()
+                    fig_hist.add_trace(go.Histogram(
+                        x=DS_stats_permuted,
+                        nbinsx=30,
+                        name="Δ permutado",
+                        marker_color='lightgrey'
+                    ))
+
+                    fig_hist.add_trace(go.Scatter(
+                        x=[DS_stat_real, DS_stat_real],
+                        y=[0, np.histogram(DS_stats_permuted, bins=30)[0].max()],
+                        mode='lines',
+                        line=dict(color='red', width=3, dash='dash'),
+                        name='Δ real'
+                    ))
+
+                    fig_hist.update_layout(
+                        title="Distribución nula (Δ permutado) vs. Δ real",
+                        xaxis_title='Δ',
+                        yaxis_title='Frecuencia',
+                        template='plotly_white'
+                    )
+
+                    st.plotly_chart(fig_hist, use_container_width=True)
+
+                    # ✅ Clasifica Delta_sub y genera hover
+                    bins = [0, 1, 2, 3, 5]
+                    labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
+
+                    df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
+
+                    color_map = {
+                        'Bajo': '#1f77b4',
+                        'Medio': '#2ca02c',
+                        'Alto': '#ff7f0e',
+                        'Muy Alto': '#d62728'
+                    }
+
+                    df_sub_sub['color'] = df_sub_sub['Delta_sub_cat'].map(color_map)
+
+                    fig_ds = go.Figure()
+                    for cat, color in color_map.items():
+                        df_cat = df_sub_sub[df_sub_sub['Delta_sub_cat'] == cat]
+                        if not df_cat.empty:
+                            fig_ds.add_trace(go.Scatter(
+                                x=df_cat['RA'],
+                                y=df_cat['Dec'],
+                                mode='markers',
+                                name=f'Delta: {cat}',
+                                marker=dict(size=8, color=color, line=dict(width=0.5, color='DarkSlateGrey')),
+                                hovertext=df_cat.apply(
+                                    lambda row: f"ID: {row['ID']}<br>RA: {row['RA']:.3f}<br>Dec: {row['Dec']:.3f}<br>Vel: {row['Vel']:.1f}<br>Delta_sub: {row['Delta_sub']:.3f}",
+                                    axis=1
+                                ),
+                                hoverinfo='text'
+                            ))
+
+                    fig_ds.add_trace(go.Histogram2dContour(
+                        x=df_sub_sub['RA'],
+                        y=df_sub_sub['Dec'],
+                        colorscale='Blues',
+                        reversescale=True,
+                        showscale=False,
+                        opacity=0.3,
+                        ncontours=15,
+                        hoverinfo='skip'
+                    ))
+
+                    fig_ds.update_layout(
+                        title=f'DS + Densidad Local — Sub-Subestructura {selected_sub_sub}',
+                        xaxis_title='Ascensión Recta (RA, grados)',
+                        yaxis_title='Declinación (Dec, grados)',
+                        xaxis=dict(autorange='reversed'),
+                        template='plotly_white',
+                        height=700,
+                        width=900
+                    )
+                    st.plotly_chart(fig_ds, use_container_width=True)
+
+                    with st.expander("📄 Tabla DS Sub-Subcluster"):
+                        st.dataframe(df_sub_sub)
+                        st.download_button(
+                            "💾 Descargar tabla DS",
+                            df_sub_sub.to_csv(index=False).encode('utf-8'),
+                            file_name=f"DS_Sub_Subcluster_{selected_sub_sub}.csv",
+                            mime="text/csv"
+                        )
+            else:
+                st.info("No se ha generado la columna 'Subcluster_sub'. Ejecuta primero el sub-subclustering.")
+
+
+
+
 
 
         

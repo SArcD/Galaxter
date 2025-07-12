@@ -1843,8 +1843,8 @@ elif opcion == "Proceso":
 
 
 
-        with st.expander("📊 Prueba DS + Bootstrapping para sub-subclusters"):
-            st.subheader("🧪 Análisis Dressler–Shectman dentro de un Subcluster")
+        with st.expander("📊 Prueb DS + Bootstrapping para sub-subclusters"):
+            st.subheader("🧪 Análisi Dressler–Shectman dentro de un Subcluster")
 
             if 'Subcluster_sub' in df.columns:  # Asegúrate de haberlo guardado con nombre diferente
                 unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
@@ -1995,6 +1995,98 @@ elif opcion == "Proceso":
                         )
             else:
                 st.info("No se ha generado la columna 'Subcluster_sub'. Ejecuta primero el sub-subclustering.")
+
+
+        with st.expander("🗺️ Mapa global de sub-subestructuras que pasan la prueba DS"):
+    st.subheader("✨ Sub-subestructuras validadas (p < umbral) + Contornos KDE + Hover detallado")
+
+    if 'SubSub_DS_Pass' in df.columns and 'Subcluster_sub' in df.columns:
+        df_pass = df[(df['SubSub_DS_Pass'] == 1) & (df['Subcluster_sub'].notna())].copy()
+
+        if df_pass.empty:
+            st.info("No hay sub-subestructuras que pasen la prueba DS según el umbral actual.")
+        else:
+            st.success(f"Sub-subestructuras validadas: {df_pass['Subcluster_sub'].nunique()}")
+
+            # ✅ Hover detallado
+            df_pass['hover_text'] = df_pass.apply(
+                lambda row: f"ID: {row['ID']}<br>"
+                            f"RA: {row['RA']:.3f}°<br>"
+                            f"Dec: {row['Dec']:.3f}°<br>"
+                            f"Vel: {row['Vel']:.1f}<br>"
+                            f"Delta_sub: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
+                            f"Subcluster: {row['Subcluster']}<br>"
+                            f"Subcluster_sub: {row['Subcluster_sub']}",
+                axis=1
+            )
+
+            fig = go.Figure()
+
+            # 1️⃣ Fondo: galaxias no asignadas o descartadas
+            df_background = df[df['SubSub_DS_Pass'].isna()]
+            fig.add_trace(go.Scatter(
+                x=df_background['RA'],
+                y=df_background['Dec'],
+                mode='markers',
+                marker=dict(size=4, color='lightgrey', opacity=0.2),
+                name="Galaxias sin sub-subcluster",
+                hoverinfo='skip'
+            ))
+
+            # 2️⃣ Sub-subclusters validados
+            unique_passed = sorted(df_pass['Subcluster_sub'].unique())
+            colors = px.colors.qualitative.Set2
+
+            for i, subsub in enumerate(unique_passed):
+                data_subsub = df_pass[df_pass['Subcluster_sub'] == subsub]
+
+                # Puntos
+                fig.add_trace(go.Scatter(
+                    x=data_subsub['RA'],
+                    y=data_subsub['Dec'],
+                    mode='markers',
+                    marker=dict(size=8, color=colors[i % len(colors)],
+                                line=dict(width=0.5, color='DarkSlateGrey')),
+                    name=f'Sub-subcluster {subsub}',
+                    text=data_subsub['hover_text'],
+                    hoverinfo='text'
+                ))
+
+                # Contorno KDE para cada sub-subcluster
+                fig.add_trace(go.Histogram2dContour(
+                    x=data_subsub['RA'],
+                    y=data_subsub['Dec'],
+                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
+                    showscale=False,
+                    opacity=0.3,
+                    name=f'Contorno {subsub}',
+                    hoverinfo='skip',
+                    ncontours=10,
+                    line=dict(width=1)
+                ))
+
+            fig.update_layout(
+                title="Mapa Abell 85: Sub-subclusters que pasan la prueba DS",
+                xaxis_title="Ascensión Recta (RA, grados)",
+                yaxis_title="Declinación (Dec, grados)",
+                legend_title="Sub-subclusters validados",
+                template='plotly_white',
+                xaxis=dict(autorange='reversed'),
+                height=800,
+                width=1000
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # ✅ Botón exportar solo galaxias validadas
+            st.download_button(
+                "💾 Descargar solo galaxias validadas",
+                df_pass.to_csv(index=False).encode('utf-8'),
+                file_name="Subclusters_DS_Validados.csv",
+                mime="text/csv"
+            )
+    else:
+        st.warning("No se encontró la columna 'SubSub_DS_Pass'. Ejecuta primero la prueba DS para los sub-subclusters.")
 
 
 

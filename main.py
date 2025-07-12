@@ -1262,36 +1262,67 @@ elif opcion == "Proceso":
 #            return df
 
 
+#        def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
+#            cluster_col = f'Subcluster_{level}'
+#            tsne1_col = f'TSNE1_{level}'
+#            tsne2_col = f'TSNE2_{level}'
+
+#            unique_parents = df[parent_col].dropna().unique()
+
+#            for parent_label in unique_parents:
+#                df_sub = df[df[parent_col] == parent_label].copy()
+#                if df_sub.shape[0] < 5:
+#                    continue
+
+#                scaler = StandardScaler()
+#                scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
+#                Z = linkage(scaled_data, method='ward')
+
+#                labels = fcluster(Z, t=num_clusters, criterion='maxclust')
+#                df_sub[cluster_col] = labels
+#                df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
+
+#                n_points = scaled_data.shape[0]
+#                perplexity = max(5, min(30, n_points - 1))
+#                pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+#                tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
+
+#                df_sub[tsne1_col] = tsne_result[:, 0]
+#                df_sub[tsne2_col] = tsne_result[:, 1]
+#                df.loc[df_sub.index, tsne1_col] = df_sub[tsne1_col]
+#                df.loc[df_sub.index, tsne2_col] = df_sub[tsne2_col]
+
+#            return df
+
+
         def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
-            cluster_col = f'Subcluster_{level}'
-            tsne1_col = f'TSNE1_{level}'
-            tsne2_col = f'TSNE2_{level}'
+            child_col = f'Subcluster_{level}'
 
-            unique_parents = df[parent_col].dropna().unique()
+            all_labels = []
 
-            for parent_label in unique_parents:
-                df_sub = df[df[parent_col] == parent_label].copy()
-                if df_sub.shape[0] < 5:
+            parents = sorted(df[parent_col].dropna().unique())
+            scaler = StandardScaler()
+
+            for parent in parents:
+                df_parent = df[df[parent_col] == parent].copy()
+                if df_parent.shape[0] < num_clusters:
+                    continue  # no tiene suficientes galaxias para subdividir
+
+                data = df_parent[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
+                if data.empty:
                     continue
-
-                scaler = StandardScaler()
-                scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
+        
+                scaled_data = scaler.fit_transform(data)
                 Z = linkage(scaled_data, method='ward')
-
                 labels = fcluster(Z, t=num_clusters, criterion='maxclust')
-                df_sub[cluster_col] = labels
-                df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
 
-                n_points = scaled_data.shape[0]
-                perplexity = max(5, min(30, n_points - 1))
-                pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-                tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
+                # etiqueta compuesta: padre_hijo
+                combined_labels = [f"{int(parent)}_{label}" for label in labels]
 
-                df_sub[tsne1_col] = tsne_result[:, 0]
-                df_sub[tsne2_col] = tsne_result[:, 1]
-                df.loc[df_sub.index, tsne1_col] = df_sub[tsne1_col]
-                df.loc[df_sub.index, tsne2_col] = df_sub[tsne2_col]
+                df.loc[data.index, child_col] = combined_labels
+                all_labels.extend(combined_labels)
 
+            st.info(f"✅ Subclusters creados a nivel {level}: {len(set(all_labels))}")
             return df
 
 

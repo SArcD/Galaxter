@@ -1698,6 +1698,144 @@ elif opcion == "Proceso":
                 st.info("No se ha generado la columna Delta_cat. Ejecuta primero la prueba DS.")
 
 
+        with st.expander("🧬 Buscar sub-subclusters dentro de un Subcluster"):
+            st.subheader("🔎 Clustering Jerárquico Interno")
+
+            if 'Subcluster' in df.columns:
+                unique_subclusters = sorted(df['Subcluster'].dropna().unique())
+                selected_parent = st.selectbox(
+                    "Selecciona un Subcluster principal para buscar sub-subclusters:",
+                    options=unique_subclusters
+                )
+
+                df_sub = df[df['Subcluster'] == selected_parent].copy()
+
+                if df_sub.empty or df_sub.shape[0] < 5:
+                    st.warning("No hay suficientes galaxias en este subcluster para subdividir.")
+                else:
+                    numeric_cols = df_sub.select_dtypes(include='number').columns.tolist()
+                    selected_cols = st.multiselect(
+                        "Selecciona variables numéricas para sub-subclustering:",
+                        options=numeric_cols,
+                        default=numeric_cols
+                    )
+
+                    if selected_cols:
+                        data_sub = df_sub[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
+
+                        if data_sub.shape[0] < 2:
+                            st.warning("No hay suficientes datos limpios para el clustering interno.")
+                        else:
+                            # ✅ Escalar y clustering jerárquico interno
+                            scaler = StandardScaler()
+                            scaled_data_sub = scaler.fit_transform(data_sub)
+                            Z_sub = linkage(scaled_data_sub, method='ward')
+
+                            num_clusters_sub = st.slider(
+                                "Número de sub-subclusters:",
+                                min_value=2, max_value=10, value=3
+                            )
+
+                            criterion_sub = st.selectbox(
+                                "Criterio de corte para fcluster interno:",
+                                options=['maxclust', 'distance'],
+                                index=0
+                            )
+
+                            if criterion_sub == 'maxclust':
+                                labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion=criterion_sub)
+                            else:
+                                distance_threshold_sub = st.number_input(
+                                    "Umbral de distancia:",
+                                    min_value=0.0, value=10.0, step=0.5
+                                )
+                                labels_sub = fcluster(Z_sub, t=distance_threshold_sub, criterion=criterion_sub)
+
+                            df_sub['Subcluster2'] = labels_sub
+
+                            # ✅ Dendrograma
+                            fig_dendro_sub, ax = plt.subplots(figsize=(10, 5))
+                            dendrogram(Z_sub, labels=data_sub.index.tolist(), ax=ax)
+                            ax.set_title(f"Dendrograma Sub-subclusters (Subcluster {selected_parent})")
+                            ax.set_xlabel("Índices de galaxias")
+                            ax.set_ylabel("Distancia")
+                            st.pyplot(fig_dendro_sub)
+
+                            # ✅ t-SNE/PCA interno
+                            if 'TSNE1_sub' not in df_sub.columns or 'TSNE2_sub' not in df_sub.columns:
+                                st.info("Generando TSNE interno dinámicamente...")
+                                from sklearn.decomposition import PCA
+                                from sklearn.manifold import TSNE
+
+                                pca_sub = PCA(n_components=min(20, scaled_data_sub.shape[1])).fit_transform(scaled_data_sub)
+                                tsne_sub = TSNE(n_components=2, random_state=42)
+                                tsne_result_sub = tsne_sub.fit_transform(pca_sub)
+
+                                df_sub['TSNE1_sub'] = tsne_result_sub[:, 0]
+                                df_sub['TSNE2_sub'] = tsne_result_sub[:, 1]
+
+                            # ✅ Gráfico t-SNE + boxplots internos
+                            unique_subsub = sorted(df_sub['Subcluster2'].dropna().unique())
+                            colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
+
+                            fig = make_subplots(
+                                rows=2, cols=1,
+                                subplot_titles=["t-SNE Sub-subclusters", "Boxplots por Sub-subcluster"],
+                                vertical_spacing=0.2
+                            )
+
+                            for i, cluster in enumerate(unique_subsub):
+                                sub_data = df_sub[df_sub['Subcluster2'] == cluster]
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=sub_data['TSNE1_sub'],
+                                        y=sub_data['TSNE2_sub'],
+                                        mode='markers',
+                                        marker=dict(size=6, color=colors[i % len(colors)]),
+                                        name=f'Sub-subcluster {cluster}'
+                                    ),
+                                    row=1, col=1
+                                )
+
+                            # ✅ Ejemplo boxplot para variable de ejemplo
+                            box_var = st.selectbox("Variable para boxplots internos:", options=selected_cols)
+                            for i, cluster in enumerate(unique_subsub):
+                                sub_data = df_sub[df_sub['Subcluster2'] == cluster]
+                                fig.add_trace(
+                                    go.Box(
+                                        y=sub_data[box_var],
+                                        name=f'Sub-subcluster {cluster}',
+                                        marker_color=colors[i % len(colors)],
+                                        boxpoints='all',
+                                        notched=True
+                                    ),
+                                    row=2, col=1
+                                )
+
+                            fig.update_layout(
+                                height=800,
+                                width=1000,
+                                title=f"Panel t-SNE + Boxplots Sub-subclusters (Subcluster {selected_parent})"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+
+                            # ✅ Guardar en session_state
+                            st.session_state['df_subsub'] = df_sub
+
+                            st.download_button(
+                                "💾 Descargar tabla Sub-subclusters",
+                                df_sub.to_csv(index=False).encode('utf-8'),
+                                file_name=f"Subcluster_{selected_parent}_Subsubclusters.csv",
+                                mime="text/csv"
+                            )
+            else:
+                st.info("No se ha generado la columna 'Subcluster'. Ejecuta el clustering jerárquico principal primero.")
+
+
+
+
+        
+
         import streamlit as st
         import plotly.express as px
         import plotly.graph_objects as go

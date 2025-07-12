@@ -1388,43 +1388,113 @@ elif opcion == "Proceso":
         # ================================
         # 📌 Panel PCA+t-SNE + Boxplots
         # ================================
-        def plot_tsne_and_boxplots(df, cluster_col, selected_cols, level):
+#        def plot_tsne_and_boxplots(df, cluster_col, selected_cols, level):
+#            tsne1 = f'TSNE1_{level}'
+#            tsne2 = f'TSNE2_{level}'
+#            unique_clusters = sorted(df[cluster_col].dropna().unique())
+#            colors = px.colors.qualitative.Set2
+
+#            fig = go.Figure()
+#            for i, cl in enumerate(unique_clusters):
+#                d = df[df[cluster_col] == cl]
+#                fig.add_trace(go.Scatter(
+#                    x=d[tsne1], y=d[tsne2],
+#                    mode='markers',
+#                    marker=dict(size=7, color=colors[i % len(colors)]),
+#                    name=f'{cluster_col} {cl}',
+#                    hovertext=d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1),
+#                    hoverinfo='text'
+#                ))
+
+#            fig.add_trace(go.Histogram2dContour(
+#                x=df[tsne1], y=df[tsne2],
+#                colorscale='Greys',
+#                showscale=False, reversescale=True, opacity=0.2, ncontours=15,
+#                hoverinfo='skip'
+#            ))
+
+#            fig.update_layout(
+#                title=f"PCA+t-SNE nivel {level}",
+#                template='plotly_white', height=600, width=800,
+#                xaxis_title=tsne1, yaxis_title=tsne2
+#            )
+#            st.plotly_chart(fig, use_container_width=True)
+
+#            for var in selected_cols:
+#                fig_box = px.box(df, x=cluster_col, y=var, color=cluster_col, notched=True,
+#                         points='all', color_discrete_sequence=colors)
+#                fig_box.update_layout(title=f"Boxplot {var} nivel {level}")
+#                st.plotly_chart(fig_box, use_container_width=True)
+
+
+        def plot_tsne_and_boxplots(df, parent_col, selected_cols, level):
             tsne1 = f'TSNE1_{level}'
             tsne2 = f'TSNE2_{level}'
-            unique_clusters = sorted(df[cluster_col].dropna().unique())
+
+            # Si faltan, genera PCA + TSNE a nivel actua    l        
+            if tsne1 not in df.columns or tsne2 not in df.columns:
+                parents = sorted(df[parent_col].dropna().unique())
+                scaler = StandardScaler()
+                tsne1_vals = []
+                tsne2_vals = []
+
+                for parent in parents:
+                    d = df[df[parent_col] == parent].copy()
+                    data = d[selected_cols].replace([np.inf, -np.inf], np.nan).dropna()
+                    if data.shape[0] < 2:
+                        tsne1_vals.extend([np.nan] * len(d))
+                        tsne2_vals.extend([np.nan] * len(d))
+                        continue
+
+                    scaled = scaler.fit_transform(data)
+                    pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
+                    perplexity = min(30, max(5, scaled.shape[0] - 1))
+                    tsne = TSNE(n_components=2, perplexity=perplexity, random_state=42)
+                    result = tsne.fit_transform(pca)
+
+                    # Asigna resultados respetando los índices
+                    df.loc[data.index, tsne1] = result[:, 0]
+                    df.loc[data.index, tsne2] = result[:, 1]
+
+            # Ahora sí: genera plotly        
+            import plotly.express as px
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+
+            unique_clusters = sorted(df[parent_col].dropna().unique())
             colors = px.colors.qualitative.Set2
 
             fig = go.Figure()
-            for i, cl in enumerate(unique_clusters):
-                d = df[df[cluster_col] == cl]
+            for i, c in enumerate(unique_clusters):
+                d = df[df[parent_col] == c]
                 fig.add_trace(go.Scatter(
                     x=d[tsne1], y=d[tsne2],
                     mode='markers',
-                    marker=dict(size=7, color=colors[i % len(colors)]),
-                    name=f'{cluster_col} {cl}',
+                    name=f'{parent_col} {c}',
+                    marker=dict(size=8, color=colors[i % len(colors)]),
                     hovertext=d.apply(lambda row: "<br>".join([f"{col}: {row[col]}" for col in df.columns]), axis=1),
                     hoverinfo='text'
                 ))
 
-            fig.add_trace(go.Histogram2dContour(
-                x=df[tsne1], y=df[tsne2],
-                colorscale='Greys',
-                showscale=False, reversescale=True, opacity=0.2, ncontours=15,
-                hoverinfo='skip'
-            ))
-
             fig.update_layout(
-                title=f"PCA+t-SNE nivel {level}",
-                template='plotly_white', height=600, width=800,
-                xaxis_title=tsne1, yaxis_title=tsne2
-            )
-            st.plotly_chart(fig, use_container_width=True)
+                title=f"PCA + t-SNE nivel {level}",
+                xaxis_title=tsne1, yaxis_title=tsne2,
+                template='plotly_white',
+                height=600        
+            )        
+            st.plotly_chart(fig)
 
+            # Boxplots para cada variable
             for var in selected_cols:
-                fig_box = px.box(df, x=cluster_col, y=var, color=cluster_col, notched=True,
-                         points='all', color_discrete_sequence=colors)
-                fig_box.update_layout(title=f"Boxplot {var} nivel {level}")
-                st.plotly_chart(fig_box, use_container_width=True)
+                fig_box = px.box(
+                    df[df[parent_col].notna()],
+                    x=parent_col, y=var, color=parent_col,
+                    points='all', notched=True,
+                    color_discrete_sequence=colors,
+                    title=f"{var} por {parent_col}"
+                )
+                st.plotly_chart(fig_box)
+
 
         # ================================
         # 📌 Mapa validado final

@@ -1744,14 +1744,74 @@ elif opcion == "Proceso":
                     fig = px.histogram(df, x=var, color=var, text_auto=True, title=f'Distribución de {var}')
                 st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander("📊 Dispersión Global de Variables"):
-            vars_to_plot = st.multiselect(
+
+
+        def plot_dispersion(df, level, variables, 
+                    mode='Global', 
+                    show_only_validated=True):
+            """
+            Muestra la dispersión de variables numéricas o categóricas:
+            🔹 Global (todas las galaxias)
+            🔹 Por subcluster
+            🔹 Por subcluster solo los que pasaron DS
+            """
+            st.subheader(f"📊 Dispersión de Variables — Modo: {mode}")
+
+            if mode == 'Global':
+                d = df.copy()
+            elif mode == 'Subclusters':
+                subcluster_col = f'Subcluster_{level}'
+                d = df[df[subcluster_col].notna()].copy()
+            elif mode == 'Validados':
+                subcluster_col = f'Subcluster_{level}'
+                pass_col = f'DS_Pass_{level}'
+                d = df[(df[subcluster_col].notna()) & (df[pass_col] == 1)].copy()
+            else:
+                st.warning("Modo no válido.")
+                return
+
+            for var in variables:
+                if var not in d.columns:
+                    continue
+                if pd.api.types.is_numeric_dtype(d[var]):
+                    fig = px.box(
+                        d, 
+                        x=subcluster_col if mode != 'Global' else None,
+                        y=var, 
+                        points='all', 
+                        notched=True,
+                        title=f'Dispersión de {var}'
+                    )
+                else:
+                    fig = px.histogram(
+                        d,
+                        x=var,
+                        color=subcluster_col if mode != 'Global' else var,
+                        text_auto=True,
+                        title=f'Distribución de {var}'
+                    )
+                st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("📊 Dispersión de Variables"):
+            mode = st.radio(            
+                "¿Qué quieres visualizar?",
+                options=['Global', 'Subclusters', 'Validados'],
+                index=0
+            )
+
+            variables_to_plot = st.multiselect(        
                 "Selecciona variables:",
                 options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
                 default=['Vel']
             )
-            plot_global_dispersion(df, vars_to_plot)
 
+            plot_dispersion(
+                df,
+                level=current_level,   # Nivel actual de clustering
+                variables=variables_to_plot,
+                mode=mode,
+                show_only_validated=(mode == 'Validados')
+            )
 
         
 
@@ -1771,6 +1831,16 @@ elif opcion == "Proceso":
                 variables=variables_to_plot,
                 show_only_validated=show_only_val
             )
+
+
+        with st.expander("📊 Dispersión Global de Variables"):
+            vars_to_plot = st.multiselect(
+                "Selecciona variables:",
+                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
+                default=['Vel']
+            )
+            plot_global_dispersion(df, vars_to_plot)
+
 
 
         import numpy as np

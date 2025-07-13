@@ -2106,37 +2106,37 @@ elif opcion == "Proceso":
         import streamlit as st
         import numpy as np
 
-        def generate_realistic_galaxy_svg(df, ra_col='RA', dec_col='Dec',
-                                          morph_col='M(ave)', subcluster_col='Subcluster',
-                                          mag_col='M(IPn)'):
+        import streamlit as st
+
+        def generate_realistic_svg(df,
+                                   ra_col='RA', dec_col='Dec',
+                                   morph_col='M(ave)', mag_col='M(IPn)',
+                                   vel_col='Vel'):
             """
-            🌌 Genera un mapa SVG realista tipo Deep Field:
-            🔹 Morfología como forma y animación
-            🔹 Gradientes y filtros de blur
-            🔹 Toggle por morfología o subcluster
+            🌌 Mapa Deep Field SVG realista adaptado.
+            Incluye:
+            - Gradientes difusos        
+            - Filtros blur
+            - Formas realistas por morfología
             """
 
-            st.subheader("🌌 Mapa Abell 85 estilo Deep Field (SVG)")
+            svg_parts = [
+                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
+                '<defs>',
+                '<filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>',
+            ]
 
-            # === 1️⃣ Selección de vista ===
-            mode = st.radio(
-                "Filtrar galaxias por:",
-                options=['Morfología', 'Subcluster'],
-                index=0
-            )
+            # === Gradientes ===
+            gradients = [
+                '<radialGradient id="grad0" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(200,255,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+                '<radialGradient id="grad1" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(0,150,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+                '<radialGradient id="grad2" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,255,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+                '<radialGradient id="grad3" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,100,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+            ]
+            svg_parts.extend(gradients)
+            svg_parts.append('</defs>')
 
-            if mode == 'Morfología':
-                unique = sorted(df[morph_col].dropna().unique())
-            else:
-                unique = sorted(df[subcluster_col].dropna().unique())
-
-            selected = st.multiselect(
-                f"Selecciona {mode.lower()}s a mostrar:",
-                options=unique,
-                default=unique
-            )
-
-            # === 2️⃣ Escalado RA/Dec ===
+            # === Escala RA/Dec ===
             ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
             dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
@@ -2146,80 +2146,47 @@ elif opcion == "Proceso":
             def scale_dec(dec):
                 return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
 
-            # === 3️⃣ Definir gradientes y filtro ===
-            svg_parts = [
-                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
-                '<defs>',
-                '<filter id="blur"><feGaussianBlur stdDeviation="3"/></filter>'
-            ]
-
-            # Colores gradiente variados para estilos deep field
-            gradient_colors = [
-                'rgba(0,255,200,0.2)',
-                'rgba(0,150,255,0.2)',
-                'rgba(255,255,200,0.15)',
-                'rgba(255,100,100,0.2)',
-                'rgba(255,255,255,0.25)'
-            ]
-
-            for i, col in enumerate(gradient_colors):
-                svg_parts.append(f"""
-                <radialGradient id="grad{i}" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" style="stop-color:{col};" />
-                  <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
-                </radialGradient>
-                """)
-
-            svg_parts.append('</defs>')
-
-            # === 4️⃣ Dibujar galaxias ===
+            # === Galaxias ===
             for idx, row in df.iterrows():
-                if mode == 'Morfología':
-                    if row[morph_col] not in selected:
-                        continue
-                else:
-                    if row[subcluster_col] not in selected:
-                        continue
-
                 x = scale_ra(row[ra_col])
                 y = scale_dec(row[dec_col])
-                morph = str(row[morph_col]) if morph_col in row else 'UNK'
+                morph = str(row[morph_col]) if pd.notna(row[morph_col]) else 'UNK'
 
-                # Escoge gradiente pseudoaleatorio pero estable
-                grad_id = f"grad{idx % len(gradient_colors)}"
+                # Tamaño aproximado inverso a magnitud
+                size = max(4, 12 - float(row[mag_col])) if mag_col in row else 8
 
-                # Tamaño relativo inverso a la magnitud (o fijo)
-                size = 12
-
+                # Asigna gradiente por tipo
                 if "E" in morph:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9" />'
-
-                elif "Sb" in morph or "Sc" in morph or "S" in morph:  
-                    shape = f'''
-                    <g>
-                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}"
-                        fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9">
-                        <title>ID: {row.get('ID','')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get('Vel','')} | Morph: {morph}</title>
-                      </ellipse>
-                      <animateTransform attributeName="transform" attributeType="XML"
-                        type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>
-                    </g>
-                    '''                    
-                elif "I" in morph or "Ir" in morph:
-                    shape = f'<rect x="{x-size//2}" y="{y-size//2}" width="{size}" height="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.7" />'
-
+                    grad_id = "grad0"
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
+                elif "Sb" in morph or "Sc" in morph:
+                    grad_id = "grad1"
+                    shape = (
+                        f'<g>'
+                        f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" '
+                        f'fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9">'
+                        f'<title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title>'
+                        f'</ellipse>'
+                        f'<animateTransform attributeName="transform" attributeType="XML" '
+                        f'type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>'
+                        f'</g>'
+                    )
+                elif "S0" in morph:
+                    grad_id = "grad2"
+                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.7"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></ellipse>'
                 else:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"/>'
+                    grad_id = "grad3"
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
 
                 svg_parts.append(shape)
 
             svg_parts.append('</svg>')
 
             svg_code = "\n".join(svg_parts)
-            st.markdown(svg_code, unsafe_allow_html=True)
-
-        with st.expander("🌌 Mapa Deep Field (SVG)"):
-            generate_realistic_galaxy_svg(df)
+            st.subheader("🌌 Vista Realista Deep Field SVG")
+            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
+        with st.expander("🌌 Mapa Realista Deep Field SVG"):
+            generate_realistic_svg(df)
 
         
 

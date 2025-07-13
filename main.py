@@ -2219,20 +2219,19 @@ elif opcion == "Proceso":
                 options=sorted(df[subcluster_col].dropna().unique()),
                 default=sorted(df[subcluster_col].dropna().unique())
             )
+]
 
             svg_parts = [
                 '<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" style="background:black;">',
                 '<defs>',
                 f'<filter id="blur"><feGaussianBlur stdDeviation="{blur_strength}"/></filter>',
-                '''
-                <radialGradient id="gradHalo" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />
-                  <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
-                </radialGradient>
-                ''',
+                '<radialGradient id="gradHalo" cx="50%" cy="50%" r="50%">'
+                '<stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />'
+                '<stop offset="100%" style="stop-color:rgba(0,0,0,0);" />'
+                '</radialGradient>',
                 '</defs>'
             ]
-
+            
             x_min, x_max = df[ra_col].min(), df[ra_col].max()
             y_min, y_max = df[dec_col].min(), df[dec_col].max()
 

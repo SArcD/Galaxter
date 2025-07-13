@@ -1990,24 +1990,28 @@ elif opcion == "Proceso":
 
         import streamlit as st
 
+
         def generate_galaxy_svg(
             df,
             ra_col='RA',
             dec_col='Dec',
-            morph_col='Morfología',
+            morph_col='M(C)',
             id_col='ID',
             vel_col='Vel'
         ):
             """
-            🔭 Crea SVG realista del cúmulo Abell 85:
-            - Diferentes formas por morfología
-            - Rotación animada para espirales
-            - Fondo negro estilo cielo
-            - Hover interactivo con title
-            - Multiselect de morfologías
+            📌 SVG realista: mapa de Abell 85
+            🔹 Formas y colores por morfología
+            🔹 Hover <title> con info
+            🔹 Animación de espirales
+            🔹 Fondo negro
+            🔹 Toggle morfologías
             """
 
-            st.subheader("🌌 Mapa Realista de Abell 85 (SVG)")
+            # Validar columna
+            if morph_col not in df.columns:
+                st.warning(f"Columna '{morph_col}' no existe. Verifica nombres: {df.columns.tolist()}")
+                return
 
             morphs = sorted(df[morph_col].dropna().unique().tolist())
 
@@ -2017,11 +2021,12 @@ elif opcion == "Proceso":
                 default=morphs
             )
 
+            # === SVG inicial ===
             svg_parts = [
                 '<svg viewBox="0 0 1000 1000" style="background-color:black;" xmlns="http://www.w3.org/2000/svg">'
             ]
 
-            # Escalado
+            # Escalado RA/Dec
             ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
             dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
@@ -2036,76 +2041,56 @@ elif opcion == "Proceso":
                 y = scale_dec(row[dec_col])
                 morph = row[morph_col]
 
-                # 🏷️ Hover text
+                # Hover text
                 hover = (
-                    f"ID: {row.get(id_col,'')} | "
-                    f"RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | "
-                    f"Vel: {row.get(vel_col,'')} | "
+                    f"<title>"
+                    f"ID: {row[id_col]} | "
+                    f"RA: {row[ra_col]:.3f} | "
+                    f"Dec: {row[dec_col]:.3f} | "
+                    f"Vel: {row[vel_col]:.0f} | "
                     f"Morfología: {morph}"
+                    f"</title>"
                 )
 
-                size = 8  # Ajusta a tu gusto
+                size = 8
 
                 if "E" in morph:
-                    # Elíptica
-                    shape = f'''
-                    <circle cx="{x}" cy="{y}" r="{size}" fill="white" opacity="0.8">
-                      <title>{hover}</title>
-                    </circle>
-                    '''
-                elif "Sb" in morph or "Sc" in morph:
-                    # Espiral animada
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="white" opacity="0.8">{hover}</circle>'
+
+                elif "Sb" in morph or "Sc" in morph or "Sa" in morph:
                     shape = f'''
                     <g>
-                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="cyan" opacity="0.8">
-                        <title>{hover}</title>
-                      </ellipse>
+                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="cyan" opacity="0.8">{hover}</ellipse>
                       <animateTransform attributeName="transform" attributeType="XML"
                         type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
                     </g>
                     '''
+
                 elif "S0" in morph:
-                    # Lenticular
-                    shape = f'''
-                    <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="grey" opacity="0.7">
-                      <title>{hover}</title>
-                    </ellipse>
-                    '''
+                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="grey" opacity="0.7">{hover}</ellipse>'
+        
                 else:
-                    # Otros: difusos
-                    shape = f'''
-                    <circle cx="{x}" cy="{y}" r="{size//2}" fill="white" opacity="0.5">
-                      <title>{hover}</title>
-                    </circle>
-                    '''
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="white" opacity="0.5">{hover}</circle>'
 
                 svg_parts.append(shape)
 
             svg_parts.append('</svg>')
-
             svg_code = "\n".join(svg_parts)
 
-            # Render SVG en Streamlit
-            st.markdown(
-                f"""
-                <div style="background-color:black;">
-                {svg_code}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.subheader("🌌 Mapa Realista (SVG)")
+            st.markdown(f"""<div style="background-color:black;">{svg_code}</div>""", unsafe_allow_html=True)
 
-            
-        with st.expander("✨ Mapa Realista SVG"):
+
+                
+        with st.expander("🌌 Mapa Realista (SVG)"):
             generate_galaxy_svg(
                 df,
                 ra_col='RA',
                 dec_col='Dec',
-                morph_col='M(C)',
+                morph_col='M(C)',   # O el nombre exacto de tu columna
                 id_col='ID',
                 vel_col='Vel'
             )
-
         
 
         import numpy as np

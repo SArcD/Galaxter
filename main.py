@@ -2194,7 +2194,7 @@ elif opcion == "Proceso":
         import numpy as np
         import pandas as pd
 
-        def generate_realistic_kde_svg(        
+        def generate_realistic_kde_svg(
             df,
             ra_col='RA',
             dec_col='Dec',
@@ -2205,8 +2205,7 @@ elif opcion == "Proceso":
         ):
             st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista SVG (Gradientes + KDE)")
 
-            # --- Sliders ---
-            blur_strength = st.slider("🔆 Blur KDE", 1, 60, 4)
+            blur_strength = st.slider("🔆 Blur KDE", 1, 20, 4)
             brightness_factor = st.slider("💡 Brillo máximo KDE", 0.05, 1.0, 0.2)
 
             active_morphs = st.multiselect(
@@ -2214,7 +2213,7 @@ elif opcion == "Proceso":
                 options=sorted(df[morph_col].dropna().unique()),
                 default=sorted(df[morph_col].dropna().unique())
             )
-    
+
             active_subs = st.multiselect(
                 "Subclusters visibles",
                 options=sorted(df[subcluster_col].dropna().unique()),
@@ -2230,12 +2229,10 @@ elif opcion == "Proceso":
                   <stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />
                   <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
                 </radialGradient>
-                '''
+                ''',
+                '</defs>'
             ]
 
-            svg_parts.append('</defs>')
-
-            # === Escalado ===
             x_min, x_max = df[ra_col].min(), df[ra_col].max()
             y_min, y_max = df[dec_col].min(), df[dec_col].max()
 
@@ -2262,7 +2259,6 @@ elif opcion == "Proceso":
                     f'<circle cx="{x}" cy="{y}" r="{radius}" fill="url(#gradHalo)" filter="url(#blur)" opacity="{opacity:.2f}"/>'
                 )
 
-            # === Galaxias principales ===
             morph_colors = {
                 'E': '#FFDAB9',
                 'S': '#00FFFF',
@@ -2288,24 +2284,14 @@ elif opcion == "Proceso":
                 )
 
                 if "E" in morph:
-                    shape = (
-                        f'<circle cx="{x}" cy="{y}" r="{size}" fill="{base_color}" opacity="0.9">'
-                        f'<title>{title}</title></circle>'
-                    )
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></circle>'
                 elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
-                    shape = (
-                        f'<ellipse cx="{x}" cy="{y}" rx="{size*1.5}" ry="{size}" fill="{base_color}" opacity="0.9">'
-                        f'<title>{title}</title></ellipse>'
-                    )
+                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size*1.5}" ry="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></ellipse>'
                 else:
-                    shape = (
-                        f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{base_color}" opacity="0.5">'
-                        f'<title>{title}</title></circle>'
-                    )
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{base_color}" opacity="0.5"><title>{title}</title></circle>'
 
                 svg_parts.append(shape)
 
-            # === Estrellas de fondo ===
             np.random.seed(42)
             for _ in range(400):
                 x = np.random.randint(0, 1000)
@@ -2321,37 +2307,10 @@ elif opcion == "Proceso":
             svg_code = "\n".join(svg_parts)
             st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
 
-        
+
         with st.expander("🌌 Mapa Realista Deep Field SVG"):
             generate_realistic_kde_svg(df)
 
-
-        import streamlit as st
-        import plotly.graph_objects as go
-        import pandas as pd
-        import numpy as np
-        import base64
-        from scipy.stats import gaussian_kde
-        import base64
-
-
-        import base64
-        import streamlit as st
-
-        def generate_spiral_svg():
-            svg = """<svg width="50" height="50" viewBox="0 0 100 100">
-              <path d="M50,50 m-30,0 a30,30 0 1,1 60,0 a30,30 0 1,1 -60,0"
-                  stroke="#00ffff" stroke-width="2" fill="none"/>
-            </svg>"""
-            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
-
-        # Ejemplo minimal
-        spiral_sprite = generate_spiral_svg()
-
-        # Usar <image> con coordenadas RA-Dec escaladas
-        svg_map = f'<svg viewBox="0 0 1000 1000" style="background:black;"><image x="400" y="500" width="50" height="50" href="{spiral_sprite}" /></svg>'
-
-        st.markdown(svg_map, unsafe_allow_html=True)
 
 
 

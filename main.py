@@ -2241,8 +2241,12 @@ elif opcion == "Proceso":
                     continue
                 x = scale_ra(row[ra_col])
                 y = scale_dec(row[dec_col])
-                rf_value = abs(row.get(rf_col, -2))
-                radius = int(5 + np.clip(rf_value * 20, 5, 100))
+
+                rf_value = row.get(rf_col, -2)
+                if rf_value is None or pd.isna(rf_value):
+                    rf_value = -2
+                rf_value = abs(rf_value)
+                radius = int(5 + np.clip(rf_value * 20, 5, 100))                
                 opacity = np.clip(abs(row.get(rf_col, -2)) * brightness_factor, 0.02, 0.2)
                 svg_parts.append(
                     f'<circle cx="{x}" cy="{y}" r="{radius}" fill="cyan" filter="url(#blur)" opacity="{opacity:.2f}"/>'

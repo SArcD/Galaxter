@@ -23,7 +23,7 @@ def plot_galaxy_map(
     subcluster_filter = st.sidebar.multiselect("Filtrar por Subcluster", all_subclusters, default=all_subclusters)
 
     df_filtered = df[
-        df[morph_col].isin(morph_filter) & 
+        df[morph_col].isin(morph_filter) &
         df[subcluster_col].isin(subcluster_filter)
     ].dropna(subset=[ra_col, dec_col, rf_col])
 
@@ -37,7 +37,7 @@ def plot_galaxy_map(
     img = Image.new('RGBA', (width, height), (0, 0, 0, 255))
     draw = ImageDraw.Draw(img)
 
-    # Agregar halo difuso grande
+    # Agregar halo central
     halo_layer = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw_halo = ImageDraw.Draw(halo_layer)
     draw_halo.ellipse(
@@ -46,6 +46,20 @@ def plot_galaxy_map(
     )
     halo_blurred = halo_layer.filter(ImageFilter.GaussianBlur(100))
     img.alpha_composite(halo_blurred)
+
+    # Agregar halos locales por subcluster
+    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+    for _, row in subcluster_positions.iterrows():
+        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
+        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
+        local_halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        draw_local = ImageDraw.Draw(local_halo)
+        draw_local.ellipse(
+            [cx - 200, cy - 200, cx + 200, cy + 200],
+            fill=(0, 200, 180, 25)
+        )
+        local_blurred = local_halo.filter(ImageFilter.GaussianBlur(50))
+        img.alpha_composite(local_blurred)
 
     for _, row in df_filtered.iterrows():
         RA = row[ra_col]

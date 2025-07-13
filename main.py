@@ -2204,72 +2204,32 @@ elif opcion == "Proceso":
     
         import streamlit as st
 
-        def generate_realistic_svg(df):
+        def generate_simple_svg():
+            svg_code = """
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="background:black;">
+              <defs>
+                <radialGradient id="grad1" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />
+                  <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
+                </radialGradient>
+                <filter id="blur">
+                  <feGaussianBlur stdDeviation="2"/>
+                </filter>
+              </defs>
+
+              <circle cx="100" cy="100" r="30" fill="url(#grad1)" filter="url(#blur)" opacity="0.8" />
+      
+              <g>
+                <ellipse cx="150" cy="50" rx="20" ry="8" fill="url(#grad1)" filter="url(#blur)" opacity="0.8"/>
+                <animateTransform attributeName="transform" attributeType="XML"
+                  type="rotate" from="0 150 50" to="360 150 50" dur="20s" repeatCount="indefinite"/>
+              </g>
+            </svg>
             """
-            🌌 Genera mapa estilo 'Deep Field' con:
-            🔹 Gradientes difusos KDE
-            🔹 Filtros de blur
-            🔹 Morfología como forma
-            """
+            st.markdown(svg_code, unsafe_allow_html=True)
 
-            svg_parts = [
-                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
-                '<defs>',
-                # Filtro global para suavizar bordes
-                '<filter id="blur">',
-                '<feGaussianBlur stdDeviation="4"/>',
-                '</filter>'
-            ]
-
-            # === Gradientes ===
-            # Puedes generar 1 gradiente por subcluster, morfología o lo que quieras:
-            for i in range(1, 5):  # Cambia 5 por el número real de contornos
-                svg_parts.append(f"""
-                  <radialGradient id="grad{i}" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" style="stop-color:rgba(0,255,200,0.1);" />
-                    <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
-                  </radialGradient>
-                """)
-
-            svg_parts.append('</defs>')
-
-            # === Galaxias ===
-            for idx, row in df.iterrows():
-                x = 500  # Escala real aquí
-                y = 500
-                morph = row['M(ave)'] if 'M(ave)' in row else 'UNK'
-                grad_id = "grad1"
-
-                # Aquí cambia forma y gradiente según tu lógica
-                if "E" in morph:
-                    shape = f'<circle cx="{x}" cy="{y}" r="15" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.8"/>'
-                elif "Sb" in morph or "Sc" in morph:
-                    shape = f"""
-                      <g>
-                        <ellipse cx="{x}" cy="{y}" rx="20" ry="8" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.8"/>
-                        <animateTransform attributeName="transform" attributeType="XML"
-                          type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
-                      </g>
-                    """
-                else:
-                    shape = f'<circle cx="{x}" cy="{y}" r="10" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"/>'
-
-                svg_parts.append(shape)
-        
-            # === Contornos KDE difusos ===
-            # Ejemplo
-            svg_parts.append(f'<circle cx="400" cy="600" r="200" fill="url(#grad2)" filter="url(#blur)" />')
-
-            svg_parts.append('</svg>')
-
-            # === Mostrar    
-            svg_code = "\n".join(svg_parts)
-            st.subheader("🌌 Vista Estilo Deep Field (SVG)")
-            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
-
-        with st.expander("🌌 Mapa Realista Deep Field SVG"):
-            generate_realistic_svg(df)
-
+        with st.expander("SVG Test"):
+            generate_simple_svg()
 
 
 

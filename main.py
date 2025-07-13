@@ -2188,6 +2188,135 @@ elif opcion == "Proceso":
         with st.expander("🌌 Mapa Realista Deep Field SVG"):
             generate_realistic_svg(df)
 
+
+
+        import streamlit as st
+        import numpy as np
+
+        def generate_realistic_kde_svg(
+            df,
+            ra_col='RA',
+            dec_col='Dec',
+            morph_col='M(ave)',
+            subcluster_col='Subcluster',
+            rf_col='Rf',
+            vel_col='Vel'
+        ):
+            st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista SVG")
+
+            # --- Sliders ---
+            blur_strength = st.slider("🔆 Blur KDE", 1, 20, 4)
+            brightness_factor = st.slider("💡 Brillo máximo KDE", 0.05, 1.0, 0.2)
+
+            active_morphs = st.multiselect(
+                "Morfologías visibles",
+                options=sorted(df[morph_col].dropna().unique()),
+                default=sorted(df[morph_col].dropna().unique())
+            )
+
+            active_subs = st.multiselect(
+                "Subclusters visibles",
+                options=sorted(df[subcluster_col].dropna().unique()),
+                default=sorted(df[subcluster_col].dropna().unique())
+            )
+
+            svg_parts = [
+                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
+                '<defs>',
+                f'<filter id="blur"><feGaussianBlur stdDeviation="{blur_strength}"/></filter>'
+            ]
+
+            # === KDE Halos ===
+            x_min, x_max = df[ra_col].min(), df[ra_col].max()
+            y_min, y_max = df[dec_col].min(), df[dec_col].max()
+
+            def scale_ra(ra):
+                return int(1000 * (ra - x_min) / (x_max - x_min))
+
+            def scale_dec(dec):
+                return int(1000 * (1 - (dec - y_min) / (y_max - y_min)))
+
+            for _, row in df.iterrows():
+                if row[subcluster_col] not in active_subs:
+                    continue
+                x = scale_ra(row[ra_col])
+                y = scale_dec(row[dec_col])
+                rf_value = abs(row.get(rf_col, -2))
+                radius = int(5 + np.clip(rf_value * 20, 5, 100))
+                opacity = np.clip(abs(row.get(rf_col, -2)) * brightness_factor, 0.02, 0.2)
+                svg_parts.append(
+                    f'<circle cx="{x}" cy="{y}" r="{radius}" fill="cyan" filter="url(#blur)" opacity="{opacity:.2f}"/>'
+                )
+
+            # --- Gradientes de galaxias ---
+            svg_parts.append('</defs>')
+
+            morph_colors = {
+                'E': '#FFDAB9',
+                'S': '#00FFFF',
+                'I': '#FF69B4',
+                'UNK': '#CCCCCC'
+            }
+
+            for _, row in df.iterrows():
+                morph = str(row.get(morph_col, 'UNK'))
+                sub = row.get(subcluster_col, None)
+                if morph not in active_morphs or sub not in active_subs:
+                    continue
+
+                x = scale_ra(row[ra_col])
+                y = scale_dec(row[dec_col])
+                base_color = morph_colors.get(morph[0], '#FFFFFF')
+                size = 8
+
+                title = (
+                    f"ID: {row.get('ID','')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | "
+                    f"Vel: {row.get(vel_col,'')} | Rf: {row.get(rf_col,''):.2f} | "
+                    f"Morph: {morph} | Sub: {sub}"
+                )
+
+                if "E" in morph:
+                    shape = (
+                        f'<circle cx="{x}" cy="{y}" r="{size}" fill="{base_color}" opacity="0.9">'
+                        f'<title>{title}</title></circle>'
+                    )
+                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
+                    shape = (
+                        f'<g>'
+                        f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="{base_color}" opacity="0.9">'
+                        f'<title>{title}</title></ellipse>'
+                        f'<animateTransform attributeName="transform" attributeType="XML" '
+                        f'type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>'
+                        f'</g>'
+                    )
+                else:
+                    shape = (
+                        f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{base_color}" opacity="0.5">'
+                        f'<title>{title}</title></circle>'
+                    )
+
+                svg_parts.append(shape)
+
+            # === Estrellas de fondo ===
+            np.random.seed(42)        
+            for _ in range(300):
+                x = np.random.randint(0, 1000)
+                y = np.random.randint(0, 1000)
+                star_size = np.random.uniform(0.3, 1.2)
+                opacity = np.random.uniform(0.05, 0.2)
+                svg_parts.append(
+                    f'<circle cx="{x}" cy="{y}" r="{star_size:.2f}" fill="white" opacity="{opacity:.2f}"/>'
+                )
+
+            svg_parts.append('</svg>')
+
+            svg_code = "\n".join(svg_parts)
+            st.markdown(f"""<div style="background:black;">{svg_code}</div>""", unsafe_allow_html=True)
+
+        with st.expander("🌌 Mapa Realista Deep Field SVG"):
+            generate_realistic_kde_svg(df)
+
+        
         
 
         import numpy as np

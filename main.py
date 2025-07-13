@@ -2219,7 +2219,7 @@ elif opcion == "Proceso":
                 options=sorted(df[subcluster_col].dropna().unique()),
                 default=sorted(df[subcluster_col].dropna().unique())
             )
-]
+
 
             svg_parts = [
                 '<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" style="background:black;">',

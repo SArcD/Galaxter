@@ -2320,209 +2320,119 @@ elif opcion == "Proceso":
         with st.expander("🌌 Mapa Realista Deep Field SVG"):
             generate_realistic_kde_svg(df)
 
-        
-        
 
-        import numpy as np
-        import pandas as pd
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.decomposition import PCA
-        from sklearn.manifold import TSNE
-        from scipy.cluster.hierarchy import linkage, fcluster
-        from scipy.spatial import KDTree
-        from tqdm import tqdm
-        import plotly.express as px
+        import streamlit as st
         import plotly.graph_objects as go
+        import pandas as pd
+        import numpy as np
+        import base64
+        from scipy.stats import gaussian_kde
+        import base64
 
-        # ============================================
-        # ✅ 1️⃣ FUNCIÓN: Sub-subclustering para 1 Subcluster
-        # ============================================
-        def run_subsub_clustering_one(df, parent, selected_cols, num_clusters_sub):
-            df_sub = df[df['Subcluster'] == parent].copy()
-            if df_sub.shape[0] < 5:
-                return df  # Saltar si muy pocos
+        def generate_spiral_svg(color="#00ffff"):
+            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><g transform="translate(50,50)"><path d="M0,0 m-30,0 a30,30 0 1,1 60,0 a30,30 0 1,1 -60,0"stroke="{color}" stroke-width="2" fill="none"/></g></svg>'
+            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
 
-            scaler = StandardScaler()
-            scaled = scaler.fit_transform(df_sub[selected_cols].dropna())
-            Z_sub = linkage(scaled, method='ward')
-            labels_sub = fcluster(Z_sub, t=num_clusters_sub, criterion='maxclust')
+        def generate_elliptical_svg(color="#ffffcc"):
+            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="30" ry="20" fill="{color}" fill-opacity="0.6"/></svg>'
+            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
 
-            df_sub['Subcluster_sub'] = labels_sub
-            df.loc[df_sub.index, 'Subcluster_sub'] = df_sub['Subcluster_sub']
+        def generate_irregular_svg(color="#ff9999"):
+            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><path d="M50 20 L70 50 L50 80 L30 50 Z" fill="{color}" fill-opacity="0.7"/></svg>'
+            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
 
-            # t-SNE seguro
-            n_points = scaled.shape[0]
-            max_perplexity = max(5, min(30, n_points - 1))
-            pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
-            tsne = TSNE(n_components=2, perplexity=max_perplexity, random_state=42)
-            tsne_result = tsne.fit_transform(pca)
 
-            df_sub['TSNE1_sub'] = tsne_result[:, 0]
-            df_sub['TSNE2_sub'] = tsne_result[:, 1]
-
-            df.loc[df_sub.index, 'TSNE1_sub'] = df_sub['TSNE1_sub']
-            df.loc[df_sub.index, 'TSNE2_sub'] = df_sub['TSNE2_sub']
-
-            return df
-
-        # ============================================
-        # ✅ 2️⃣ FUNCIÓN: DS masivo
-        # ============================================
-        def run_ds_test_all(df, n_permutations=500, alpha=0.05):
-            df['Delta_sub'] = np.nan
-            df['Delta_sub_cat'] = np.nan
-            df['SubSub_DS_Pass'] = np.nan
-
-            passed_list = []
-            unique_sub_subclusters = sorted(df['Subcluster_sub'].dropna().unique())
-
-            for sub in unique_sub_subclusters:
-                df_sub_sub = df[df['Subcluster_sub'] == sub].copy()
-                if df_sub_sub.shape[0] < 5:
-                    continue
-
-                coords = df_sub_sub[['RA', 'Dec']].values
-                velocities = df_sub_sub['Vel'].values
-
-                N = int(np.sqrt(len(coords)))
-                tree = KDTree(coords)
-                neighbors_idx = [tree.query(coords[i], k=N+1)[1][1:] for i in range(len(coords))]
-
-                V_global = np.mean(velocities)
-                sigma_global = np.std(velocities)
-
-                delta = []
-                for i, neighbors in enumerate(neighbors_idx):
-                    local_vel = np.mean(velocities[neighbors])
-                    local_sigma = np.std(velocities[neighbors])
-                    d_i = ((N + 1) / sigma_global**2) * (
-                        (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
-                    )
-                    delta.append(np.sqrt(d_i))
-
-                df_sub_sub['Delta_sub'] = delta
-                DS_stat_real = np.sum(delta)
-
-                DS_stats_permuted = []
-                for _ in range(n_permutations):
-                    velocities_perm = np.random.permutation(velocities)
-                    delta_perm = []
-                    for i, neighbors in enumerate(neighbors_idx):
-                        local_vel = np.mean(velocities_perm[neighbors])
-                        local_sigma = np.std(velocities_perm[neighbors])
-                        d_i = ((N + 1) / sigma_global**2) * (
-                            (local_vel - V_global)**2 + (local_sigma - sigma_global**2)
-                        )
-                        delta_perm.append(np.sqrt(d_i))
-                    DS_stats_permuted.append(np.sum(delta_perm))
-
-                p_value = np.sum(np.array(DS_stats_permuted) >= DS_stat_real) / n_permutations
-
-                bins = [0, 1, 2, 3, 5]
-                labels = ['Bajo', 'Medio', 'Alto', 'Muy Alto']
-                df_sub_sub['Delta_sub_cat'] = pd.cut(df_sub_sub['Delta_sub'], bins=bins, labels=labels)
-
-                df.loc[df['Subcluster_sub'] == sub, 'Delta_sub'] = df_sub_sub['Delta_sub'].values
-                df.loc[df['Subcluster_sub'] == sub, 'Delta_sub_cat'] = df_sub_sub['Delta_sub_cat'].values
-                df.loc[df['Subcluster_sub'] == sub, 'SubSub_DS_Pass'] = int(p_value < alpha)
-
-                if p_value < alpha:
-                    passed_list.append(sub)
-
-            return df, passed_list
-
-        # ============================================        
-        # ✅ 3️⃣ FUNCIÓN: Mapa final global
-        # ============================================
-        def plot_all_with_valids(df, passed_list):
-            df_pass = df[df['SubSub_DS_Pass'] == 1].copy()
+        # === 2️⃣ MAPA PRINCIPAL: SPRITES + KDE ===
+        def plot_galaxy_sprites_with_kde(df, ra_col='RA', dec_col='Dec',
+                                         morph_col='M(ave)', rf_col='Rf', id_col='ID'):
             fig = go.Figure()
 
-            fig.add_trace(go.Scatter(
-                x=df['RA'],
-                y=df['Dec'],
-                mode='markers',
-                marker=dict(size=4, color='lightgrey', opacity=0.3),
-                name="Todas las galaxias",
+            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+
+            # --- 🔹 KDE para brillo difuso ---
+            coords = np.vstack([df[ra_col], df[dec_col]])
+            kde = gaussian_kde(coords, bw_method=0.1)
+            xi, yi = np.mgrid[ra_min:ra_max:100j, dec_min:dec_max:100j]
+            zi = kde(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
+
+            fig.add_trace(go.Contour(
+                x=np.linspace(ra_min, ra_max, 100),
+                y=np.linspace(dec_min, dec_max, 100),
+                z=zi,
+                colorscale='YlGnBu',
+                opacity=0.35,
+                contours=dict(start=zi.min(), end=zi.max(), size=(zi.max()-zi.min())/10),
+                showscale=False,
                 hoverinfo='skip'
             ))
 
-            colors = px.colors.qualitative.Set2
+            # --- 🔹 Sprites galaxias ---
+            for _, row in df.iterrows():
+                ra = row[ra_col]
+                dec = row[dec_col]
+                morph = row.get(morph_col, 'UNK')
+                rf = abs(row.get(rf_col, -2))
+                size_factor = np.clip(rf * 3, 0.5, 3)
 
-            for i, subsub in enumerate(passed_list):
-                data_sub = df_pass[df_pass['Subcluster_sub'] == subsub].copy()
-                hover_text = data_sub.apply(
-                    lambda row: f"ID: {row['ID']}<br>"
-                                f"RA: {row['RA']:.3f}°<br>"
-                                f"Dec: {row['Dec']:.3f}°<br>"
-                                f"Vel: {row['Vel']:.1f} km/s<br>"
-                                f"Δ: {row['Delta_sub']:.3f} ({row['Delta_sub_cat']})<br>"
-                                f"Subcluster_sub: {row['Subcluster_sub']}",
-                    axis=1
+                if "E" in morph:
+                    sprite = generate_elliptical_svg("#ffffcc")
+                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
+                    sprite = generate_spiral_svg("#00ffff")
+                elif "Irr" in morph:
+                    sprite = generate_irregular_svg("#ff9999")
+                else:
+                    sprite = generate_elliptical_svg("#999999")
+
+                size = 0.05 * (ra_max - ra_min) * size_factor
+
+                fig.add_layout_image(
+                    dict(
+                        source=sprite,
+                        x=ra,
+                        y=dec,
+                        sizex=size,
+                        sizey=size,
+                        xanchor="center",
+                        yanchor="middle",
+                        xref="x",
+                        yref="y",
+                        opacity=0.9,
+                        layer="above"
+                    )
                 )
 
                 fig.add_trace(go.Scatter(
-                    x=data_sub['RA'],
-                    y=data_sub['Dec'],
-                    mode='markers',
-                    marker=dict(size=8, color=colors[i % len(colors)],
-                                line=dict(width=0.5, color='DarkSlateGrey')),
-                    name=f'Sub-subcluster {subsub}',
-                    text=hover_text,
-                    hoverinfo='text'
-                ))
-
-                fig.add_trace(go.Histogram2dContour(
-                    x=data_sub['RA'],
-                    y=data_sub['Dec'],
-                    colorscale=[[0, 'rgba(0,0,0,0)'], [1, colors[i % len(colors)]]],
-                    showscale=False,
-                    opacity=0.3,
-                    ncontours=10,
-                    line=dict(width=1),
-                    hoverinfo='skip',
-                    name=f'Contorno {subsub}'
+                    x=[ra],
+                    y=[dec],
+                    mode="markers",
+                    marker=dict(size=1, opacity=0),
+                    text=f"ID: {row.get(id_col,'-')}<br>RA: {ra:.3f}<br>Dec: {dec:.3f}<br>Morph: {morph}<br>Rf: {rf:.2f}",
+                    hoverinfo="text",
+                    showlegend=False
                 ))
 
             fig.update_layout(
-                title="Mapa Abell 85: fondo + Sub-subclusters validados DS",
-                xaxis_title="Ascensión Recta (RA, grados)",
-                yaxis_title="Declinación (Dec, grados)",
-                xaxis=dict(autorange='reversed'),
-                template='plotly_white',
-                height=800, width=1000
+                paper_bgcolor="black",
+                plot_bgcolor="black",
+                xaxis=dict(autorange="reversed", showgrid=False, title="Ascensión Recta (RA)"),
+                yaxis=dict(showgrid=False, title="Declinación (Dec)"),
+                title="🌌 Mapa Realista con Sprites + KDE",
+                font=dict(color="white")
             )
+            fig.update_xaxes(range=[ra_min, ra_max])
+            fig.update_yaxes(range=[dec_min, dec_max])
 
+            return fig
+
+        # === 3️⃣ BLOQUE STREAMLIT ===
+        with st.expander("🌌 Mapa Deep Field: Sprites + KDE + Rf"):
+            fig = plot_galaxy_sprites_with_kde(df)
             st.plotly_chart(fig, use_container_width=True)
 
-            st.download_button(
-                "💾 Descargar galaxias validadas",
-                df_pass.to_csv(index=False).encode('utf-8'),
-                file_name="Galaxias_DS_Validadas.csv",
-                mime="text/csv"
-            )
 
-        # ============================================
-        # ✅ 4️⃣ Pipeline AUTOMÁTICO
-        # ============================================
-        with st.expander("🚀 Pipeline Automático para TODOS"):
-            st.subheader("🔁 Sub-subclustering + DS + Mapa Global")
-
-            if 'Subcluster' in df.columns:
-                numeric_cols = df.select_dtypes(include='number').columns.tolist()
-                num_clusters_sub = st.slider("Número de sub-subclusters por Subcluster:", 2, 10, 3)
-                selected_cols = st.multiselect("Variables numéricas:", numeric_cols, default=numeric_cols)
-
-                if st.button("🔄 Ejecutar todo"):
-                    unique_parents = sorted(df['Subcluster'].dropna().unique())
-                    for parent in unique_parents:
-                        df = run_subsub_clustering_one(df, parent, selected_cols, num_clusters_sub)
-                    df, passed_list = run_ds_test_all(df, n_permutations=500)
-                    plot_all_with_valids(df, passed_list)
-            else:
-                st.warning("Ejecuta primero el clustering jerárquico principal.")
-
-
+        
+        
 
 
 

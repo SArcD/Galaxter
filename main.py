@@ -1934,7 +1934,9 @@ elif opcion == "Proceso":
                         showscale=False,
                         opacity=0.15,
                         name=f'KDE Subcluster {subc}',
-                        hoverinfo='skip'
+                        hoverinfo='skip',
+                        contours=dict(coloring='lines')  # 👉 Modo solo líneas
+
                     ))
 
             fig.update_layout(

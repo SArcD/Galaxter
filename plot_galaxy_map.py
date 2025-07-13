@@ -1,7 +1,6 @@
-# plot_galaxy_map.py
 import streamlit as st
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 import math
 import random
 
@@ -39,12 +38,15 @@ def plot_galaxy_map(
     draw = ImageDraw.Draw(img)
 
     # Agregar halo difuso grande
-    halo = Image.new('RGBA', (width, height), (0,0,0,0))
-    draw_halo = ImageDraw.Draw(halo)
-    draw_halo.ellipse([width//2-400, height//2-400, width//2+400, height//2+400], fill=(0,180,150,40))
-    halo = halo.filter(ImageFilter.GaussianBlur(100))
-    img.alpha_composite(halo)
-    
+    halo_layer = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    draw_halo = ImageDraw.Draw(halo_layer)
+    draw_halo.ellipse(
+        [width // 2 - 400, height // 2 - 400, width // 2 + 400, height // 2 + 400],
+        fill=(0, 180, 150, 40)
+    )
+    halo_blurred = halo_layer.filter(ImageFilter.GaussianBlur(100))
+    img.alpha_composite(halo_blurred)
+
     for _, row in df_filtered.iterrows():
         RA = row[ra_col]
         Dec = row[dec_col]
@@ -52,7 +54,7 @@ def plot_galaxy_map(
         try:
             mag_rf = float(row[rf_col])
         except:
-            mag_rf = -15.0  # fallback safe default
+            mag_rf = -15.0
 
         size = max(8, int(30 - abs(mag_rf)))
         brightness = 200
@@ -73,7 +75,7 @@ def plot_galaxy_map(
         img.alpha_composite(galaxy, (x, y))
 
     for _ in range(2000):
-        sx, sy = random.randint(0, width-1), random.randint(0, height-1)
+        sx, sy = random.randint(0, width - 1), random.randint(0, height - 1)
         b = random.randint(120, 220)
         draw.point((sx, sy), fill=(b, b, b, 255))
 
@@ -82,7 +84,7 @@ def plot_galaxy_map(
         st.dataframe(df_filtered)
 
 def draw_spiral(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for i in range(100):
@@ -92,28 +94,28 @@ def draw_spiral(size, brightness):
         x = int(cx + (radius + noise) * math.cos(theta))
         y = int(cy + (radius + noise) * math.sin(theta))
         if 0 <= x < g.width and 0 <= y < g.height:
-            draw.point((x,y), fill=(100,200,255, brightness))
-    draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(220,220,255,255))
+            draw.point((x, y), fill=(100, 200, 255, brightness))
+    draw.ellipse([cx - 1, cy - 1, cx + 1, cy + 1], fill=(220, 220, 255, 255))
     return g
 
 def draw_elliptical(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    for i in range(3,0,-1):
-        rx = int(size * (i/3))
-        ry = int(size * (i/3) * 0.6)
-        alpha = int(brightness * (i/3) * 0.5)
-        bbox = [cx-rx, cy-ry, cx+rx, cy+ry]
-        draw.ellipse(bbox, fill=(150,220,255,alpha))
+    for i in range(3, 0, -1):
+        rx = int(size * (i / 3))
+        ry = int(size * (i / 3) * 0.6)
+        alpha = int(brightness * (i / 3) * 0.5)
+        bbox = [cx - rx, cy - ry, cx + rx, cy + ry]
+        draw.ellipse(bbox, fill=(150, 220, 255, alpha))
     return g
 
 def draw_irregular(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    for _ in range(size*4):
-        dx = random.randint(-size//2, size//2)
-        dy = random.randint(-size//2, size//2)
-        draw.point((cx+dx, cy+dy), fill=(120,200,255, brightness))
+    for _ in range(size * 4):
+        dx = random.randint(-size // 2, size // 2)
+        dy = random.randint(-size // 2, size // 2)
+        draw.point((cx + dx, cy + dy), fill=(120, 200, 255, brightness))
     return g

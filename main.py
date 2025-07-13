@@ -1735,6 +1735,25 @@ elif opcion == "Proceso":
                     )
                     st.plotly_chart(fig_bar, use_container_width=True)
 
+        def plot_global_dispersion(df, variables):
+            st.subheader("📊 Dispersión Global de Variables")
+            for var in variables:
+                if pd.api.types.is_numeric_dtype(df[var]):
+                    fig = px.box(df, y=var, points='all', notched=True, title=f'Dispersión de {var}')
+                else:
+                    fig = px.histogram(df, x=var, color=var, text_auto=True, title=f'Distribución de {var}')
+                st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("📊 Dispersión Global de Variables"):
+            vars_to_plot = st.multiselect(
+                "Selecciona variables:",
+                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
+                default=['Vel']
+            )
+            plot_global_dispersion(df, vars_to_plot)
+
+
+        
 
         # ✔️ Ahora: DISPERSIÓN de variables numéricas o categóricas
         with st.expander(f"📊 Dispersión por Subcluster Nivel {current_level}"):

@@ -1987,136 +1987,6 @@ elif opcion == "Proceso":
         import streamlit as st
         import numpy as np
 
-        def generate_realistic_galaxy_svg(
-            df,
-            ra_col='RA',
-            dec_col='Dec',
-            morph_col='M(ave)',
-            id_col='ID',
-            vel_col='Vel',
-            n_stars=150
-        ):
-            """
-            🌌 Mapa SVG con:
-            - Galaxias de morfología distinta
-            - Colores variados
-            - Rotación para espirales
-            - Hover completo
-            - Estrellas de fondo
-            - Toggle por morfología
-            """
-
-            if morph_col not in df.columns:
-                st.warning(f"Columna '{morph_col}' no existe.")
-                return
-
-            morphs = sorted(df[morph_col].dropna().unique().tolist())
-
-            selected_morphs = st.multiselect(
-                "Selecciona morfologías:",
-                options=morphs,
-                default=morphs
-            )
-
-            svg_parts = [
-                '<svg viewBox="0 0 1000 1000" '
-                'style="background-color:black;" '
-                'preserveAspectRatio="xMidYMid meet" '
-                'xmlns="http://www.w3.org/2000/svg">'
-            ]
-
-            # === 1️⃣ Estrellas de fondo ===
-            np.random.seed(42)
-            for _ in range(n_stars):
-                x_star = np.random.randint(0, 1000)
-                y_star = np.random.randint(0, 1000)
-                size = np.random.uniform(0.5, 1.5)
-                opacity = np.random.uniform(0.2, 0.8)
-                svg_parts.append(
-                    f'<circle cx="{x_star}" cy="{y_star}" r="{size}" fill="white" opacity="{opacity}"/>'
-                )
-
-            # === 2️⃣ Escalado
-            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
-            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
-
-            def scale_ra(ra):
-                return 1000 * (ra - ra_min) / (ra_max - ra_min)
-
-            def scale_dec(dec):
-                return 1000 * (1 - (dec - dec_min) / (dec_max - dec_min))
-
-            # === 3️⃣ Galaxias
-            for _, row in df[df[morph_col].isin(selected_morphs)].iterrows():
-                x = round(scale_ra(row[ra_col]), 2)
-                y = round(scale_dec(row[dec_col]), 2)
-                morph = row[morph_col]
-                vel = row[vel_col]
-                id_ = row[id_col]
-
-                hover = (
-                    f"<title>"
-                    f"ID: {id_} | "
-                    f"RA: {row[ra_col]:.3f} | "
-                    f"Dec: {row[dec_col]:.3f} | "
-                    f"Vel: {vel:.0f} | "
-                    f"Morfología: {morph}"
-                    f"</title>"
-                )
-
-                size = np.random.randint(6, 12)  # Varía el tamaño para realismo
-
-                # === Colores astronómicos aproximados
-                if "E" in morph:
-                    color = "#FFDAB9"  # Peach (amarillento, galaxias viejas)
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.9">{hover}</circle>'
-
-                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
-                    color = "#87CEFA"  # Azul claro (más joven)
-                    shape = f'''
-                    <g>
-                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="{color}" opacity="0.9">{hover}</ellipse>
-                      <animateTransform attributeName="transform" attributeType="XML"
-                        type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
-                    </g>
-                    '''
-
-                elif "S0" in morph:
-                    color = "#EEE8AA"  # Pálido
-                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="{color}" opacity="0.8">{hover}</ellipse>'
-
-                else:
-                    color = "#FFFFFF"
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{color}" opacity="0.5">{hover}</circle>'
-
-                svg_parts.append(shape.strip())
-
-            svg_parts.append('</svg>')
-            svg_code = "\n".join(svg_parts)
-
-            st.subheader("🌌 Mapa Realista Abell 85 (SVG)")        
-            st.markdown(
-                f"""
-                <div style="background-color:black; text-align:center;">
-                    {svg_code}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-                
-
-
-        with st.expander("🌌 Mapa Realista Galaxias (SVG)"):
-            generate_realistic_galaxy_svg(
-                df,
-                ra_col='RA',
-                dec_col='Dec',
-                morph_col='M(ave)',  # Ajusta a tu DataFrame
-                id_col='ID',
-                vel_col='Vel',
-                n_stars=150
-            )
 
         import plotly.graph_objects as go
         import numpy as np
@@ -2232,6 +2102,126 @@ elif opcion == "Proceso":
             generate_simple_svg()
 
 
+
+        import streamlit as st
+        import numpy as np
+
+        def generate_realistic_galaxy_svg(df, ra_col='RA', dec_col='Dec',
+                                          morph_col='M(ave)', subcluster_col='Subcluster',
+                                          mag_col='M(IPn)'):
+            """
+            🌌 Genera un mapa SVG realista tipo Deep Field:
+            🔹 Morfología como forma y animación
+            🔹 Gradientes y filtros de blur
+            🔹 Toggle por morfología o subcluster
+            """
+
+            st.subheader("🌌 Mapa Abell 85 estilo Deep Field (SVG)")
+
+            # === 1️⃣ Selección de vista ===
+            mode = st.radio(
+                "Filtrar galaxias por:",
+                options=['Morfología', 'Subcluster'],
+                index=0
+            )
+
+            if mode == 'Morfología':
+                unique = sorted(df[morph_col].dropna().unique())
+            else:
+                unique = sorted(df[subcluster_col].dropna().unique())
+
+            selected = st.multiselect(
+                f"Selecciona {mode.lower()}s a mostrar:",
+                options=unique,
+                default=unique
+            )
+
+            # === 2️⃣ Escalado RA/Dec ===
+            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+
+            def scale_ra(ra):
+                return int(1000 * (ra - ra_min) / (ra_max - ra_min))
+
+            def scale_dec(dec):
+                return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+
+            # === 3️⃣ Definir gradientes y filtro ===
+            svg_parts = [
+                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
+                '<defs>',
+                '<filter id="blur"><feGaussianBlur stdDeviation="3"/></filter>'
+            ]
+
+            # Colores gradiente variados para estilos deep field
+            gradient_colors = [
+                'rgba(0,255,200,0.2)',
+                'rgba(0,150,255,0.2)',
+                'rgba(255,255,200,0.15)',
+                'rgba(255,100,100,0.2)',
+                'rgba(255,255,255,0.25)'
+            ]
+
+            for i, col in enumerate(gradient_colors):
+                svg_parts.append(f"""
+                <radialGradient id="grad{i}" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" style="stop-color:{col};" />
+                  <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
+                </radialGradient>
+                """)
+
+            svg_parts.append('</defs>')
+
+            # === 4️⃣ Dibujar galaxias ===
+            for idx, row in df.iterrows():
+                if mode == 'Morfología':
+                    if row[morph_col] not in selected:
+                        continue
+                else:
+                    if row[subcluster_col] not in selected:
+                        continue
+
+                x = scale_ra(row[ra_col])
+                y = scale_dec(row[dec_col])
+                morph = str(row[morph_col]) if morph_col in row else 'UNK'
+
+                # Escoge gradiente pseudoaleatorio pero estable
+                grad_id = f"grad{idx % len(gradient_colors)}"
+
+                # Tamaño relativo inverso a la magnitud (o fijo)
+                size = 12
+
+                if "E" in morph:
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9" />'
+
+                elif "Sb" in morph or "Sc" in morph or "S" in morph:  
+                    shape = f'''
+                    <g>
+                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}"
+                        fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9">
+                        <title>ID: {row.get('ID','')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get('Vel','')} | Morph: {morph}</title>
+                      </ellipse>
+                      <animateTransform attributeName="transform" attributeType="XML"
+                        type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>
+                    </g>
+                    '''                    
+                elif "I" in morph or "Ir" in morph:
+                    shape = f'<rect x="{x-size//2}" y="{y-size//2}" width="{size}" height="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.7" />'
+
+                else:
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"/>'
+
+                svg_parts.append(shape)
+
+            svg_parts.append('</svg>')
+
+            svg_code = "\n".join(svg_parts)
+            st.markdown(svg_code, unsafe_allow_html=True)
+
+        with st.expander("🌌 Mapa Deep Field (SVG)"):
+            generate_realistic_galaxy_svg(df)
+
+        
 
         import numpy as np
         import pandas as pd

@@ -2219,6 +2219,10 @@ elif opcion == "Proceso":
                 options=sorted(df[subcluster_col].dropna().unique()),
                 default=sorted(df[subcluster_col].dropna().unique())
             )
+            
+            # --- Escalado de RA invertido ---
+            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
 
             svg_parts = [

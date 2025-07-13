@@ -2329,106 +2329,21 @@ elif opcion == "Proceso":
         from scipy.stats import gaussian_kde
         import base64
 
-        def generate_spiral_svg(color="#00ffff"):
-            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><g transform="translate(50,50)"><path d="M0,0 m-30,0 a30,30 0 1,1 60,0 a30,30 0 1,1 -60,0"stroke="{color}" stroke-width="2" fill="none"/></g></svg>'
+
+        def generate_spiral_svg():
+            svg = """<svg width="50" height="50" viewBox="0 0 100 100">
+              <path d="M50,50 m-30,0 a30,30 0 1,1 60,0 a30,30 0 1,1 -60,0"
+                  stroke="#00ffff" stroke-width="2" fill="none"/>
+            </svg>"""
             return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
 
-        def generate_elliptical_svg(color="#ffffcc"):
-            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="30" ry="20" fill="{color}" fill-opacity="0.6"/></svg>'
-            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+        # Ejemplo minimal
+        spiral_sprite = generate_spiral_svg()
 
-        def generate_irregular_svg(color="#ff9999"):
-            svg = f'<svg width="100" height="100" viewBox="0 0 100 100"><path d="M50 20 L70 50 L50 80 L30 50 Z" fill="{color}" fill-opacity="0.7"/></svg>'
-            return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+        # Usar <image> con coordenadas RA-Dec escaladas    
+        svg_map = f'<svg viewBox="0 0 1000 1000" style="background:black;"><image x="400" y="500" width="50" height="50" href="{spiral_sprite}" /></svg>'
+        st.markdown(svg_map, unsafe_allow_html=True)
 
-
-        # === 2️⃣ MAPA PRINCIPAL: SPRITES + KDE ===
-        def plot_galaxy_sprites_with_kde(df, ra_col='RA', dec_col='Dec',
-                                         morph_col='M(ave)', rf_col='Rf', id_col='ID'):
-            fig = go.Figure()
-
-            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
-            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
-
-            # --- 🔹 KDE para brillo difuso ---
-            coords = np.vstack([df[ra_col], df[dec_col]])
-            kde = gaussian_kde(coords, bw_method=0.1)
-            xi, yi = np.mgrid[ra_min:ra_max:100j, dec_min:dec_max:100j]
-            zi = kde(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
-
-            fig.add_trace(go.Contour(
-                x=np.linspace(ra_min, ra_max, 100),
-                y=np.linspace(dec_min, dec_max, 100),
-                z=zi,
-                colorscale='YlGnBu',
-                opacity=0.35,
-                contours=dict(start=zi.min(), end=zi.max(), size=(zi.max()-zi.min())/10),
-                showscale=False,
-                hoverinfo='skip'
-            ))
-
-            # --- 🔹 Sprites galaxias ---
-            for _, row in df.iterrows():
-                ra = row[ra_col]
-                dec = row[dec_col]
-                morph = row.get(morph_col, 'UNK')
-                rf = abs(row.get(rf_col, -2))
-                size_factor = np.clip(rf * 3, 0.5, 3)
-
-                if "E" in morph:
-                    sprite = generate_elliptical_svg("#ffffcc")
-                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
-                    sprite = generate_spiral_svg("#00ffff")
-                elif "Irr" in morph:
-                    sprite = generate_irregular_svg("#ff9999")
-                else:
-                    sprite = generate_elliptical_svg("#999999")
-
-                size = 0.05 * (ra_max - ra_min) * size_factor
-
-                fig.add_layout_image(
-                    dict(
-                        source=sprite,
-                        x=ra,
-                        y=dec,
-                        sizex=size,
-                        sizey=size,
-                        xanchor="center",
-                        yanchor="middle",
-                        xref="x",
-                        yref="y",
-                        opacity=0.9,
-                        layer="above"
-                    )
-                )
-
-                fig.add_trace(go.Scatter(
-                    x=[ra],
-                    y=[dec],
-                    mode="markers",
-                    marker=dict(size=1, opacity=0),
-                    text=f"ID: {row.get(id_col,'-')}<br>RA: {ra:.3f}<br>Dec: {dec:.3f}<br>Morph: {morph}<br>Rf: {rf:.2f}",
-                    hoverinfo="text",
-                    showlegend=False
-                ))
-
-            fig.update_layout(
-                paper_bgcolor="black",
-                plot_bgcolor="black",
-                xaxis=dict(autorange="reversed", showgrid=False, title="Ascensión Recta (RA)"),
-                yaxis=dict(showgrid=False, title="Declinación (Dec)"),
-                title="🌌 Mapa Realista con Sprites + KDE",
-                font=dict(color="white")
-            )
-            fig.update_xaxes(range=[ra_min, ra_max])
-            fig.update_yaxes(range=[dec_min, dec_max])
-
-            return fig
-
-        # === 3️⃣ BLOQUE STREAMLIT ===
-        with st.expander("🌌 Mapa Deep Field: Sprites + KDE + Rf"):
-            fig = plot_galaxy_sprites_with_kde(df)
-            st.plotly_chart(fig, use_container_width=True)
 
 
         

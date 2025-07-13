@@ -1988,9 +1988,10 @@ elif opcion == "Proceso":
             plot_realistic_map_streamlit(df)
 
 
+
+
         import streamlit as st
-
-
+    
         def generate_galaxy_svg(
             df,
             ra_col='RA',
@@ -2000,17 +2001,14 @@ elif opcion == "Proceso":
             vel_col='Vel'
         ):
             """
-            📌 SVG realista: mapa de Abell 85
-            🔹 Formas y colores por morfología
-            🔹 Hover <title> con info
-            🔹 Animación de espirales
-            🔹 Fondo negro
-            🔹 Toggle morfologías
+            📌 SVG realista con:
+            🔹 Formas y rotación
+            🔹 Hover <title>
+            🔹 Toggle por morfología
             """
 
-            # Validar columna
             if morph_col not in df.columns:
-                st.warning(f"Columna '{morph_col}' no existe. Verifica nombres: {df.columns.tolist()}")
+                st.warning(f"Columna '{morph_col}' no existe en el DataFrame.")
                 return
 
             morphs = sorted(df[morph_col].dropna().unique().tolist())
@@ -2021,33 +2019,33 @@ elif opcion == "Proceso":
                 default=morphs
             )
 
-            # === SVG inicial ===
             svg_parts = [
-                '<svg viewBox="0 0 1000 1000" style="background-color:black;" xmlns="http://www.w3.org/2000/svg">'
+                '<svg viewBox="0 0 1000 1000" style="background-color:black;" '
+                'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'        
             ]
 
-            # Escalado RA/Dec
             ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
             dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
             def scale_ra(ra):
-                return int(1000 * (ra - ra_min) / (ra_max - ra_min))
+                return 1000 * (ra - ra_min) / (ra_max - ra_min)
 
             def scale_dec(dec):
-                return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+                return 1000 * (1 - (dec - dec_min) / (dec_max - dec_min))
 
             for _, row in df[df[morph_col].isin(selected_morphs)].iterrows():
-                x = scale_ra(row[ra_col])
-                y = scale_dec(row[dec_col])
+                x = round(scale_ra(row[ra_col]), 2)
+                y = round(scale_dec(row[dec_col]), 2)
                 morph = row[morph_col]
+                vel = row[vel_col]
+                id_ = row[id_col]
 
-                # Hover text
                 hover = (
                     f"<title>"
-                    f"ID: {row[id_col]} | "
+                    f"ID: {id_} | "
                     f"RA: {row[ra_col]:.3f} | "
                     f"Dec: {row[dec_col]:.3f} | "
-                    f"Vel: {row[vel_col]:.0f} | "
+                    f"Vel: {vel:.0f} | "
                     f"Morfología: {morph}"
                     f"</title>"
                 )
@@ -2068,18 +2066,24 @@ elif opcion == "Proceso":
 
                 elif "S0" in morph:
                     shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="grey" opacity="0.7">{hover}</ellipse>'
-        
+
                 else:
                     shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="white" opacity="0.5">{hover}</circle>'
 
-                svg_parts.append(shape)
+                svg_parts.append(shape.strip())
 
             svg_parts.append('</svg>')
             svg_code = "\n".join(svg_parts)
 
             st.subheader("🌌 Mapa Realista (SVG)")
-            st.markdown(f"""<div style="background-color:black;">{svg_code}</div>""", unsafe_allow_html=True)
-
+            st.markdown(
+                f"""
+                <div style="background-color:black; text-align:center;">
+                    {svg_code}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
                 
         with st.expander("🌌 Mapa Realista (SVG)"):

@@ -38,6 +38,13 @@ def plot_galaxy_map(
     img = Image.new('RGBA', (width, height), (0, 0, 0, 255))
     draw = ImageDraw.Draw(img)
 
+    # Agregar halo difuso grande
+    halo = Image.new('RGBA', (width, height), (0,0,0,0))
+    draw_halo = ImageDraw.Draw(halo)
+    draw_halo.ellipse([width//2-400, height//2-400, width//2+400, height//2+400], fill=(0,180,150,40))
+    halo = halo.filter(ImageFilter.GaussianBlur(100))
+    img.alpha_composite(halo)
+    
     for _, row in df_filtered.iterrows():
         RA = row[ra_col]
         Dec = row[dec_col]
@@ -47,7 +54,7 @@ def plot_galaxy_map(
         except:
             mag_rf = -15.0  # fallback safe default
 
-        size = max(20, int(60 - abs(mag_rf)))
+        size = max(8, int(30 - abs(mag_rf)))
         brightness = 200
 
         if morph.lower() == 'spiral':

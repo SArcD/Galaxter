@@ -1849,7 +1849,7 @@ elif opcion == "Proceso":
             df,
             ra_col='RA',        
             dec_col='Dec',
-            morph_col='M(C)',
+            morph_col='M(ave)',
             mag_col='M(IPn)',
             color_index_col='(g-r)',
             subcluster_col='Subcluster',
@@ -1982,7 +1982,7 @@ elif opcion == "Proceso":
             df,
             ra_col='RA',
             dec_col='Dec',
-            morph_col='M(C)',
+            morph_col='M(ave)',
             id_col='ID',
             vel_col='Vel',
             n_stars=150
@@ -2103,7 +2103,7 @@ elif opcion == "Proceso":
                 df,
                 ra_col='RA',
                 dec_col='Dec',
-                morph_col='M(C)',  # Ajusta a tu DataFrame
+                morph_col='M(ave)',  # Ajusta a tu DataFrame
                 id_col='ID',
                 vel_col='Vel',
                 n_stars=150

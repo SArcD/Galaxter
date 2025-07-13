@@ -1773,15 +1773,36 @@ elif opcion == "Proceso":
             for var in variables:
                 if var not in d.columns:
                     continue
+                #if pd.api.types.is_numeric_dtype(d[var]):
+                #    fig = px.box(
+                #        d, 
+                #        x=subcluster_col if mode != 'Global' else None,
+                #        y=var, 
+                #        points='all', 
+                #        notched=True,
+                #        title=f'Dispersión de {var}'
+                #    )
+
                 if pd.api.types.is_numeric_dtype(d[var]):
+                    #fig = px.box(
+                    #    d, 
+                    #    x=subcluster_col if mode != 'Global' else None,
+                    #    y=var, 
+                    #    points='all', 
+                    #    notched=True,
+                    #    color=subcluster_col if mode != 'Global' else None,
+                    #    color_discrete_map=my_color_map if mode != 'Global' else None,
+                    #    title=f'Dispersión de {var}'
+                    #)
                     fig = px.box(
                         d, 
                         x=subcluster_col if mode != 'Global' else None,
                         y=var, 
                         points='all', 
                         notched=True,
+                        color=subcluster_col if mode != 'Global' else None,
                         title=f'Dispersión de {var}'
-                    )
+                    )                
                 else:
                     fig = px.histogram(
                         d,
@@ -1815,31 +1836,6 @@ elif opcion == "Proceso":
 
         
 
-   #     # ✔️ Ahora: DISPERSIÓN de variables numéricas o categóricas
-   #     with st.expander(f"📊 Dispersión por Subcluster Nivel {current_level}"):
-   #         variables_to_plot = st.multiselect(
-   #             "Selecciona variables para ver dispersión:",
-   #             options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
-   #             default=['Vel']  # Por ejemplo: velocidad por defecto
-   #         )
-
-    #        show_only_val = st.checkbox("Mostrar solo subclusters validados (DS)", value=True)
-#
-#            plot_dispersion_by_subcluster(
-#                df,
-#                level=current_level,
-#                variables=variables_to_plot,
-#                show_only_validated=show_only_val
-#            )
-
-
-#        with st.expander("📊 Dispersión Global de Variables"):
-#            vars_to_plot = st.multiselect(
-#                "Selecciona variables:",
-#                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
-#                default=['Vel']
-#            )
-#            plot_global_dispersion(df, vars_to_plot)
 
 
 

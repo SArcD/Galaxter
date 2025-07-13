@@ -2330,6 +2330,9 @@ elif opcion == "Proceso":
         import base64
 
 
+        import base64
+        import streamlit as st
+
         def generate_spiral_svg():
             svg = """<svg width="50" height="50" viewBox="0 0 100 100">
               <path d="M50,50 m-30,0 a30,30 0 1,1 60,0 a30,30 0 1,1 -60,0"
@@ -2340,14 +2343,10 @@ elif opcion == "Proceso":
         # Ejemplo minimal
         spiral_sprite = generate_spiral_svg()
 
-        # Usar <image> con coordenadas RA-Dec escaladas    
+        # Usar <image> con coordenadas RA-Dec escaladas
         svg_map = f'<svg viewBox="0 0 1000 1000" style="background:black;"><image x="400" y="500" width="50" height="50" href="{spiral_sprite}" /></svg>'
+
         st.markdown(svg_map, unsafe_allow_html=True)
-
-
-
-        
-        
 
 
 

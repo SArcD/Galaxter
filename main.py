@@ -1672,9 +1672,86 @@ elif opcion == "Proceso":
             parent_col = f'Subcluster_{current_level}'
             current_level += 1
 
+        import plotly.express as px
+
+        def plot_dispersion_by_subcluster(df, level, variables=None, show_only_validated=True):
+            """
+            📊 Visualiza dispersión de variables numéricas o distribución de categóricas por subcluster validado.
+            """
+            cluster_col = f'Subcluster_{level}'
+            pass_col = f'DS_Pass_{level}'
+
+            if show_only_validated:
+                df_filtered = df[df[pass_col] == 1].copy()
+            else:
+                df_filtered = df.copy()
+
+            if df_filtered.empty:
+                st.info("⚠️ No hay datos para mostrar dispersión.")
+                return
+
+            if variables is None:
+                variables = df_filtered.columns.tolist()
+
+            unique_clusters = sorted(df_filtered[cluster_col].dropna().unique())
+            st.write(f"📊 Mostrando dispersión para {len(unique_clusters)} subclusters validados (Nivel {level})")
+
+            for var in variables:
+                st.subheader(f"🔍 {var} por {cluster_col}")
+
+                if pd.api.types.is_numeric_dtype(df_filtered[var]):
+                    # Numérica: histograma + boxplot
+                    fig_hist = px.histogram(
+                        df_filtered,
+                        x=var,
+                        color=cluster_col,
+                        nbins=30,
+                        barmode='overlay',
+                        title=f"Histograma de {var}",
+                        labels={var: var, cluster_col: "Subcluster"}
+                    )
+                    st.plotly_chart(fig_hist, use_container_width=True)
+
+                    fig_box = px.box(        
+                        df_filtered,
+                        x=cluster_col,
+                        y=var,
+                        color=cluster_col,
+                        points='all',
+                        notched=True,
+                        title=f"Boxplot de {var}",
+                        labels={var: var, cluster_col: "Subcluster"}
+                    )
+                    st.plotly_chart(fig_box, use_container_width=True)
+                else:
+                    # Categórica: barras de frecuencia
+                    fig_bar = px.histogram(
+                        df_filtered,
+                        x=var,
+                        color=cluster_col,
+                        barmode='group',        
+                        title=f"Frecuencias de {var}",
+                        labels={var: var, cluster_col: "Subcluster"}
+                    )
+                    st.plotly_chart(fig_bar, use_container_width=True)
 
 
+        # ✔️ Ahora: DISPERSIÓN de variables numéricas o categóricas
+        with st.expander(f"📊 Dispersión por Subcluster Nivel {current_level}"):
+            variables_to_plot = st.multiselect(
+                "Selecciona variables para ver dispersión:",
+                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
+                default=['Vel']  # Por ejemplo: velocidad por defecto
+            )
 
+            show_only_val = st.checkbox("Mostrar solo subclusters validados (DS)", value=True)
+
+            plot_dispersion_by_subcluster(
+                df,
+                level=current_level,
+                variables=variables_to_plot,
+                show_only_validated=show_only_val
+            )
 
 
         import numpy as np

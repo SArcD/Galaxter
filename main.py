@@ -1992,38 +1992,59 @@ elif opcion == "Proceso":
 
         import streamlit as st
     
-        def generate_galaxy_svg(
+        import streamlit as st
+        import numpy as np
+
+        def generate_realistic_galaxy_svg(
             df,
             ra_col='RA',
             dec_col='Dec',
             morph_col='M(C)',
             id_col='ID',
-            vel_col='Vel'
+            vel_col='Vel',
+            n_stars=150
         ):
             """
-            📌 SVG realista con:
-            🔹 Formas y rotación
-            🔹 Hover <title>
-            🔹 Toggle por morfología
+            🌌 Mapa SVG con:
+            - Galaxias de morfología distinta
+            - Colores variados
+            - Rotación para espirales
+            - Hover completo
+            - Estrellas de fondo
+            - Toggle por morfología
             """
 
             if morph_col not in df.columns:
-                st.warning(f"Columna '{morph_col}' no existe en el DataFrame.")
+                st.warning(f"Columna '{morph_col}' no existe.")
                 return
 
             morphs = sorted(df[morph_col].dropna().unique().tolist())
 
             selected_morphs = st.multiselect(
-                "Selecciona morfologías a mostrar:",
+                "Selecciona morfologías:",
                 options=morphs,
                 default=morphs
             )
 
             svg_parts = [
-                '<svg viewBox="0 0 1000 1000" style="background-color:black;" '
-                'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'        
+                '<svg viewBox="0 0 1000 1000" '
+                'style="background-color:black;" '
+                'preserveAspectRatio="xMidYMid meet" '
+                'xmlns="http://www.w3.org/2000/svg">'
             ]
 
+            # === 1️⃣ Estrellas de fondo ===
+            np.random.seed(42)
+            for _ in range(n_stars):
+                x_star = np.random.randint(0, 1000)
+                y_star = np.random.randint(0, 1000)
+                size = np.random.uniform(0.5, 1.5)
+                opacity = np.random.uniform(0.2, 0.8)
+                svg_parts.append(
+                    f'<circle cx="{x_star}" cy="{y_star}" r="{size}" fill="white" opacity="{opacity}"/>'
+                )
+
+            # === 2️⃣ Escalado
             ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
             dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
@@ -2033,6 +2054,7 @@ elif opcion == "Proceso":
             def scale_dec(dec):
                 return 1000 * (1 - (dec - dec_min) / (dec_max - dec_min))
 
+            # === 3️⃣ Galaxias
             for _, row in df[df[morph_col].isin(selected_morphs)].iterrows():
                 x = round(scale_ra(row[ra_col]), 2)
                 y = round(scale_dec(row[dec_col]), 2)
@@ -2050,32 +2072,37 @@ elif opcion == "Proceso":
                     f"</title>"
                 )
 
-                size = 8
+                size = np.random.randint(6, 12)  # Varía el tamaño para realismo
 
+                # === Colores astronómicos aproximados
                 if "E" in morph:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="white" opacity="0.8">{hover}</circle>'
+                    color = "#FFDAB9"  # Peach (amarillento, galaxias viejas)
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.9">{hover}</circle>'
 
-                elif "Sb" in morph or "Sc" in morph or "Sa" in morph:
+                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
+                    color = "#87CEFA"  # Azul claro (más joven)
                     shape = f'''
                     <g>
-                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="cyan" opacity="0.8">{hover}</ellipse>
+                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="{color}" opacity="0.9">{hover}</ellipse>
                       <animateTransform attributeName="transform" attributeType="XML"
                         type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
                     </g>
                     '''
 
                 elif "S0" in morph:
-                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="grey" opacity="0.7">{hover}</ellipse>'
+                    color = "#EEE8AA"  # Pálido
+                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="{color}" opacity="0.8">{hover}</ellipse>'
 
                 else:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="white" opacity="0.5">{hover}</circle>'
+                    color = "#FFFFFF"
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{color}" opacity="0.5">{hover}</circle>'
 
                 svg_parts.append(shape.strip())
 
             svg_parts.append('</svg>')
             svg_code = "\n".join(svg_parts)
 
-            st.subheader("🌌 Mapa Realista (SVG)")
+            st.subheader("🌌 Mapa Realista Abell 85 (SVG)")        
             st.markdown(
                 f"""
                 <div style="background-color:black; text-align:center;">
@@ -2086,16 +2113,19 @@ elif opcion == "Proceso":
             )
 
                 
-        with st.expander("🌌 Mapa Realista (SVG)"):
-            generate_galaxy_svg(
+
+
+        with st.expander("🌌 Mapa Realista Galaxias (SVG)"):
+            generate_realistic_galaxy_svg(
                 df,
                 ra_col='RA',
                 dec_col='Dec',
-                morph_col='M(C)',   # O el nombre exacto de tu columna
+                morph_col='M(C)',  # Ajusta a tu DataFrame
                 id_col='ID',
-                vel_col='Vel'
+                vel_col='Vel',
+                n_stars=150
             )
-        
+
 
         import numpy as np
         import pandas as pd

@@ -47,7 +47,7 @@ def plot_galaxy_map(
         except:
             mag_rf = -15.0  # fallback safe default
 
-        size = max(4, int(20 - abs(mag_rf)))
+        size = max(20, int(60 - abs(mag_rf)))
         brightness = 200
 
         if morph.lower() == 'spiral':

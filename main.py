@@ -2101,7 +2101,7 @@ elif opcion == "Proceso":
                 df,
                 ra_col='RA',
                 dec_col='Dec',
-                morph_col='Morfología',
+                morph_col='M(C)',
                 id_col='ID',
                 vel_col='Vel'
             )

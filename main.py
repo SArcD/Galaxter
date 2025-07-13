@@ -1815,31 +1815,31 @@ elif opcion == "Proceso":
 
         
 
-        # ✔️ Ahora: DISPERSIÓN de variables numéricas o categóricas
-        with st.expander(f"📊 Dispersión por Subcluster Nivel {current_level}"):
-            variables_to_plot = st.multiselect(
-                "Selecciona variables para ver dispersión:",
-                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
-                default=['Vel']  # Por ejemplo: velocidad por defecto
-            )
+   #     # ✔️ Ahora: DISPERSIÓN de variables numéricas o categóricas
+   #     with st.expander(f"📊 Dispersión por Subcluster Nivel {current_level}"):
+   #         variables_to_plot = st.multiselect(
+   #             "Selecciona variables para ver dispersión:",
+   #             options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
+   #             default=['Vel']  # Por ejemplo: velocidad por defecto
+   #         )
 
-            show_only_val = st.checkbox("Mostrar solo subclusters validados (DS)", value=True)
+    #        show_only_val = st.checkbox("Mostrar solo subclusters validados (DS)", value=True)
+#
+#            plot_dispersion_by_subcluster(
+#                df,
+#                level=current_level,
+#                variables=variables_to_plot,
+#                show_only_validated=show_only_val
+#            )
 
-            plot_dispersion_by_subcluster(
-                df,
-                level=current_level,
-                variables=variables_to_plot,
-                show_only_validated=show_only_val
-            )
 
-
-        with st.expander("📊 Dispersión Global de Variables"):
-            vars_to_plot = st.multiselect(
-                "Selecciona variables:",
-                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
-                default=['Vel']
-            )
-            plot_global_dispersion(df, vars_to_plot)
+#        with st.expander("📊 Dispersión Global de Variables"):
+#            vars_to_plot = st.multiselect(
+#                "Selecciona variables:",
+#                options=df.select_dtypes(include=['number', 'object', 'category']).columns.tolist(),
+#                default=['Vel']
+#            )
+#            plot_global_dispersion(df, vars_to_plot)
 
 
 

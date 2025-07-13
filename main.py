@@ -1988,6 +1988,123 @@ elif opcion == "Proceso":
             plot_realistic_map_streamlit(df)
 
 
+        import streamlit as st
+
+        def generate_galaxy_svg(
+            df,
+            ra_col='RA',
+            dec_col='Dec',
+            morph_col='Morfología',
+            id_col='ID',
+            vel_col='Vel'
+        ):
+            """
+            🔭 Crea SVG realista del cúmulo Abell 85:
+            - Diferentes formas por morfología
+            - Rotación animada para espirales
+            - Fondo negro estilo cielo
+            - Hover interactivo con title
+            - Multiselect de morfologías
+            """
+
+            st.subheader("🌌 Mapa Realista de Abell 85 (SVG)")
+
+            morphs = sorted(df[morph_col].dropna().unique().tolist())
+
+            selected_morphs = st.multiselect(
+                "Selecciona morfologías a mostrar:",
+                options=morphs,
+                default=morphs
+            )
+
+            svg_parts = [
+                '<svg viewBox="0 0 1000 1000" style="background-color:black;" xmlns="http://www.w3.org/2000/svg">'
+            ]
+
+            # Escalado
+            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+
+            def scale_ra(ra):
+                return int(1000 * (ra - ra_min) / (ra_max - ra_min))
+
+            def scale_dec(dec):
+                return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+
+            for _, row in df[df[morph_col].isin(selected_morphs)].iterrows():
+                x = scale_ra(row[ra_col])
+                y = scale_dec(row[dec_col])
+                morph = row[morph_col]
+
+                # 🏷️ Hover text
+                hover = (
+                    f"ID: {row.get(id_col,'')} | "
+                    f"RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | "
+                    f"Vel: {row.get(vel_col,'')} | "
+                    f"Morfología: {morph}"
+                )
+
+                size = 8  # Ajusta a tu gusto
+
+                if "E" in morph:
+                    # Elíptica
+                    shape = f'''
+                    <circle cx="{x}" cy="{y}" r="{size}" fill="white" opacity="0.8">
+                      <title>{hover}</title>
+                    </circle>
+                    '''
+                elif "Sb" in morph or "Sc" in morph:
+                    # Espiral animada
+                    shape = f'''
+                    <g>
+                      <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" fill="cyan" opacity="0.8">
+                        <title>{hover}</title>
+                      </ellipse>
+                      <animateTransform attributeName="transform" attributeType="XML"
+                        type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
+                    </g>
+                    '''
+                elif "S0" in morph:
+                    # Lenticular
+                    shape = f'''
+                    <ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="grey" opacity="0.7">
+                      <title>{hover}</title>
+                    </ellipse>
+                    '''
+                else:
+                    # Otros: difusos
+                    shape = f'''
+                    <circle cx="{x}" cy="{y}" r="{size//2}" fill="white" opacity="0.5">
+                      <title>{hover}</title>
+                    </circle>
+                    '''
+
+                svg_parts.append(shape)
+
+            svg_parts.append('</svg>')
+
+            svg_code = "\n".join(svg_parts)
+
+            # Render SVG en Streamlit
+            st.markdown(
+                f"""
+                <div style="background-color:black;">
+                {svg_code}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            
+        with st.expander("✨ Mapa Realista SVG"):
+            generate_galaxy_svg(
+                df,
+                ra_col='RA',
+                dec_col='Dec',
+                morph_col='Morfología',
+                id_col='ID',
+                vel_col='Vel'
+            )
 
         
 

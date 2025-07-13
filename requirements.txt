@@ -11,3 +11,4 @@ astropy
 statsmodels
 scikit-gstat
 pykrige
+pillow

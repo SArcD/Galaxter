@@ -1840,153 +1840,136 @@ elif opcion == "Proceso":
         import plotly.graph_objects as go
         import streamlit as st
 
-        def plot_realistic_map_streamlit(
+        import numpy as np
+        import plotly.express as px
+        import plotly.graph_objects as go
+
+
+        def plot_realistic_galaxy_map(
             df,
-            ra_col='RA',
+            ra_col='RA',        
             dec_col='Dec',
             morph_col='M(C)',
             mag_col='M(IPn)',
             color_index_col='(g-r)',
             subcluster_col='Subcluster',
-            vel_col='Vel'
+            vel_col='Vel',
+            add_kde=True
         ):
-            """
-            Mapa realista tipo campo profundo para Streamlit.
-            Toggle: Morfología o Subcluster.
-            """
-
-            st.subheader("🌌 Mapa realista: Campo Profundo Abell 85")
-
-            # Opciones
-            group_mode = st.radio(
-                "Agrupar galaxias por:",
-                options=['Morfología', 'Subcluster'],
-                index=0
-            )
-            add_kde = st.checkbox("Mostrar contornos KDE por Subcluster", value=True)
+            st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista + KDE opcional")
 
             fig = go.Figure()
 
-            # 1️⃣ Fondo estelar
+            # 🔹 Estrellas de fondo
             np.random.seed(42)
-            stars_x = np.random.uniform(df[ra_col].min(), df[ra_col].max(), 500)
-            stars_y = np.random.uniform(df[dec_col].min(), df[dec_col].max(), 500)
             fig.add_trace(go.Scatter(
-                x=stars_x, y=stars_y,
+                x=np.random.uniform(df[ra_col].min(), df[ra_col].max(), 500),
+                y=np.random.uniform(df[dec_col].min(), df[dec_col].max(), 500),
                 mode='markers',
-                marker=dict(size=1, color='white', opacity=0.05),
+                marker=dict(size=1, color='white', opacity=0.02),
                 hoverinfo='skip',
                 showlegend=False
             ))
 
-            if group_mode == 'Morfología':
-                groups = df[morph_col].dropna().unique()
-                group_map = {
-                    'S': {'color': 'deepskyblue', 'symbol': 'circle'},
-                    'E': {'color': 'gold', 'symbol': 'circle'},
-                    'I': {'color': 'red', 'symbol': 'diamond'},
-                }
-                for group in groups:
-                    df_g = df[df[morph_col] == group]
-                    if df_g.empty:
-                        continue
+            # 🔹 Símbolos y colores refinados por morfología
+            morph_map = {
+                'E': {'symbol': 'circle'},
+                'S': {'symbol': 'star'},
+                'I': {'symbol': 'diamond'},
+                'UNK': {'symbol': 'x'}
+            }
 
-                    sizes = 10 - df_g[mag_col].fillna(df_g[mag_col].max())        
-                    sizes = sizes.clip(lower=1, upper=15)
+            # Agrupa por letra principal
+            df['Morph_Group'] = df[morph_col].str[0].fillna('UNK')
 
-                    fig.add_trace(go.Scatter(
-                        x=df_g[ra_col],
-                        y=df_g[dec_col],
-                        mode='markers',
-                        marker=dict(
-                            size=sizes,
-                            color=group_map.get(group, {}).get('color', 'white'),
-                            symbol=group_map.get(group, {}).get('symbol', 'circle'),
-                            opacity=0.9,
-                            line=dict(width=0.5, color='white')
-                        ),
-                        name=f"{group} ({len(df_g)})",
-                        text=df_g.apply(
-                            lambda r: f"ID: {r['ID']}<br>"
-                                      f"RA: {r[ra_col]:.3f}°<br>"
-                                      f"Dec: {r[dec_col]:.3f}°<br>"
-                                      f"Vel: {r[vel_col]:.1f} km/s<br>"
-                                      f"Morph: {r[morph_col]}<br>"
-                                      f"Mag: {r[mag_col]:.2f}<br>"
-                                      f"(g-r): {r[color_index_col]:.2f}<br>"
-                                      f"Subcluster: {r[subcluster_col]}",
-                              axis=1
-                        ),
-                        hoverinfo='text'
+            # 🔹 Rango de color (g-r) continuo
+            color_range = df[color_index_col].quantile([0.05, 0.95]).values.tolist()
+
+            for morph_type, style in morph_map.items():
+                df_m = df[df['Morph_Group'] == morph_type]
+                if df_m.empty:
+                    continue
+
+                sizes = 12 - df_m[mag_col].fillna(df_m[mag_col].max())
+                sizes = sizes.clip(lower=2, upper=20)
+
+                fig.add_trace(go.Scatter(
+                    x=df_m[ra_col],
+                    y=df_m[dec_col],
+                    mode='markers',
+                    name=f"{morph_type} ({len(df_m)})",
+                    marker=dict(
+                        size=sizes,
+                        symbol=style['symbol'],
+                        color=df_m[color_index_col],
+                        colorscale='RdBu_r',
+                        cmin=color_range[0],
+                        cmax=color_range[1],
+                        colorbar=dict(title='(g-r)', len=0.3),
+                        opacity=0.85,
+                        line=dict(width=0.3, color='white')
+                    ),
+                    text=df_m.apply(
+                        lambda r: f"ID: {r['ID']}<br>"
+                                  f"RA: {r[ra_col]:.3f}°<br>"
+                                  f"Dec: {r[dec_col]:.3f}°<br>"
+                                  f"Vel: {r[vel_col]:.1f} km/s<br>"
+                                  f"Morph: {r[morph_col]}<br>"
+                                  f"Mag: {r[mag_col]:.2f}<br>"
+                                  f"(g-r): {r[color_index_col]:.2f}<br>"
+                                  f"Subcluster: {r[subcluster_col]}",
+                        axis=1
+                    ),
+                    hoverinfo='text'
+                ))
+
+            # 🔹 KDE opcional por subcluster
+            if add_kde and subcluster_col in df.columns:
+                for subc in sorted(df[subcluster_col].dropna().unique()):
+                    subc_data = df[df[subcluster_col] == subc]
+                    fig.add_trace(go.Histogram2dContour(
+                        x=subc_data[ra_col],
+                        y=subc_data[dec_col],
+                        colorscale='Greys',
+                        showscale=False,
+                        opacity=0.15,
+                        name=f'KDE Subcluster {subc}',
+                        hoverinfo='skip'
                     ))
 
-            elif group_mode == 'Subcluster':        
-                groups = df[subcluster_col].dropna().unique()
-                colors = px.colors.qualitative.Set2
-
-                for i, group in enumerate(groups):
-                    df_g = df[df[subcluster_col] == group]
-                    if df_g.empty:
-                        continue
-
-                    sizes = 10 - df_g[mag_col].fillna(df_g[mag_col].max())
-                    sizes = sizes.clip(lower=1, upper=15)
-
-                    fig.add_trace(go.Scatter(
-                        x=df_g[ra_col],
-                        y=df_g[dec_col],
-                        mode='markers',
-                        marker=dict(
-                            size=sizes,
-                            color=colors[i % len(colors)],
-                            symbol='circle',
-                            opacity=0.9,
-                            line=dict(width=0.5, color='white')
-                        ),
-                        name=f"Subcluster {group} ({len(df_g)})",
-                        text=df_g.apply(
-                            lambda r: f"ID: {r['ID']}<br>"
-                                      f"RA: {r[ra_col]:.3f}°<br>"
-                                      f"Dec: {r[dec_col]:.3f}°<br>"
-                                      f"Vel: {r[vel_col]:.1f} km/s<br>"
-                                      f"Morph: {r[morph_col]}<br>"
-                                      f"Mag: {r[mag_col]:.2f}<br>"
-                                      f"(g-r): {r[color_index_col]:.2f}<br>"
-                                      f"Subcluster: {r[subcluster_col]}",
-                            axis=1
-                        ),
-                        hoverinfo='text'
-                    ))
-
-                    if add_kde:
-                        fig.add_trace(go.Histogram2dContour(
-                            x=df_g[ra_col],
-                            y=df_g[dec_col],
-                            colorscale='Greys',
-                            showscale=False,
-                            opacity=0.2,
-                            ncontours=10,
-                            hoverinfo='skip',
-                            line=dict(width=1)
-                        ))
-
-            # Layout
             fig.update_layout(
-                title="Mapa Realista: Galaxias de Abell 85",
                 paper_bgcolor='black',
                 plot_bgcolor='black',
-                xaxis=dict(title='Ascensión Recta (RA, grados)', autorange='reversed', showgrid=False, color='white'),
-                yaxis=dict(title='Declinación (Dec, grados)', showgrid=False, color='white'),
-                font_color='white',
-                legend_title=group_mode
+                xaxis=dict(
+                    title='Ascensión Recta (RA, grados)',
+                    autorange='reversed',
+                    showgrid=False,
+                    color='white'
+                ),
+                yaxis=dict(
+                    title='Declinación (Dec, grados)',
+                    showgrid=False,
+                    color='white'
+                ),
+                legend=dict(
+                    font=dict(color='white')
+                ),
+                font=dict(color='white'),
+                title=dict(text="Mapa Realista: Campo Profundo + (g-r) + Morfología", font=dict(color='white'))
             )
 
             st.plotly_chart(fig, use_container_width=True)
 
 
-        with st.expander("🌌 Mapa Realista Campo Profundo"):
-            plot_realistic_map_streamlit(df)
 
+#        with st.expander("🌌 Mapa Realista Campo Profundo"):
+#            plot_realistic_map_streamlit(df)
+
+        with st.expander("🌌 Mapa Realista Final"):
+            plot_realistic_galaxy_map(
+                df,
+                add_kde=True  # True o False
+            )
 
 
 

@@ -2200,8 +2200,120 @@ elif opcion == "Proceso":
             plot_realistic_plotly(df)
 
 
+        import streamlit as st
+    
+        def generate_realistic_spiral_svg(        
+            df,
+            ra_col='RA',
+            dec_col='Dec',
+            morph_col='M(ave)',
+            mag_col='M(IPn)',
+            subcluster_col='Subcluster'
+        ):
+            """
+            📌 Mapa realista Abell 85 con:
+            🔹 Diferentes morfologías
+            🔹 Espirales con efectos distintos
+            🔹 Halos difusos y gas caliente (KDE)        
+            """
+    
+            # === Agrupa tipos simplificados
+            morph_map = {
+                'E': {'color': '#F4E3B2', 'shape': 'circle'},
+                'Sa': {'color': '#7DD9F5', 'shape': 'spiral1'},
+                'Sb': {'color': '#66CCFF', 'shape': 'spiral2'},
+                'Sc': {'color': '#50BFE6', 'shape': 'spiral3'},
+                'I': {'color': '#FFFFFF', 'shape': 'circle'},
+                'UNK': {'color': '#B0BEC5', 'shape': 'circle'}
+            }
 
-        
+            df['Morph_Group'] = df[morph_col].fillna('UNK').apply(
+                lambda m: next((k for k in morph_map if k in m), 'UNK')
+            )
+
+            svg_parts = [
+                '''
+                <svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>
+                '''
+            ]
+
+            # === KDE por subcluster
+            subclusters = df[subcluster_col].dropna().unique()
+            for i, sub in enumerate(subclusters):
+                svg_parts.append(f'''
+                  <radialGradient id="grad{sub}" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" style="stop-color:rgba(0,255,200,0.1);" />
+                    <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
+                  </radialGradient>
+                ''')
+
+            svg_parts.append('</defs>')
+
+            # === Dibuja burbujas KDE
+            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+            def scale_ra(ra): return int(1000 * (ra - ra_min) / (ra_max - ra_min))
+            def scale_dec(dec): return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+
+            for i, sub in enumerate(subclusters):
+                df_sub = df[df[subcluster_col] == sub]
+                if df_sub.empty: continue
+                x = scale_ra(df_sub[ra_col].mean())
+                y = scale_dec(df_sub[dec_col].mean())
+                svg_parts.append(f'''
+                  <circle cx="{x}" cy="{y}" r="150" fill="url(#grad{sub})" filter="url(#blur)"/>
+                ''')
+
+            # === Dibuja galaxias
+            for _, row in df.iterrows():
+                x = scale_ra(row[ra_col])
+                y = scale_dec(row[dec_col])
+                morph = row['Morph_Group']
+                style = morph_map.get(morph, morph_map['UNK'])
+                color = style['color']
+                size = max(2, 12 - row.get(mag_col, 5))
+    
+                hover = f"""
+                <title>
+                  ID: {row.get('ID','-')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f}
+                  | Vel: {row.get('Vel','')} | Morph: {row[morph_col]}
+                </title>
+                """
+
+                if style['shape'] == 'circle':
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.8" filter="url(#blur)">{hover}</circle>'
+
+                elif 'spiral' in style['shape']:
+                    # Espiral simulada: elipse aplastada + animación
+                    rx, ry = size, size * 0.5
+                    duration = {'spiral1': '20s', 'spiral2': '25s', 'spiral3': '30s'}[style['shape']]
+                    shape = f'''
+                      <g>
+                        <ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{color}" opacity="0.8" filter="url(#blur)">{hover}</ellipse>
+                        <animateTransform attributeName="transform" attributeType="XML"
+                          type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="{duration}" repeatCount="indefinite"/>
+                      </g>
+                    '''
+                else:
+                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.5" filter="url(#blur)">{hover}</circle>'
+
+                svg_parts.append(shape)
+
+            svg_parts.append('</svg>')
+
+            svg_code = "\n".join(svg_parts)
+
+            st.subheader("🌌 Mapa Realista con Espirales Diferenciados")
+            st.markdown(f"""<div style="background-color:black;">{svg_code}</div>""", unsafe_allow_html=True)
+
+
+        with st.expander("🌌 Mapa Estilo Foto (SVG realista)"):
+            generate_realistic_spiral_svg(df)
+
+
+
 
         import numpy as np
         import pandas as pd

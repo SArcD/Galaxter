@@ -1930,7 +1930,8 @@ elif opcion == "Proceso":
                     fig.add_trace(go.Histogram2dContour(
                         x=subc_data[ra_col],
                         y=subc_data[dec_col],
-                        colorscale='Greys',
+#                        colorscale='Greys',
+                        colorscale = [[0, 'white'], [1, 'blue']],
                         showscale=False,
                         opacity=0.15,
                         name=f'KDE Subcluster {subc}',
@@ -1961,8 +1962,8 @@ elif opcion == "Proceso":
             )
 
             fig.update_layout(
-                width=900,      # Aumenta ancho
-                height=1200    # Más alto = aspecto más vert
+                width=800,      # Aumenta ancho
+                height=1000    # Más alto = aspecto más vert
             )
 
             

@@ -2118,6 +2118,90 @@ elif opcion == "Proceso":
                 n_stars=150
             )
 
+        import plotly.graph_objects as go
+        import numpy as np
+        import streamlit as st
+
+        def plot_realistic_plotly(df, ra_col='RA', dec_col='Dec',
+                                  morph_col='M(C)', mag_col='M(IPn)', color_index_col='(g-r)',
+                                  subcluster_col='Subcluster'):
+            st.subheader("🌌 Mapa Abell 85 — Estilo Plotly")
+
+            fig = go.Figure()
+
+            # 🔹 Fondo de estrellas
+            np.random.seed(42)
+            fig.add_trace(go.Scatter(
+                x=np.random.uniform(df[ra_col].min(), df[ra_col].max(), 500),
+                y=np.random.uniform(df[dec_col].min(), df[dec_col].max(), 500),
+                mode='markers',
+                marker=dict(size=1, color='white', opacity=0.02),
+                hoverinfo='skip',
+                showlegend=False
+            ))
+
+            morph_map = {
+                'E': {'color': 'gold', 'symbol': 'circle'},
+                'S': {'color': 'deepskyblue', 'symbol': 'star'},
+                'I': {'color': 'red', 'symbol': 'diamond'},
+                'UNK': {'color': 'grey', 'symbol': 'x'}
+            }
+
+            df['Morph_Group'] = df[morph_col].str[0].fillna('UNK')
+
+            for morph_type, style in morph_map.items():
+                df_m = df[df['Morph_Group'] == morph_type]
+                if df_m.empty:
+                    continue
+
+                sizes = 12 - df_m[mag_col].fillna(df_m[mag_col].max())
+                sizes = sizes.clip(lower=2, upper=18)
+
+                fig.add_trace(go.Scatter(
+                    x=df_m[ra_col],
+                    y=df_m[dec_col],
+                    mode='markers',
+                    name=f"{morph_type} ({len(df_m)})",
+                    marker=dict(
+                        size=sizes,
+                        color=style['color'],
+                        symbol=style['symbol'],
+                        opacity=0.85,
+                        line=dict(width=0.5, color='white')
+                    ),
+                    text=df_m.apply(
+                        lambda r: f"ID: {r['ID']}<br>"
+                                  f"RA: {r[ra_col]:.3f}°<br>"
+                                  f"Dec: {r[dec_col]:.3f}°<br>"
+                                  f"Vel: {r['Vel']:.1f} km/s<br>"
+                                  f"Morph: {r[morph_col]}<br>"
+                                  f"Mag: {r[mag_col]:.2f}<br>"
+                                  f"(g-r): {r[color_index_col]:.2f}<br>"
+                                  f"Subcluster: {r[subcluster_col]}",
+                        axis=1
+                    ),
+                    hoverinfo='text'
+                ))
+
+            fig.update_layout(
+                paper_bgcolor='black',
+                plot_bgcolor='black',
+                xaxis=dict(title='RA', autorange='reversed', showgrid=False, color='white'),
+                yaxis=dict(title='Dec', showgrid=False, color='white'),
+                legend=dict(font=dict(color='white')),
+                font=dict(color='white'),
+                height=800, width=800,
+                title=dict(text="Mapa Realista: Plotly", font=dict(color='white'))
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("🌌 Mapa Plotly Realista"):
+            plot_realistic_plotly(df)
+
+
+
+        
 
         import numpy as np
         import pandas as pd

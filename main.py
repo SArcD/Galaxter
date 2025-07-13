@@ -2202,115 +2202,73 @@ elif opcion == "Proceso":
 
         import streamlit as st
     
-        def generate_realistic_spiral_svg(        
-            df,
-            ra_col='RA',
-            dec_col='Dec',
-            morph_col='M(ave)',
-            mag_col='M(IPn)',
-            subcluster_col='Subcluster'
-        ):
-            """
-            📌 Mapa realista Abell 85 con:
-            🔹 Diferentes morfologías
-            🔹 Espirales con efectos distintos
-            🔹 Halos difusos y gas caliente (KDE)        
-            """
-    
-            # === Agrupa tipos simplificados
-            morph_map = {
-                'E': {'color': '#F4E3B2', 'shape': 'circle'},
-                'Sa': {'color': '#7DD9F5', 'shape': 'spiral1'},
-                'Sb': {'color': '#66CCFF', 'shape': 'spiral2'},
-                'Sc': {'color': '#50BFE6', 'shape': 'spiral3'},
-                'I': {'color': '#FFFFFF', 'shape': 'circle'},
-                'UNK': {'color': '#B0BEC5', 'shape': 'circle'}
-            }
+        import streamlit as st
 
-            df['Morph_Group'] = df[morph_col].fillna('UNK').apply(
-                lambda m: next((k for k in morph_map if k in m), 'UNK')
-            )
+        def generate_realistic_svg(df):
+            """
+            🌌 Genera mapa estilo 'Deep Field' con:
+            🔹 Gradientes difusos KDE
+            🔹 Filtros de blur
+            🔹 Morfología como forma
+            """
 
             svg_parts = [
-                '''
-                <svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>
-                '''
+                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
+                '<defs>',
+                # Filtro global para suavizar bordes
+                '<filter id="blur">',
+                '<feGaussianBlur stdDeviation="4"/>',
+                '</filter>'
             ]
 
-            # === KDE por subcluster
-            subclusters = df[subcluster_col].dropna().unique()
-            for i, sub in enumerate(subclusters):
-                svg_parts.append(f'''
-                  <radialGradient id="grad{sub}" cx="50%" cy="50%" r="50%">
+            # === Gradientes ===
+            # Puedes generar 1 gradiente por subcluster, morfología o lo que quieras:
+            for i in range(1, 5):  # Cambia 5 por el número real de contornos
+                svg_parts.append(f"""
+                  <radialGradient id="grad{i}" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" style="stop-color:rgba(0,255,200,0.1);" />
                     <stop offset="100%" style="stop-color:rgba(0,0,0,0);" />
                   </radialGradient>
-                ''')
+                """)
 
             svg_parts.append('</defs>')
 
-            # === Dibuja burbujas KDE
-            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
-            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
-            def scale_ra(ra): return int(1000 * (ra - ra_min) / (ra_max - ra_min))
-            def scale_dec(dec): return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+            # === Galaxias ===
+            for idx, row in df.iterrows():
+                x = 500  # Escala real aquí
+                y = 500
+                morph = row['M(ave)'] if 'M(ave)' in row else 'UNK'
+                grad_id = "grad1"
 
-            for i, sub in enumerate(subclusters):
-                df_sub = df[df[subcluster_col] == sub]
-                if df_sub.empty: continue
-                x = scale_ra(df_sub[ra_col].mean())
-                y = scale_dec(df_sub[dec_col].mean())
-                svg_parts.append(f'''
-                  <circle cx="{x}" cy="{y}" r="150" fill="url(#grad{sub})" filter="url(#blur)"/>
-                ''')
-
-            # === Dibuja galaxias
-            for _, row in df.iterrows():
-                x = scale_ra(row[ra_col])
-                y = scale_dec(row[dec_col])
-                morph = row['Morph_Group']
-                style = morph_map.get(morph, morph_map['UNK'])
-                color = style['color']
-                size = max(2, 12 - row.get(mag_col, 5))
-    
-                hover = f"""
-                <title>
-                  ID: {row.get('ID','-')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f}
-                  | Vel: {row.get('Vel','')} | Morph: {row[morph_col]}
-                </title>
-                """
-
-                if style['shape'] == 'circle':
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.8" filter="url(#blur)">{hover}</circle>'
-
-                elif 'spiral' in style['shape']:
-                    # Espiral simulada: elipse aplastada + animación
-                    rx, ry = size, size * 0.5
-                    duration = {'spiral1': '20s', 'spiral2': '25s', 'spiral3': '30s'}[style['shape']]
-                    shape = f'''
+                # Aquí cambia forma y gradiente según tu lógica
+                if "E" in morph:
+                    shape = f'<circle cx="{x}" cy="{y}" r="15" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.8"/>'
+                elif "Sb" in morph or "Sc" in morph:
+                    shape = f"""
                       <g>
-                        <ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{color}" opacity="0.8" filter="url(#blur)">{hover}</ellipse>
+                        <ellipse cx="{x}" cy="{y}" rx="20" ry="8" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.8"/>
                         <animateTransform attributeName="transform" attributeType="XML"
-                          type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="{duration}" repeatCount="indefinite"/>
+                          type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="20s" repeatCount="indefinite"/>
                       </g>
-                    '''
+                    """
                 else:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{color}" opacity="0.5" filter="url(#blur)">{hover}</circle>'
+                    shape = f'<circle cx="{x}" cy="{y}" r="10" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"/>'
 
                 svg_parts.append(shape)
+        
+            # === Contornos KDE difusos ===
+            # Ejemplo
+            svg_parts.append(f'<circle cx="400" cy="600" r="200" fill="url(#grad2)" filter="url(#blur)" />')
 
             svg_parts.append('</svg>')
 
+            # === Mostrar    
             svg_code = "\n".join(svg_parts)
+            st.subheader("🌌 Vista Estilo Deep Field (SVG)")
+            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
 
-            st.subheader("🌌 Mapa Realista con Espirales Diferenciados")
-            st.markdown(f"""<div style="background-color:black;">{svg_code}</div>""", unsafe_allow_html=True)
-
-
-        with st.expander("🌌 Mapa Estilo Foto (SVG realista)"):
-            generate_realistic_spiral_svg(df)
+        with st.expander("🌌 Mapa Realista Deep Field SVG"):
+            generate_realistic_svg(df)
 
 
 

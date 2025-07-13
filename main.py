@@ -1960,6 +1960,12 @@ elif opcion == "Proceso":
                 title=dict(text="Mapa Realista: Campo Profundo + (g-r) + Morfología", font=dict(color='white'))
             )
 
+            fig.update_layout(
+                width=900,      # Aumenta ancho
+                height=1200    # Más alto = aspecto más vert
+            )
+
+            
             st.plotly_chart(fig, use_container_width=True)
 
 

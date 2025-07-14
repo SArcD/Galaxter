@@ -258,7 +258,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
 
         # 3️⃣ Normaliza y aplica umbral de densidad para forma orgánica
-        threshold = np.percentile(Z, 80)  # Prueba con 50-70 para mejor forma
+        threshold = np.percentile(Z, 95)  # Prueba con 50-70 para mejor forma
         mask_array = (Z > threshold).astype(np.uint8) * 255
 
         # 4️⃣ Convierte a máscara PIL
@@ -270,7 +270,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 
         halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
 
-        alpha_factor = 0.5  # 50% de la opacidad
+        alpha_factor = 0.3  # 50% de la opacidad
         alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
         halo_rgba.putalpha(alpha)
 

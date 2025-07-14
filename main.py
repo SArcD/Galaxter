@@ -2482,7 +2482,7 @@ elif opcion == "Proceso":
 
             var_options = list(variables.keys())
             selected_var = st.sidebar.selectbox("Variable para ranking:", var_options, format_func=lambda x: variables[x])
-            top_n = st.sidebar.slider("Número de galaxias a resaltar:", min_value=1, max_value=20, value=5)
+            top_n = st.sidebar.slider("Número de galaxias a resaltar:", min_value=1, max_value=100, value=5)
 
             sorted_df = df_filtered.copy()
             if selected_var == rf_col:

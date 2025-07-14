@@ -2457,6 +2457,69 @@ elif opcion == "Proceso":
         from PIL import ImageDraw, ImageFont
         import numpy as np
 
+#        def highlight_ranked_galaxies_with_selector(img, df_filtered,
+#                                                     ra_col='RA', dec_col='Dec', id_col='ID',
+#                                                     rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
+#                                                     width=1024, height=1024):
+#            RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
+#            Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
+#            draw = ImageDraw.Draw(img)
+#            font = ImageFont.load_default()
+
+#            variables = {
+#                rf_col: "Más Brillantes",
+#                delta_col: "Delta",
+#                vel_col: "Vel",
+#                cld_col: "Cl_d"
+#            }
+
+#            color_map = {
+#                4: "gold",
+#                3: "orange",
+#                2: "deepskyblue",
+#                1: "silver"
+#            }
+
+#            var_options = list(variables.keys())
+#            selected_var = st.sidebar.selectbox("Variable para ranking:", var_options, format_func=lambda x: variables[x])
+#            top_n = st.sidebar.slider("Número de galaxias a resaltar:", min_value=1, max_value=100, value=5)
+
+#            sorted_df = df_filtered.copy()
+#            if selected_var == rf_col:
+#                sorted_df = sorted_df.sort_values(selected_var)
+#            else:
+#                sorted_df = sorted_df.sort_values(selected_var, ascending=False)
+
+#            values = sorted_df[selected_var].values
+#            q75, q50, q25 = np.percentile(values, [75, 50, 25])
+
+#            for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
+#                val = row[selected_var]
+#                if val > q75:
+#                    color = "gold"
+#                elif val > q50:
+#                    color = "silver"
+#                elif val > q25:
+#                    color = "orange"
+#                else:
+#                    color = "deepskyblue"
+
+
+                
+#                RA, Dec = row[ra_col], row[dec_col]
+#                x = int((RA - RA_min) / (RA_max - RA_min) * width)
+#                y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
+#                r = 10
+
+#                draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
+#                draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
+
+#            return img
+
+        import pandas as pd
+        import streamlit as st
+        from PIL import ImageDraw, ImageFont
+
         def highlight_ranked_galaxies_with_selector(img, df_filtered,
                                                      ra_col='RA', dec_col='Dec', id_col='ID',
                                                      rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
@@ -2473,11 +2536,11 @@ elif opcion == "Proceso":
                 cld_col: "Cl_d"
             }
 
-            color_map = {
+            quartile_colors = {
                 4: "gold",
-                3: "orange",
-                2: "deepskyblue",
-                1: "silver"
+                3: "silver",
+                2: "#cd7f32",  # bronce
+                1: "deepskyblue"
             }
 
             var_options = list(variables.keys())
@@ -2490,31 +2553,29 @@ elif opcion == "Proceso":
             else:
                 sorted_df = sorted_df.sort_values(selected_var, ascending=False)
 
-            values = sorted_df[selected_var].values
-            q75, q50, q25 = np.percentile(values, [75, 50, 25])
+            df_extreme = sorted_df.head(top_n).copy()
 
-            for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
-                val = row[selected_var]
-                if val > q75:
-                    color = "gold"
-                elif val > q50:
-                    color = "silver"
-                elif val > q25:
-                    color = "orange"
-                else:
-                    color = "deepskyblue"
+            try:
+                df_extreme['cuartil'] = pd.qcut(
+                    df_extreme[selected_var],
+                    q=4,
+                    labels=[4, 3, 2, 1]
+                ).astype(int)
+            except ValueError:
+                df_extreme['cuartil'] = 4  # Fallback: todos igual
 
-
-                
+            for rank, (_, row) in enumerate(df_extreme.iterrows(), 1):
+                color = quartile_colors.get(row['cuartil'], 'white')
                 RA, Dec = row[ra_col], row[dec_col]
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
                 r = 10
-
                 draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
                 draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
 
             return img
+
+
 
 #        import streamlit as st
 #        from PIL import ImageDraw, ImageFont

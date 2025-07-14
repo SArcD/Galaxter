@@ -6,19 +6,28 @@ import random
 from noise import pnoise2
 
 # --- Generador de halo Perlin ---
+#def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
+#    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+#    for x in range(width):
+#        for y in range(height):
+#            n = pnoise2(x * scale, y * scale, octaves=octaves)
+#            val = int(300 * (n + 0.5))
+#            a = int(min(max(val, 0), alpha * 2))  # duplicar alpha máximo
+#            a = min(a, 255)  # asegurar que sea válido 0-255
+#            halo.putpixel((x, y), (0, 180, 150, a))
+#            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
+#    return halo.filter(ImageFilter.GaussianBlur(60))
+
 def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     for x in range(width):
         for y in range(height):
             n = pnoise2(x * scale, y * scale, octaves=octaves)
-            val = int(300 * (n + 0.5))
-            a = int(min(max(val, 0), alpha * 2))  # duplicar alpha máximo
-            a = min(a, 255)  # asegurar que sea válido 0-255
+            val = int(200 * (n + 0.5))
+            a = int(min(max(val, 0), int(alpha * 2)))  # ✅ cast alpha*2 to int
+            a = min(a, 255)  # ensure valid range
             halo.putpixel((x, y), (0, 180, 150, a))
-            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
     return halo.filter(ImageFilter.GaussianBlur(60))
-
-
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):

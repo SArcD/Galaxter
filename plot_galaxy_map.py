@@ -6,28 +6,28 @@ import random
 from noise import pnoise2
 
 # --- Generador de halo Perlin ---
-#def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
-#    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-#    for x in range(width):
-#        for y in range(height):
-#            n = pnoise2(x * scale, y * scale, octaves=octaves)
-#            val = int(300 * (n + 0.5))
-#            a = int(min(max(val, 0), alpha * 2))  # duplicar alpha máximo
-#            a = min(a, 255)  # asegurar que sea válido 0-255
-#            halo.putpixel((x, y), (0, 180, 150, a))
-#            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
-#    return halo.filter(ImageFilter.GaussianBlur(60))
-
 def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=120):
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     for x in range(width):
         for y in range(height):
             n = pnoise2(x * scale, y * scale, octaves=octaves)
             val = int(200 * (n + 0.5))
-            a = int(min(max(val, 0), int(alpha * 2)))  # ✅ cast alpha*2 to int
-            a = min(a, 255)  # ensure valid range
+            a = int(min(max(val, 0), int(alpha * 2)))
+            a = min(a, 255)
             halo.putpixel((x, y), (0, 220, 180, a))
     return halo.filter(ImageFilter.GaussianBlur(90))
+
+# --- Clasificador de morfología ---
+def classify_morphology(morph_str):
+    morph_str = morph_str.lower()
+    if morph_str.startswith('e'):
+        return 'elliptical'
+    elif 's0' in morph_str:
+        return 'lenticular'
+    elif any(s in morph_str for s in ['sa', 'sb', 'sc', 'sdm']):
+        return 'spiral'
+    else:
+        return 'irregular'
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):
@@ -102,7 +102,6 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
     img = Image.new('RGBA', (width, height), (0,0,0,255))
     img.alpha_composite(generate_perlin_halo(width, height))
 
-    # Halo para cada subcluster
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
     for _, row in subcluster_positions.iterrows():
         cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
@@ -114,15 +113,20 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         img.alpha_composite(local_blurred)
 
     for _, row in df_filtered.iterrows():
-        RA, Dec, morph = row[ra_col], row[dec_col], row[morph_col]
+        RA, Dec, morph_raw = row[ra_col], row[dec_col], row[morph_col]
+        morph = classify_morphology(morph_raw)
         try: mag_rf = float(row[rf_col])
         except: mag_rf = -15.0
         size = max(80, int(120 - abs(mag_rf)))
         brightness = 255
-        if morph.lower() == 'spiral': galaxy = draw_spiral(size, brightness)
-        elif morph.lower() == 'elliptical': galaxy = draw_elliptical(size, brightness)
-        elif morph.lower() == 'lenticular': galaxy = draw_lenticular(size, brightness)
-        else: galaxy = draw_irregular(size, brightness)
+        if morph == 'spiral':
+            galaxy = draw_spiral(size, brightness)
+        elif morph == 'elliptical':
+            galaxy = draw_elliptical(size, brightness)
+        elif morph == 'lenticular':
+            galaxy = draw_lenticular(size, brightness)
+        else:
+            galaxy = draw_irregular(size, brightness)
         galaxy = galaxy.rotate(random.randint(0, 360), expand=True)
         x = int((RA - RA_min) / (RA_max - RA_min) * width) - galaxy.width // 2
         y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2

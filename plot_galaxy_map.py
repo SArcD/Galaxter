@@ -88,7 +88,7 @@ def draw_irregular(size, brightness):
 
 # Función principal
 
-def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=4096, height=4096):
+def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=2048, height=2048):
     st.header("Mapa de Cúmulo con Halo Perlin + Subclusters")
     all_morphs = sorted(df[morph_col].dropna().unique())
     all_subclusters = sorted(df[subcluster_col].dropna().unique())

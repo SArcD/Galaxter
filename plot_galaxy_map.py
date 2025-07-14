@@ -236,53 +236,50 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 
+    from scipy.stats import gaussian_kde
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+
+    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+
     for _, row in subcluster_positions.iterrows():
         galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
         num_galaxias = len(galaxies_in_subcluster)
         if num_galaxias == 0:
             continue
 
-        # 1️⃣ Calcula orientación
-        coords = galaxies_in_subcluster[[ra_col, dec_col]].values
-        coords -= coords.mean(axis=0)
-        cov = np.cov(coords, rowvar=False)
-        eigvals, eigvecs = np.linalg.eigh(cov)
-        angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
-        angle_deg = np.degrees(angle_rad)
+        # 1️⃣ Datos y KDE
+        coords = galaxies_in_subcluster[[ra_col, dec_col]].values.T
+        kde = gaussian_kde(coords, bw_method='scott')  # O ajusta 'silverman'
 
-        # 2️⃣ Tamaño y opacidad
-        halo_alpha = min(200, max(10, num_galaxias))
-        rx = 200
-        ry = 100
+        # 2️⃣ Grilla de densidad en coordenadas RA-Dec
+        grid_size = 300
+        xgrid = np.linspace(RA_min, RA_max, grid_size)
+        ygrid = np.linspace(Dec_min, Dec_max, grid_size)
+        X, Y = np.meshgrid(xgrid, ygrid)
+        Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
 
-        # 3️⃣ Dibuja halo elíptic  o
-        single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
-        draw_local = ImageDraw.Draw(single_halo)
-        draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
+        # 3️⃣ Normaliza y aplica umbral de densidad para forma orgánica
+        threshold = np.percentile(Z, 60)  # Prueba con 50-70 para mejor forma
+        mask_array = (Z > threshold).astype(np.uint8) * 255
 
-        # 4️⃣ Aplica blur
-        blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
+        # 4️⃣ Convierte a máscara PIL
+        mask_img = Image.fromarray(mask_array).convert("L")
+        mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
 
-        # 5️⃣ Crea máscara circular suave 
-        mask = Image.new('L', blurred.size, 0)
-        draw_mask = ImageDraw.Draw(mask)  
-        draw_mask.ellipse([0, 0, rx * 2, ry * 2], fill=255)
-        mask = mask.filter(ImageFilter.GaussianBlur(60))
+        # 5️⃣ Difumina para halo suave
+        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(20))
 
-        # 6️⃣ Aplica la máscara para recortar bordes
-        blurred.putalpha(mask)
+        # 6️⃣ Crea RGBA halo cálido
+        halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
+        halo_rgba.putalpha(mask_blurred)
 
-        # 7️⃣ Rota
-        rotated = blurred.rotate(-angle_deg, expand=True)
+        # 7️⃣ Escala al tamaño del mapa
+        halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
 
-        # 8️⃣ Encuentra posición global
-        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
-        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
+        # 8️⃣ Combina centrado (ya mapeado al marco global)
+        img.alpha_composite(halo_resized)
 
-        # 9️⃣ Pega centrado
-        offset_x = cx - rotated.width // 2
-        offset_y = cy - rotated.height // 2
-        img.alpha_composite(rotated, (offset_x, offset_y))
 
  
 

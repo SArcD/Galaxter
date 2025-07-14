@@ -2502,7 +2502,7 @@ elif opcion == "Proceso":
                 elif val > q25:
                     color = "orange"
                 else:
-                    color = "deepbluesky"
+                    color = "deepskyblue"
 
 
                 

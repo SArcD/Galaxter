@@ -7,15 +7,27 @@ from noise import pnoise2
 
 # ✅ Generador de halo Perlin global
 
-def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=100):
+#def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=100):
+#    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+#    for x in range(width):
+#        for y in range(height):
+#            n = pnoise2(x * scale, y * scale, octaves=octaves)
+#            val = int(200 * (n + 0.5))
+ #           a = min(max(val, 0), alpha)
+ #           halo.putpixel((x, y), (0, 180, 150, int(a)))
+#    return halo.filter(ImageFilter.GaussianBlur(40))
+
+def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     for x in range(width):
         for y in range(height):
             n = pnoise2(x * scale, y * scale, octaves=octaves)
-            val = int(200 * (n + 0.5))
-            a = min(max(val, 0), alpha)
-            halo.putpixel((x, y), (0, 180, 150, int(a)))
+            val = max(n + 0.5, 0)  # Normaliza
+            val = val ** 2.5        # Ajusta contraste: más exponente = menos brillo base
+            a = int(alpha * val)
+            halo.putpixel((x, y), (0, 180, 150, a))
     return halo.filter(ImageFilter.GaussianBlur(40))
+
 
 # Clasificador de morfología
 

@@ -521,11 +521,9 @@ elif opcion == "Proceso":
                     else df_filtered.nlargest(num_extreme, selected_var)
                 ).copy()
                 df_bright = df_filtered.nsmallest(num_bright, 'Rf').copy()
+                # ⭐ Colores adaptativos
+                custom_colors = []
 
-                # ⭐ Colores adaptativos
-                custom_colors = []
-                # ⭐ Colores adaptativos
-                custom_colors = []
                 if len(df_extreme) == 1:
                     custom_colors = ['gold']
                 elif len(df_extreme) == 2:
@@ -533,26 +531,34 @@ elif opcion == "Proceso":
                 elif len(df_extreme) == 3:
                     custom_colors = ['gold', 'silver', '#cd7f32']
                 elif len(df_extreme) >= 4:
-                    df_extreme = df_extreme.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
+                        # Define si debes invertir el orden para magnitudes inversas
+                    ascending = False
+                    if selected_var in ['Rf', 'Cl_d']:
+                        ascending = True
+
+                    df_extreme = df_extreme.sort_values(by=selected_var, ascending=ascending).reset_index(drop=True)
                     unique_vals = df_extreme[selected_var].nunique()
 
                     if unique_vals >= 4:
                         df_extreme['cuartil'] = pd.qcut(
                             df_extreme[selected_var],
                             q=4,
-                            labels=[4, 3, 2, 1]
+                            labels=[4, 3, 2, 1],
+                            duplicates='drop'  # 👈 importante para no fallar con valores repetidos
                         ).astype(int)
                     else:
-                        # Si no hay suficientes valores únicos para 4 cuartiles, asigna 1 a todos
                         df_extreme['cuartil'] = 1
 
+                    # Mapeo cuartil ➡️ color consistente
                     quartile_colors = {
-                        1: 'gold',
-                        2: 'silver',
-                        3: '#cd7f32',
-                        4: 'lightskyblue'
+                        4: 'gold',
+                        3: 'orange',
+                        2: 'deepskyblue',
+                        1: 'silver'
                     }
-                    custom_colors = [quartile_colors[q] for q in df_extreme['cuartil']]
+
+                    # Construye lista final de colores
+                    custom_colors = [quartile_colors.get(q, 'white') for q in df_extreme['cuartil']]
 
 
                 # ⭐ + 💎 combinado con numeraciones dobles

@@ -2579,7 +2579,7 @@ elif opcion == "Proceso":
 
         #img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
         # Asegúrate de pasar el mismo DataFrame filtrado o usa df.copy() si es todo
-        img = highlight_ranked_galaxies_with_selector(
+        img = highlight_ranked_galaxies_with_arrows(
             img,
             df,
             ra_col='RA',

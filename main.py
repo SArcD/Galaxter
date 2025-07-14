@@ -2466,8 +2466,8 @@ elif opcion == "Proceso":
             return img
 
         # Uso dentro de Streamlit:
-         highlight_ids = st.sidebar.multiselect("Selecciona galaxias para resaltar", df_filtered['ID'].unique())
-         img = highlight_selected_galaxies(img, df_filtered, highlight_ids)
+        highlight_ids = st.sidebar.multiselect("Selecciona galaxias para resaltar", df_filtered['ID'].unique())
+        img = highlight_selected_galaxies(img, df_filtered, highlight_ids)
 
 
 

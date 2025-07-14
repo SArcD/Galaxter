@@ -2555,10 +2555,10 @@ elif opcion == "Proceso":
             }
 
             quartile_colors = {        
-                4: "gold",
-                3: "silver",
-                2: "#cd7f32",  # bronce
-                1: "deepskyblue"
+                4: "deepskyblue",
+                3: "#cd7f32",
+                2: "silver",  # bronce
+                1: "gold"
             }
 
             var_options = list(variables.keys())

@@ -5,7 +5,20 @@ import math
 import random
 from noise import pnoise2
 
+# ✅ Generador de halo Perlin global
+
+def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=120):
+    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    for x in range(width):
+        for y in range(height):
+            n = pnoise2(x * scale, y * scale, octaves=octaves)
+            val = int(200 * (n + 0.5))
+            a = min(max(val, 0), alpha)
+            halo.putpixel((x, y), (0, 180, 150, int(a)))
+    return halo.filter(ImageFilter.GaussianBlur(60))
+
 # Clasificador de morfología
+
 def classify_morphology(morph_str):
     morph_str = morph_str.lower()
     if morph_str.startswith('e'):
@@ -17,7 +30,7 @@ def classify_morphology(morph_str):
     else:
         return 'irregular'
 
-# Función completa con draw_* y halos
+# Funciones draw_*
 
 def draw_spiral(size, brightness):
     g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
@@ -28,7 +41,7 @@ def draw_spiral(size, brightness):
         theta_offset = (2 * math.pi / arms) * arm
         points = []
         for i in range(150):
-            t = i / 150 * (2 * 2 * math.pi)
+            t = i / 150 * (2 * math.pi)
             r = size * (i / 150)
             x = cx + r * math.cos(t + theta_offset)
             y = cy + r * math.sin(t + theta_offset)
@@ -73,8 +86,10 @@ def draw_irregular(size, brightness):
     draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(255, 255, 255, 255))
     return g.filter(ImageFilter.GaussianBlur(1))
 
+# Función principal
+
 def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=1024, height=1024):
-    st.header("Mapa de Cúmulo con Halos Dinámicos")
+    st.header("Mapa de Cúmulo con Halo Perlin + Subclusters")
     all_morphs = sorted(df[morph_col].dropna().unique())
     all_subclusters = sorted(df[subcluster_col].dropna().unique())
     morph_filter = st.sidebar.multiselect("Filtrar morfología", all_morphs, default=all_morphs)
@@ -83,9 +98,12 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
     if df_filtered.empty:
         st.warning("No hay datos.")
         return
+
     RA_min, RA_max = df[ra_col].min(), df[ra_col].max()
     Dec_min, Dec_max = df[dec_col].min(), df[dec_col].max()
+
     img = Image.new('RGBA', (width, height), (0,0,0,255))
+    img.alpha_composite(generate_perlin_halo(width, height))
 
     for _, row in df_filtered.iterrows():
         RA, Dec, morph_raw = row[ra_col], row[dec_col], row[morph_col]

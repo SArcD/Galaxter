@@ -2534,6 +2534,10 @@ elif opcion == "Proceso":
         import streamlit as st
         from PIL import ImageDraw, ImageFont
 
+        import pandas as pd
+        import streamlit as st
+        from PIL import ImageDraw, ImageFont
+
         def highlight_ranked_galaxies_with_selector(img, df_filtered,
                                                      ra_col='RA', dec_col='Dec', id_col='ID',
                                                      rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
@@ -2550,7 +2554,7 @@ elif opcion == "Proceso":
                 cld_col: "Cl_d"
             }
 
-            quartile_colors = {
+            quartile_colors = {        
                 4: "gold",
                 3: "silver",
                 2: "#cd7f32",  # bronce
@@ -2583,7 +2587,7 @@ elif opcion == "Proceso":
                 RA, Dec = row[ra_col], row[dec_col]
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
-                r = 10
+                r = 8
                 draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
                 draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
 

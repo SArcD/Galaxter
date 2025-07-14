@@ -2443,31 +2443,72 @@ elif opcion == "Proceso":
         from plot_galaxy_map import plot_galaxy_map
 
         # Suponiendo que ya cargaste df
-        plot_galaxy_map(df)
-
+        img=plot_galaxy_map(df)
+         
 
         from PIL import ImageDraw
         import streamlit as st
 
-        def highlight_selected_galaxies(img, df_filtered, highlight_ids, ra_col='RA', dec_col='Dec', id_col='ID', width=1024, height=1024):
+        from PIL import ImageDraw, ImageFont
+        import streamlit as st
+        import numpy as np
+        
+        def highlight_ranked_galaxies(img, df_filtered,
+                                       ra_col='RA', dec_col='Dec', id_col='ID', rf_col='Rf',
+                                       delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
+                                       width=1024, height=1024, top_n=5):
             RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
             Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
-
             draw = ImageDraw.Draw(img)
+            font = ImageFont.load_default()
 
-            for _, row in df_filtered.iterrows():
-                if row[id_col] in highlight_ids:
+            # Diccionario para variables y colores por cuartil
+            variables = {
+                rf_col: "Más Brillantes",
+                delta_col: "Delta",
+                vel_col: "Vel",
+                cld_col: "Cl_d"
+            }
+            color_map = {
+                4: "gold",
+                3: "orange",
+                2: "deepskyblue",
+                1: "silver"
+            }
+
+            for var, label in variables.items():
+                sorted_df = df_filtered.copy()
+                if var == rf_col:
+                    sorted_df = sorted_df.sort_values(var)  # Rf es magnitud negativa
+                else:
+                    sorted_df = sorted_df.sort_values(var, ascending=False)
+
+                values = sorted_df[var].values
+                q75, q50, q25 = np.percentile(values, [75, 50, 25])
+
+                for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
+                    val = row[var]
+                    if val >= q75:
+                        color = "gold"
+                    elif val >= q50:
+                        color = "orange"
+                    elif val >= q25:
+                        color = "deepskyblue"
+                    else:
+                        color = "silver"
+
                     RA, Dec = row[ra_col], row[dec_col]
                     x = int((RA - RA_min) / (RA_max - RA_min) * width)
                     y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
-                    r = 25  # radio del círculo resaltado
-                    draw.ellipse([x - r, y - r, x + r, y + r], outline="red", width=3)
+                    r = 25
+
+                    draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
+                    draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
 
             return img
 
-        # Uso dentro de Streamlit:
-        highlight_ids = st.sidebar.multiselect("Selecciona galaxias para resaltar", df_filtered['ID'].unique())
-        img = highlight_selected_galaxies(img, df_filtered, highlight_ids)
+# Uso:
+         img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
 
 
 

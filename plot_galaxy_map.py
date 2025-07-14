@@ -11,16 +11,16 @@ def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
     for x in range(width):
         for y in range(height):
             n = pnoise2(x * scale, y * scale, octaves=octaves)
-            val = int(100 * (n + 0.5))
-            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha)))
+            val = int(300 * (n + 0.5))
+            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
     return halo.filter(ImageFilter.GaussianBlur(60))
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*8, size*8), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    arms = 2
+    arms = 4
     for arm in range(arms):
         theta_offset = (2 * math.pi / arms) * arm
         points = []
@@ -35,7 +35,7 @@ def draw_spiral(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_elliptical(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*8, size*8), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for i in range(5, 0, -1):
@@ -47,7 +47,7 @@ def draw_elliptical(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_lenticular(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*8, size*8), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for i in range(2, 0, -1):
@@ -60,7 +60,7 @@ def draw_lenticular(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_irregular(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*8, size*8), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for _ in range(size*6):
@@ -103,7 +103,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         RA, Dec, morph = row[ra_col], row[dec_col], row[morph_col]
         try: mag_rf = float(row[rf_col])
         except: mag_rf = -15.0
-        size = max(40, int(60 - abs(mag_rf)))
+        size = max(80, int(120 - abs(mag_rf)))
         brightness = 255
         if morph.lower() == 'spiral': galaxy = draw_spiral(size, brightness)
         elif morph.lower() == 'elliptical': galaxy = draw_elliptical(size, brightness)

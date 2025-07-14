@@ -35,8 +35,8 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         RA, Dec, morph = row[ra_col], row[dec_col], row[morph_col]
         try: mag_rf = float(row[rf_col])
         except: mag_rf = -15.0
-        size = max(30, int(60 - abs(mag_rf)))
-        brightness = 255
+        size = max(60, int(180 - abs(mag_rf)))
+        brightness = 600
         if morph.lower() == 'spiral': galaxy = draw_spiral(size, brightness)
         elif morph.lower() == 'elliptical': galaxy = draw_elliptical(size, brightness)
         elif morph.lower() == 'lenticular': galaxy = draw_lenticular(size, brightness)

@@ -127,28 +127,29 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
     # ----------------------------
     # 🌟 Generar estrellas de campo
     # ----------------------------
+    if show_stars:
 
-    num_stars = 2000  # Ajusta la densidad a tu gusto
-    field = Image.new('RGBA', (width, height), (0,0,0,0))
-    draw_field = ImageDraw.Draw(field)
+        num_stars = 2000  # Ajusta la densidad a tu gusto
+        field = Image.new('RGBA', (width, height), (0,0,0,0))
+        draw_field = ImageDraw.Draw(field)
 
-    for _ in range(num_stars):
-        x = random.randint(0, width)
-        y = random.randint(0, height)
-        r = random.uniform(0.5, 1.8)  # Tamaño en px
+        for _ in range(num_stars):
+            x = random.randint(0, width)
+            y = random.randint(0, height)
+            r = random.uniform(0.5, 1.8)  # Tamaño en px
     
-        brightness = random.randint(150, 255)  # Opacidad de 150 a 255
+            brightness = random.randint(150, 255)  # Opacidad de 150 a 255
     
-        # Color: blanco puro o con leve tinte azul o amarillo
-        tint = random.choice([(255, 255, 255), (200, 220, 255), (255, 240, 200)])
+            # Color: blanco puro o con leve tinte azul o amarillo
+            tint = random.choice([(255, 255, 255), (200, 220, 255), (255, 240, 200)])
     
-        draw_field.ellipse([x - r, y - r, x + r, y + r], fill=(tint[0], tint[1], tint[2], brightness))
+            draw_field.ellipse([x - r, y - r, x + r, y + r], fill=(tint[0], tint[1], tint[2], brightness))
 
-    # Difumina levemente
-    field_blur = field.filter(ImageFilter.GaussianBlur(0.5))
+        # Difumina levemente
+        field_blur = field.filter(ImageFilter.GaussianBlur(0.5))
 
-    # Combina al fondo
-    img.alpha_composite(field_blur)
+        # Combina al fondo
+        img.alpha_composite(field_blur)
 
 
 

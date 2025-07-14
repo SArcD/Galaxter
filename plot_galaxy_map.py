@@ -135,4 +135,5 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         img.alpha_composite(local_blurred)
 
     st.image(img)
+    st.dataframe(df_filtered)
     return img

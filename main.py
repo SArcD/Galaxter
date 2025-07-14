@@ -2507,8 +2507,9 @@ elif opcion == "Proceso":
 
             return img
 
-# Uso:
         img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
+        with st.expander("Mapa Final con Resaltado"):
+            st.image(img)  # ✅ Esto mostrará el resultado actualizado
 
 
 

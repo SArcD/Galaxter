@@ -234,11 +234,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 #    import numpy as np
 #    from PIL import ImageOps, ImageChops, Image
 
-    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 
-    from scipy.stats import gaussian_kde
-    import numpy as np
-    from PIL import Image, ImageDraw, ImageFilter
 
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 

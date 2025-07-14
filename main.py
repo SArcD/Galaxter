@@ -2571,14 +2571,14 @@ elif opcion == "Proceso":
               #  # Poner numerito al inicio de la flecha
               #  draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
             # Flecha con punta
-                offset = 40
+                offset = 10
                 end_x = x + offset
                 end_y = y - offset
                 draw.line([(end_x, end_y), (x, y)], fill=color, width=3)
 
                 # Dibujar punta de flecha
                 angle = math.atan2(y - end_y, x - end_x)
-                arrow_size = 10
+                arrow_size = 6
                 arrow_angle = math.pi / 6
 
                 left_x = x - arrow_size * math.cos(angle - arrow_angle)

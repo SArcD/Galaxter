@@ -12,3 +12,4 @@ statsmodels
 scikit-gstat
 pykrige
 pillow
+noise

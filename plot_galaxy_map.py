@@ -147,6 +147,48 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 #        img.alpha_composite(local_blurred)
 
     
+#    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+
+#    for _, row in subcluster_positions.iterrows():
+        # 🔍 Filtra galaxias de este subcluster
+#        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
+#        num_galaxias = len(galaxies_in_subcluster)
+#        if num_galaxias == 0:
+#            continue
+
+#        # ✅ 1. Calcula orientación (covarianza + eigenvectors)
+#        coords = galaxies_in_subcluster[[ra_col, dec_col]].values
+ #       coords -= coords.mean(axis=0)  # centra
+#        cov = np.cov(coords, rowvar=False)
+#        eigvals, eigvecs = np.linalg.eigh(cov)
+#        angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
+#        angle_deg = np.degrees(angle_rad)
+
+#        # ✅ 2. Define forma elíptica
+#        halo_alpha = min(200, max(10, num_galaxias))
+#        rx = 200  # Eje mayor
+#        ry = 100  # Eje menor
+
+#        # ✅ 3. Dibuja halo elíptico pequeño
+#        single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
+#        draw_local = ImageDraw.Draw(single_halo)
+#        draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
+#        blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
+
+#        # ✅ 4. Rota para alinearlo
+#        rotated = blurred.rotate(-angle_deg, expand=True)
+
+#        # ✅ 5. Calcula posición global
+#        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
+#        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
+
+#        # ✅ 6. Pega halo rotado centrado
+#        offset_x = cx - rotated.width // 2
+#        offset_y = cy - rotated.height // 2
+#        img.alpha_composite(rotated, (offset_x, offset_y))
+
+#        import numpy as np
+
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 
     for _, row in subcluster_positions.iterrows():
@@ -187,6 +229,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         offset_y = cy - rotated.height // 2
         img.alpha_composite(rotated, (offset_x, offset_y))
 
+ 
 
  
     img = img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.FLIP_TOP_BOTTOM)

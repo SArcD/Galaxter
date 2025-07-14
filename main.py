@@ -2445,7 +2445,31 @@ elif opcion == "Proceso":
         # Suponiendo que ya cargaste df
         plot_galaxy_map(df)
 
-        
+
+        from PIL import ImageDraw
+        import streamlit as st
+
+        def highlight_selected_galaxies(img, df_filtered, highlight_ids, ra_col='RA', dec_col='Dec', id_col='ID', width=1024, height=1024):
+            RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
+            Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
+
+            draw = ImageDraw.Draw(img)
+
+            for _, row in df_filtered.iterrows():
+                if row[id_col] in highlight_ids:
+                    RA, Dec = row[ra_col], row[dec_col]
+                    x = int((RA - RA_min) / (RA_max - RA_min) * width)
+                    y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
+                    r = 25  # radio del círculo resaltado
+                    draw.ellipse([x - r, y - r, x + r, y + r], outline="red", width=3)
+
+            return img
+
+        # Uso dentro de Streamlit:
+         highlight_ids = st.sidebar.multiselect("Selecciona galaxias para resaltar", df_filtered['ID'].unique())
+         img = highlight_selected_galaxies(img, df_filtered, highlight_ids)
+
+
 
         import streamlit as st
         import plotly.express as px

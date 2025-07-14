@@ -7,7 +7,7 @@ from noise import pnoise2
 
 # ✅ Generador de halo Perlin global
 
-def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=120):
+def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=100):
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     for x in range(width):
         for y in range(height):
@@ -15,7 +15,7 @@ def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=120):
             val = int(200 * (n + 0.5))
             a = min(max(val, 0), alpha)
             halo.putpixel((x, y), (0, 180, 150, int(a)))
-    return halo.filter(ImageFilter.GaussianBlur(60))
+    return halo.filter(ImageFilter.GaussianBlur(40))
 
 # Clasificador de morfología
 

@@ -2348,7 +2348,7 @@ elif opcion == "Proceso":
 
         import streamlit as st
         from plot_galaxy_map import plot_galaxy_map
-        show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
+        #show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
 
         # Suponiendo que ya cargaste df
         img=plot_galaxy_map(df)

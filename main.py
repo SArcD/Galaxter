@@ -524,6 +524,8 @@ elif opcion == "Proceso":
 
                 # ⭐ Colores adaptativos
                 custom_colors = []
+                # ⭐ Colores adaptativos
+                custom_colors = []
                 if len(df_extreme) == 1:
                     custom_colors = ['gold']
                 elif len(df_extreme) == 2:
@@ -532,11 +534,18 @@ elif opcion == "Proceso":
                     custom_colors = ['gold', 'silver', '#cd7f32']
                 elif len(df_extreme) >= 4:
                     df_extreme = df_extreme.sort_values(by=selected_var, ascending=False).reset_index(drop=True)
-                    df_extreme['cuartil'] = pd.qcut(
-                        df_extreme[selected_var],
-                        q=4,
-                        labels=[4, 3, 2, 1]
-                    ).astype(int)
+                    unique_vals = df_extreme[selected_var].nunique()
+
+                    if unique_vals >= 4:
+                        df_extreme['cuartil'] = pd.qcut(
+                            df_extreme[selected_var],
+                            q=4,
+                            labels=[4, 3, 2, 1]
+                        ).astype(int)
+                    else:
+                        # Si no hay suficientes valores únicos para 4 cuartiles, asigna 1 a todos
+                        df_extreme['cuartil'] = 1
+
                     quartile_colors = {
                         1: 'gold',
                         2: 'silver',
@@ -544,6 +553,7 @@ elif opcion == "Proceso":
                         4: 'lightskyblue'
                     }
                     custom_colors = [quartile_colors[q] for q in df_extreme['cuartil']]
+
 
                 # ⭐ + 💎 combinado con numeraciones dobles
                 ids_extreme = df_extreme['ID'].tolist()

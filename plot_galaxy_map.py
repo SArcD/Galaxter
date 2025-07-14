@@ -18,7 +18,7 @@ from noise import pnoise2
 #            halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
 #    return halo.filter(ImageFilter.GaussianBlur(60))
 
-def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
+def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=120):
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     for x in range(width):
         for y in range(height):
@@ -26,8 +26,8 @@ def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
             val = int(200 * (n + 0.5))
             a = int(min(max(val, 0), int(alpha * 2)))  # ✅ cast alpha*2 to int
             a = min(a, 255)  # ensure valid range
-            halo.putpixel((x, y), (0, 180, 150, a))
-    return halo.filter(ImageFilter.GaussianBlur(60))
+            halo.putpixel((x, y), (0, 220, 180, a))
+    return halo.filter(ImageFilter.GaussianBlur(90))
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):

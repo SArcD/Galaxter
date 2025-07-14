@@ -2350,8 +2350,8 @@ elif opcion == "Proceso":
             morph_col='M(ave)',
             subcluster_col='Subcluster',
             rf_col='Rf',
-            width=1024,
-            height=1024
+            width=2048,
+            height=2048
         ):
             st.header("Mapa de Cúmulo con RA/Dec desde DataFrame")
 

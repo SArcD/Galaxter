@@ -134,7 +134,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         local_blurred = local_halo.filter(ImageFilter.GaussianBlur(60))
         img.alpha_composite(local_blurred)
 
-    img = img.transpose(Image.FLIP_TOP_BOTTOM)
+    img = img.transpose(Image.FLIP_LEFT_RIGHT)
     #img = img.transpose(Image.ROTATE_180)
     st.image(img)
     st.dataframe(df_filtered)

@@ -189,42 +189,96 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 
 #        import numpy as np
 
+#    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+
+#    for _, row in subcluster_positions.iterrows():
+#        # 🔍 Filtra galaxias de este subcluster
+#        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
+#        num_galaxias = len(galaxies_in_subcluster)
+#        if num_galaxias == 0:
+#            continue
+
+#        # ✅ 1. Calcula orientación (covarianza + eigenvectors)
+#        coords = galaxies_in_subcluster[[ra_col, dec_col]].values
+#        coords -= coords.mean(axis=0)  # centra
+#        cov = np.cov(coords, rowvar=False)
+#        eigvals, eigvecs = np.linalg.eigh(cov)
+#        angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
+#        angle_deg = np.degrees(angle_rad)
+
+#        # ✅ 2. Define forma elíptica
+#        halo_alpha = min(200, max(10, num_galaxias))
+#        rx = 200  # Eje mayor
+#        ry = 100  # Eje menor
+
+#        # ✅ 3. Dibuja halo elíptico pequeño
+#        single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
+#        draw_local = ImageDraw.Draw(single_halo)
+#        draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
+#        blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
+
+#        # ✅ 4. Rota para alinearlo
+#        rotated = blurred.rotate(-angle_deg, expand=True)
+
+#        # ✅ 5. Calcula posición global
+#        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
+#        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
+
+        # ✅ 6. Pega halo rotado centrado
+#        offset_x = cx - rotated.width // 2
+#        offset_y = cy - rotated.height // 2
+#        img.alpha_composite(rotated, (offset_x, offset_y))
+
+
+    import numpy as np
+    from PIL import ImageOps, ImageChops, Image
+
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 
     for _, row in subcluster_positions.iterrows():
-        # 🔍 Filtra galaxias de este subcluster
         galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
         num_galaxias = len(galaxies_in_subcluster)
         if num_galaxias == 0:
             continue
 
-        # ✅ 1. Calcula orientación (covarianza + eigenvectors)
+        # 1️⃣ Calcula orientación
         coords = galaxies_in_subcluster[[ra_col, dec_col]].values
-        coords -= coords.mean(axis=0)  # centra
+        coords -= coords.mean(axis=0)
         cov = np.cov(coords, rowvar=False)
         eigvals, eigvecs = np.linalg.eigh(cov)
         angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
         angle_deg = np.degrees(angle_rad)
 
-        # ✅ 2. Define forma elíptica
+        # 2️⃣ Tamaño y opacidad
         halo_alpha = min(200, max(10, num_galaxias))
-        rx = 200  # Eje mayor
-        ry = 100  # Eje menor
+        rx = 200
+        ry = 100
 
-        # ✅ 3. Dibuja halo elíptico pequeño
+        # 3️⃣ Dibuja halo elíptic  o
         single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
         draw_local = ImageDraw.Draw(single_halo)
         draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
+
+        # 4️⃣ Aplica blur
         blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
 
-        # ✅ 4. Rota para alinearlo
+        # 5️⃣ Crea máscara circular suave 
+        mask = Image.new('L', blurred.size, 0)
+        draw_mask = ImageDraw.Draw(mask)  
+        draw_mask.ellipse([0, 0, rx * 2, ry * 2], fill=255)
+        mask = mask.filter(ImageFilter.GaussianBlur(60))
+
+        # 6️⃣ Aplica la máscara para recortar bordes
+        blurred.putalpha(mask)
+
+        # 7️⃣ Rota
         rotated = blurred.rotate(-angle_deg, expand=True)
 
-        # ✅ 5. Calcula posición global
+        # 8️⃣ Encuentra posición global
         cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
         cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
 
-        # ✅ 6. Pega halo rotado centrado
+        # 9️⃣ Pega centrado
         offset_x = cx - rotated.width // 2
         offset_y = cy - rotated.height // 2
         img.alpha_composite(rotated, (offset_x, offset_y))

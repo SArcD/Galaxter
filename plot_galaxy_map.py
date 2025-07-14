@@ -142,7 +142,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
         local_halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         draw_local = ImageDraw.Draw(local_halo)
-        draw_local.ellipse([cx-150, cy-150, cx+150, cy+150], fill=(0, 200, 180, halo_alpha))
+        draw_local.ellipse([cx-150, cy-150, cx+150, cy+150], fill=(255, 160, 50, halo_alpha))
         local_blurred = local_halo.filter(ImageFilter.GaussianBlur(60))
         img.alpha_composite(local_blurred)
 

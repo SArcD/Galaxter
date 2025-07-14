@@ -123,3 +123,4 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
     with st.expander("Mapa Generado"):
         st.image(img)
         st.dataframe(df_filtered)
+    return img

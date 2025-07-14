@@ -4,6 +4,8 @@ from PIL import Image, ImageDraw, ImageFilter
 import math
 import random
 from noise import pnoise2
+from scipy.stats import gaussian_kde
+
 #from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 # ✅ Generador de halo Perlin global

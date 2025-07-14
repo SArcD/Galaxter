@@ -2597,6 +2597,10 @@ elif opcion == "Proceso":
                 RA, Dec = row[ra_col], row[dec_col]
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
+                    # 🔄 Ajuste para ROTATE_180: invierte ambos ejes
+                x = width - x
+                y = height - y
+
                 r = 8
                 draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
                 draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)

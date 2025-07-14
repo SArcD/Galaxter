@@ -92,6 +92,11 @@ def plot_galaxy_map(
         sx, sy = random.randint(0, width - 1), random.randint(0, height - 1)
         b = random.randint(120, 220)
         draw.point((sx, sy), fill=(b, b, b, 255))
+    
+    # Invertir la imagen en ambos ejes
+    img = img.transpose(method=Image.FLIP_LEFT_RIGHT)
+    img = img.transpose(method=Image.FLIP_TOP_BOTTOM)
+
 
     with st.expander("Mapa generado"):
         st.image(img)

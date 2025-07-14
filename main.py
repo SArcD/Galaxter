@@ -2457,71 +2457,10 @@ elif opcion == "Proceso":
         from PIL import ImageDraw, ImageFont
         import numpy as np
 
- #       def highlight_ranked_galaxies_with_selector(img, df_filtered,
- #                                                    ra_col='RA', dec_col='Dec', id_col='ID',
- #                                                    rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
- #                                                    width=1024, height=1024):
- #           RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
- #           Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
- #           draw = ImageDraw.Draw(img)
- #           font = ImageFont.load_default()
-
- #           variables = {
- #               rf_col: "Más Brillantes",
- #               delta_col: "Delta",
- #               vel_col: "Vel",
- #               cld_col: "Cl_d"
- #           }
-
- #           color_map = {
- #               4: "gold",
- #               3: "orange",
- #               2: "deepskyblue",
- #               1: "silver"
- #           }
-
- #           var_options = list(variables.keys())
- #           selected_var = st.sidebar.selectbox("Variable para ranking:", var_options, format_func=lambda x: variables[x])
- #           top_n = st.sidebar.slider("Número de galaxias a resaltar:", min_value=1, max_value=20, value=5)
-
- #           sorted_df = df_filtered.copy()
- #           if selected_var == rf_col:
- #               sorted_df = sorted_df.sort_values(selected_var)
- #           else:
- #               sorted_df = sorted_df.sort_values(selected_var, ascending=False)
-
- #           values = sorted_df[selected_var].values
- #           q75, q50, q25 = np.percentile(values, [75, 50, 25])
-
- #           for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
- #               val = row[selected_var]
- #               if val >= q75:
- #                   color = "gold"
- #               elif val >= q50:
- #                   color = "orange"
- #               elif val >= q25:
- #                   color = "deepskyblue"
- #               else:
- #                   color = "silver"
-
- #               RA, Dec = row[ra_col], row[dec_col]
- #               x = int((RA - RA_min) / (RA_max - RA_min) * width)
- #               y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
- #               r = 25
-
-#                draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
-#                draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
-
-#            return img
-
-        import streamlit as st
-        from PIL import ImageDraw, ImageFont
-        import numpy as np
-
-        def highlight_ranked_galaxies_with_arrows(img, df_filtered,
-                                                  ra_col='RA', dec_col='Dec', id_col='ID',
-                                                  rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
-                                                  width=1024, height=1024):
+        def highlight_ranked_galaxies_with_selector(img, df_filtered,
+                                                     ra_col='RA', dec_col='Dec', id_col='ID',
+                                                     rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
+                                                     width=1024, height=1024):
             RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
             Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
             draw = ImageDraw.Draw(img)
@@ -2532,6 +2471,13 @@ elif opcion == "Proceso":
                 delta_col: "Delta",
                 vel_col: "Vel",
                 cld_col: "Cl_d"
+            }
+
+            color_map = {
+                4: "gold",
+                3: "orange",
+                2: "deepskyblue",
+                1: "silver"
             }
 
             var_options = list(variables.keys())
@@ -2552,15 +2498,69 @@ elif opcion == "Proceso":
                 if val >= q75:
                     color = "gold"
                 elif val >= q50:
-                    color = "silver"
-                elif val >= q25:
                     color = "orange"
-                else:
+                elif val >= q25:
                     color = "deepskyblue"
+                else:
+                    color = "silver"
 
                 RA, Dec = row[ra_col], row[dec_col]
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
+                r = 10
+
+                draw.ellipse([x - r, y - r, x + r, y + r], outline=color, width=3)
+                draw.text((x + r + 2, y), f"{rank}", fill=color, font=font)
+
+            return img
+
+#        import streamlit as st
+#        from PIL import ImageDraw, ImageFont
+#        import numpy as np
+
+#       def highlight_ranked_galaxies_with_arrows(img, df_filtered,
+#                                                  ra_col='RA', dec_col='Dec', id_col='ID',
+#                                                  rf_col='Rf', delta_col='Delta', vel_col='Vel', cld_col='Cl_d',
+#                                                  width=1024, height=1024):
+#            RA_min, RA_max = df_filtered[ra_col].min(), df_filtered[ra_col].max()
+#            Dec_min, Dec_max = df_filtered[dec_col].min(), df_filtered[dec_col].max()
+#            draw = ImageDraw.Draw(img)
+#            font = ImageFont.load_default()
+
+#            variables = {
+#                rf_col: "Más Brillantes",
+#                delta_col: "Delta",
+#                vel_col: "Vel",
+#                cld_col: "Cl_d"
+#            }
+
+#            var_options = list(variables.keys())
+#            selected_var = st.sidebar.selectbox("Variable para ranking:", var_options, format_func=lambda x: variables[x])
+#            top_n = st.sidebar.slider("Número de galaxias a resaltar:", min_value=1, max_value=20, value=5)
+
+#            sorted_df = df_filtered.copy()
+#            if selected_var == rf_col:
+#                sorted_df = sorted_df.sort_values(selected_var)
+#            else:
+#                sorted_df = sorted_df.sort_values(selected_var, ascending=False)#
+#
+#            values = sorted_df[selected_var].values
+#            q75, q50, q25 = np.percentile(values, [75, 50, 25])
+
+#            for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
+#                val = row[selected_var]
+#                if val >= q75:
+#                    color = "gold"
+#                elif val >= q50:
+#                    color = "silver"
+#                elif val >= q25:
+#                    color = "orange"
+#                else:
+#                    color = "deepskyblue"
+
+#                RA, Dec = row[ra_col], row[dec_col]
+#                x = int((RA - RA_min) / (RA_max - RA_min) * width)
+#                y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
 
               #  # Dibujar flecha
               #  offset = 40
@@ -2571,38 +2571,38 @@ elif opcion == "Proceso":
               #  # Poner numerito al inicio de la flecha
               #  draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
             # Flecha con punta
-                offset = 10
-                end_x = x + offset
-                end_y = y - offset
-                draw.line([(end_x, end_y), (x, y)], fill=color, width=3)
+#                offset = 10
+#                end_x = x + offset
+#                end_y = y - offset
+#                draw.line([(end_x, end_y), (x, y)], fill=color, width=3)
 
-                # Dibujar punta de flecha
-                angle = math.atan2(y - end_y, x - end_x)
-                arrow_size = 6
-                arrow_angle = math.pi / 6
+#                # Dibujar punta de flecha
+#                angle = math.atan2(y - end_y, x - end_x)
+#                arrow_size = 6
+#                arrow_angle = math.pi / 6
 
-                left_x = x - arrow_size * math.cos(angle - arrow_angle)
-                left_y = y - arrow_size * math.sin(angle - arrow_angle)
-                right_x = x - arrow_size * math.cos(angle + arrow_angle)
-                right_y = y - arrow_size * math.sin(angle + arrow_angle)
+#                left_x = x - arrow_size * math.cos(angle - arrow_angle)
+#                left_y = y - arrow_size * math.sin(angle - arrow_angle)
+#                right_x = x - arrow_size * math.cos(angle + arrow_angle)
+#                right_y = y - arrow_size * math.sin(angle + arrow_angle)
 
-                draw.line([(x, y), (left_x, left_y)], fill=color, width=3)
-                draw.line([(x, y), (right_x, right_y)], fill=color, width=3)
+#                draw.line([(x, y), (left_x, left_y)], fill=color, width=3)
+#                draw.line([(x, y), (right_x, right_y)], fill=color, width=3)
 
                 # Numerito en inicio
-                draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
+#                draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
 
 
                                                       
-            return img
+#            return img
 
 
 
 
 
-        #img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
+   #     img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
         # Asegúrate de pasar el mismo DataFrame filtrado o usa df.copy() si es todo
-        img = highlight_ranked_galaxies_with_arrows(
+        img = highlight_ranked_galaxies_with_selector(
             img,
             df,
             ra_col='RA',

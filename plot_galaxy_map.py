@@ -258,7 +258,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
 
         # 3️⃣ Normaliza y aplica umbral de densidad para forma orgánica
-        threshold = np.percentile(Z, 60)  # Prueba con 50-70 para mejor forma
+        threshold = np.percentile(Z, 80)  # Prueba con 50-70 para mejor forma
         mask_array = (Z > threshold).astype(np.uint8) * 255
 
         # 4️⃣ Convierte a máscara PIL
@@ -266,11 +266,16 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
 
         # 5️⃣ Difumina para halo suave
-        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(20))
+        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(10))
 
-        # 6️⃣ Crea RGBA halo cálido
-        halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
-        halo_rgba.putalpha(mask_blurred)
+        alpha_factor = 0.5  # 50% de la opacidad
+        alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
+        halo_rgba.putalpha(alpha)
+
+     
+       # # 6️⃣ Crea RGBA halo cálido
+       # halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
+       # halo_rgba.putalpha(mask_blurred)
 
         # 7️⃣ Escala al tamaño del mapa
         halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)

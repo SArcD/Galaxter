@@ -2562,15 +2562,38 @@ elif opcion == "Proceso":
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)
 
-                # Dibujar flecha
+              #  # Dibujar flecha
+              #  offset = 40
+              #  end_x = x + offset
+              #  end_y = y - offset
+              #  draw.line([(end_x, end_y), (x, y)], fill=color, width=3)
+
+              #  # Poner numerito al inicio de la flecha
+              #  draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
+            # Flecha con punta
                 offset = 40
                 end_x = x + offset
                 end_y = y - offset
                 draw.line([(end_x, end_y), (x, y)], fill=color, width=3)
 
-                # Poner numerito al inicio de la flecha
+                # Dibujar punta de flecha
+                angle = math.atan2(y - end_y, x - end_x)
+                arrow_size = 10
+                arrow_angle = math.pi / 6
+
+                left_x = x - arrow_size * math.cos(angle - arrow_angle)
+                left_y = y - arrow_size * math.sin(angle - arrow_angle)
+                right_x = x - arrow_size * math.cos(angle + arrow_angle)
+                right_y = y - arrow_size * math.sin(angle + arrow_angle)
+
+                draw.line([(x, y), (left_x, left_y)], fill=color, width=3)
+                draw.line([(x, y), (right_x, right_y)], fill=color, width=3)
+
+                # Numerito en inicio
                 draw.text((end_x + 4, end_y - 4), f"{rank}", fill=color, font=font)
-    
+
+
+                                                      
             return img
 
 

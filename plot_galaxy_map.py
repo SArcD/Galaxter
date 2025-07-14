@@ -14,7 +14,7 @@ def plot_galaxy_map(
     width=1024,
     height=1024
 ):
-    st.header("Mapa de Cúmulo con RA/Dec desde DataFrame")
+    st.header("Mapa de Cúmulo con RA/Dec y Morfología Real")
 
     all_morphs = sorted(df[morph_col].dropna().unique())
     all_subclusters = sorted(df[subcluster_col].dropna().unique())
@@ -37,7 +37,6 @@ def plot_galaxy_map(
     img = Image.new('RGBA', (width, height), (0, 0, 0, 255))
     draw = ImageDraw.Draw(img)
 
-    # Agregar halo central
     halo_layer = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw_halo = ImageDraw.Draw(halo_layer)
     draw_halo.ellipse(
@@ -47,7 +46,6 @@ def plot_galaxy_map(
     halo_blurred = halo_layer.filter(ImageFilter.GaussianBlur(100))
     img.alpha_composite(halo_blurred)
 
-    # Agregar halos locales por subcluster
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
     for _, row in subcluster_positions.iterrows():
         cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
@@ -77,6 +75,8 @@ def plot_galaxy_map(
             galaxy = draw_spiral(size, brightness)
         elif morph.lower() == 'elliptical':
             galaxy = draw_elliptical(size, brightness)
+        elif morph.lower() == 'barred':
+            galaxy = draw_barred_spiral(size, brightness)
         else:
             galaxy = draw_irregular(size, brightness)
 
@@ -101,25 +101,31 @@ def draw_spiral(size, brightness):
     g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    for i in range(100):
-        theta = i * 0.15
-        radius = size * (i / 100)
-        noise = np.random.normal(0, 0.5)
-        x = int(cx + (radius + noise) * math.cos(theta))
-        y = int(cy + (radius + noise) * math.sin(theta))
+    for i in range(120):
+        theta = i * 0.2
+        radius = size * (i / 120)
+        x = int(cx + radius * math.cos(theta))
+        y = int(cy + radius * math.sin(theta))
         if 0 <= x < g.width and 0 <= y < g.height:
             draw.point((x, y), fill=(100, 200, 255, brightness))
-    draw.ellipse([cx - 1, cy - 1, cx + 1, cy + 1], fill=(220, 220, 255, 255))
+    draw.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(220, 220, 255, 255))
+    return g
+
+def draw_barred_spiral(size, brightness):
+    g = draw_spiral(size, brightness)
+    draw = ImageDraw.Draw(g)
+    cx, cy = size, size
+    draw.rectangle([cx - size//3, cy - 2, cx + size//3, cy + 2], fill=(200, 220, 255, 180))
     return g
 
 def draw_elliptical(size, brightness):
     g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    for i in range(3, 0, -1):
-        rx = int(size * (i / 3))
-        ry = int(size * (i / 3) * 0.6)
-        alpha = int(brightness * (i / 3) * 0.5)
+    for i in range(5, 0, -1):
+        rx = int(size * (i / 5))
+        ry = int(size * (i / 5) * 0.6)
+        alpha = int(brightness * (i / 5) * 0.5)
         bbox = [cx - rx, cy - ry, cx + rx, cy + ry]
         draw.ellipse(bbox, fill=(150, 220, 255, alpha))
     return g
@@ -128,7 +134,7 @@ def draw_irregular(size, brightness):
     g = Image.new('RGBA', (size * 2, size * 2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    for _ in range(size * 4):
+    for _ in range(size * 5):
         dx = random.randint(-size // 2, size // 2)
         dy = random.randint(-size // 2, size // 2)
         draw.point((cx + dx, cy + dy), fill=(120, 200, 255, brightness))

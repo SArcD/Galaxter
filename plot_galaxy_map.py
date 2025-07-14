@@ -268,7 +268,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         # 5️⃣ Difumina para halo suave
         mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(10))
 
-        halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
+        halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))
 
         alpha_factor = 0.3  # 50% de la opacidad
         alpha = mask_blurred.point(lambda p: int(p * alpha_factor))

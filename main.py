@@ -2103,90 +2103,90 @@ elif opcion == "Proceso":
 
 
 
-        import streamlit as st
-        import numpy as np
+#        import streamlit as st
+#        import numpy as np
 
-        import streamlit as st
+#        import streamlit as st
+#
+#        def generate_realistic_svg(df,
+#                                   ra_col='RA', dec_col='Dec',
+#                                   morph_col='M(ave)', mag_col='M(IPn)',
+#                                   vel_col='Vel'):
+#            """
+#            🌌 Mapa Deep Field SVG realista adaptado.
+#            Incluye:
+#            - Gradientes difusos        
+#            - Filtros blur
+#            - Formas realistas por morfología
+#            """
 
-        def generate_realistic_svg(df,
-                                   ra_col='RA', dec_col='Dec',
-                                   morph_col='M(ave)', mag_col='M(IPn)',
-                                   vel_col='Vel'):
-            """
-            🌌 Mapa Deep Field SVG realista adaptado.
-            Incluye:
-            - Gradientes difusos        
-            - Filtros blur
-            - Formas realistas por morfología
-            """
+#            svg_parts = [
+#                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
+#                '<defs>',
+#                '<filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>',
+#            ]
 
-            svg_parts = [
-                '<svg viewBox="0 0 1000 1000" style="background:black;" xmlns="http://www.w3.org/2000/svg">',
-                '<defs>',
-                '<filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>',
-            ]
+#            # === Gradientes ===
+#            gradients = [
+#                '<radialGradient id="grad0" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(200,255,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+#                '<radialGradient id="grad1" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(0,150,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+#                '<radialGradient id="grad2" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,255,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+#                '<radialGradient id="grad3" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,100,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
+#            ]
+#            svg_parts.extend(gradients)
+#            svg_parts.append('</defs>')
 
-            # === Gradientes ===
-            gradients = [
-                '<radialGradient id="grad0" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(200,255,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
-                '<radialGradient id="grad1" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(0,150,255,0.2);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
-                '<radialGradient id="grad2" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,255,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
-                '<radialGradient id="grad3" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,100,200,0.15);"/><stop offset="100%" style="stop-color:rgba(0,0,0,0);"/></radialGradient>',
-            ]
-            svg_parts.extend(gradients)
-            svg_parts.append('</defs>')
+#            # === Escala RA/Dec ===
+#            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+#            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
-            # === Escala RA/Dec ===
-            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
-            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+#            def scale_ra(ra):
+#                return int(1000 * (ra - ra_min) / (ra_max - ra_min))
 
-            def scale_ra(ra):
-                return int(1000 * (ra - ra_min) / (ra_max - ra_min))
+#            def scale_dec(dec):
+#                return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
 
-            def scale_dec(dec):
-                return int(1000 * (1 - (dec - dec_min) / (dec_max - dec_min)))
+#            # === Galaxias ===
+#            for idx, row in df.iterrows():
+#                x = scale_ra(row[ra_col])
+#                y = scale_dec(row[dec_col])
+#                morph = str(row[morph_col]) if pd.notna(row[morph_col]) else 'UNK'
 
-            # === Galaxias ===
-            for idx, row in df.iterrows():
-                x = scale_ra(row[ra_col])
-                y = scale_dec(row[dec_col])
-                morph = str(row[morph_col]) if pd.notna(row[morph_col]) else 'UNK'
+#                # Tamaño aproximado inverso a magnitud
+#                size = max(4, 12 - float(row[mag_col])) if mag_col in row else 8
 
-                # Tamaño aproximado inverso a magnitud
-                size = max(4, 12 - float(row[mag_col])) if mag_col in row else 8
+#                # Asigna gradiente por tipo
+#                if "E" in morph:
+#                    grad_id = "grad0"
+#                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
+#                elif "Sb" in morph or "Sc" in morph:
+#                    grad_id = "grad1"
+#                    shape = (
+#                        f'<g>'
+#                        f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" '
+#                        f'fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9">'
+#                        f'<title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title>'
+#                        f'</ellipse>'
+#                        f'<animateTransform attributeName="transform" attributeType="XML" '
+#                        f'type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>'
+#                        f'</g>'
+#                   )
+#                elif "S0" in morph:
+#                    grad_id = "grad2"
+#                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.7"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></ellipse>'
+#                else:
+#                    grad_id = "grad3"
+#                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
 
-                # Asigna gradiente por tipo
-                if "E" in morph:
-                    grad_id = "grad0"
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
-                elif "Sb" in morph or "Sc" in morph:
-                    grad_id = "grad1"
-                    shape = (
-                        f'<g>'
-                        f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//2}" '
-                        f'fill="url(#{grad_id})" filter="url(#blur)" opacity="0.9">'
-                        f'<title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title>'
-                        f'</ellipse>'
-                        f'<animateTransform attributeName="transform" attributeType="XML" '
-                        f'type="rotate" from="0 {x} {y}" to="360 {x} {y}" dur="40s" repeatCount="indefinite"/>'
-                        f'</g>'
-                    )
-                elif "S0" in morph:
-                    grad_id = "grad2"
-                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size}" ry="{size//3}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.7"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></ellipse>'
-                else:
-                    grad_id = "grad3"
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="url(#{grad_id})" filter="url(#blur)" opacity="0.5"><title>ID: {row.get("ID","")} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | Vel: {row.get(vel_col,"")} | Morph: {morph}</title></circle>'
+#                svg_parts.append(shape)
 
-                svg_parts.append(shape)
+#            svg_parts.append('</svg>')
 
-            svg_parts.append('</svg>')
-
-            svg_code = "\n".join(svg_parts)
-            st.subheader("🌌 Vista Realista Deep Field SVG")
-            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
-        with st.expander("🌌 Mapa Realista Deep Field SVG"):
-            generate_realistic_svg(df)
+#            svg_code = "\n".join(svg_parts)
+#            st.subheader("🌌 Vista Realista Deep Field SVG")
+#            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
+#        with st.expander("🌌 Mapa Realista Deep Field SVG"):
+#            generate_realistic_svg(df)
 
 
 

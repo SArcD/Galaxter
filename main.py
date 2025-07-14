@@ -1183,7 +1183,21 @@ elif opcion == "Proceso":
             return df
 
         with st.expander("🚀 Ejecución Pipeline Automático"):
-            selected_cols = st.multiselect("Variables numéricas:", df.select_dtypes(include='number').columns.tolist())
+ #           selected_cols = st.multiselect("Variables numéricas:", df.select_dtypes(include='number').columns.tolist())
+
+            
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+            # Define tus columnas preferidas:
+            default_cols = [col for col in ["Vel", "Delta", "Cl_d", "RA", "Dec"] if col in numeric_cols]
+
+            selected_cols = st.multiselect(
+                "Variables numéricas:",
+                numeric_cols,
+                default=default_cols
+            )
+            
+            
             num_clusters = st.slider("Número de clusters:", 2, 10, 4)
             df = full_pipeline(df, selected_cols, num_clusters)
             # Y muestra el mapa final interactivo:
@@ -1617,7 +1631,7 @@ elif opcion == "Proceso":
             st.subheader(f"🔄 Clustering nivel {current_level}")
 
             # Número de clusters para este nivel
-            num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 3)
+            num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 2)
 
             # ⚙️ Ejecuta clustering sobre parent_col y guarda nuevas columnas niveladas
             df = run_subclustering_iterative(

@@ -117,7 +117,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
         morph = classify_morphology(morph_raw)
         try: mag_rf = float(row[rf_col])
         except: mag_rf = -15.0
-        size = max(1, int(40 - abs(mag_rf)))
+        size = max(1, int(80 - abs(mag_rf)))
         brightness = 255
         if morph == 'spiral':
             galaxy = draw_spiral(size, brightness)

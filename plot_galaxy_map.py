@@ -31,7 +31,7 @@ def classify_morphology(morph_str):
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):
-    g = Image.new('RGBA', (size*1.0, size*1.0), (0,0,0,0))
+    g = Image.new('RGBA', (size*1, size*1), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     arms = 4
@@ -49,7 +49,7 @@ def draw_spiral(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_elliptical(size, brightness):
-    g = Image.new('RGBA', (size*1.0, size*1.0), (0,0,0,0))
+    g = Image.new('RGBA', (size*1, size*1), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for i in range(5, 0, -1):
@@ -61,7 +61,7 @@ def draw_elliptical(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_lenticular(size, brightness):
-    g = Image.new('RGBA', (size*1.0, size*1.0), (0,0,0,0))
+    g = Image.new('RGBA', (size*1, size*1), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for i in range(2, 0, -1):
@@ -74,7 +74,7 @@ def draw_lenticular(size, brightness):
     return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_irregular(size, brightness):
-    g = Image.new('RGBA', (size*1.0, size*1.0), (0,0,0,0))
+    g = Image.new('RGBA', (size*1, size*1), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
     for _ in range(size*6):

@@ -2495,15 +2495,17 @@ elif opcion == "Proceso":
 
             for rank, (_, row) in enumerate(sorted_df.head(top_n).iterrows(), 1):
                 val = row[selected_var]
-                if val >= q75:
+                if val > q75:
                     color = "gold"
-                elif val >= q50:
-                    color = "orange"
-                elif val >= q25:
-                    color = "deepskyblue"
-                else:
+                elif val > q50:
                     color = "silver"
+                elif val > q25:
+                    color = "orange"
+                else:
+                    color = "deepbluesky"
 
+
+                
                 RA, Dec = row[ra_col], row[dec_col]
                 x = int((RA - RA_min) / (RA_max - RA_min) * width)
                 y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height)

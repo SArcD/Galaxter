@@ -105,7 +105,8 @@ def draw_irregular(size, brightness):
 # Función principal
 
 def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=1024, height=1024):
-    st.header("Mapa de Cúmulo con Halo Perlin + Subclusters")
+    st.header("Mapa de Cúmulo con Halo Perlin + Subclusters") 
+    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
     all_morphs = sorted(df[morph_col].dropna().unique())
     all_subclusters = sorted(df[subcluster_col].dropna().unique())
     morph_filter = st.sidebar.multiselect("Filtrar morfología", all_morphs, default=all_morphs)

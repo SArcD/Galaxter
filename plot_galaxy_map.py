@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFilter
 import math
 import random
 from noise import pnoise2
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+#from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 # ✅ Generador de halo Perlin global
 
@@ -231,8 +231,8 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
 #        img.alpha_composite(rotated, (offset_x, offset_y))
 
 
-    import numpy as np
-    from PIL import ImageOps, ImageChops, Image
+#    import numpy as np
+#    from PIL import ImageOps, ImageChops, Image
 
     subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 

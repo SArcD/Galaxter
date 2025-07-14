@@ -12,8 +12,13 @@ def generate_perlin_halo(width, height, scale=0.02, octaves=2, alpha=80):
         for y in range(height):
             n = pnoise2(x * scale, y * scale, octaves=octaves)
             val = int(300 * (n + 0.5))
+            a = int(min(max(val, 0), alpha * 2))  # duplicar alpha máximo
+            a = min(a, 255)  # asegurar que sea válido 0-255
+            halo.putpixel((x, y), (0, 180, 150, a))
             halo.putpixel((x, y), (0, 180, 150, min(max(val, 0), alpha*2.0)))
     return halo.filter(ImageFilter.GaussianBlur(60))
+
+
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):

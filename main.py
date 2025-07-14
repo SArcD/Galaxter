@@ -2515,7 +2515,22 @@ elif opcion == "Proceso":
             return img
 
 
-        img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
+        #img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
+        # Asegúrate de pasar el mismo DataFrame filtrado o usa df.copy() si es todo
+        img = highlight_ranked_galaxies_with_selector(
+            img,
+            df,
+            ra_col='RA',
+            dec_col='Dec',
+            id_col='ID',
+            rf_col='Rf',
+            delta_col='Delta',
+            vel_col='Vel',
+            cld_col='Cl_d',
+            width=1024,
+            height=1024
+        )
+
         with st.expander("Mapa Final con Resaltado"):
             st.image(img)  # ✅ Esto mostrará el resultado actualizado
 

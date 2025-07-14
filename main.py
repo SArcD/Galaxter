@@ -2508,7 +2508,7 @@ elif opcion == "Proceso":
             return img
 
 # Uso:
-         img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
+        img = highlight_ranked_galaxies(img, df_filtered, top_n=5)
 
 
 

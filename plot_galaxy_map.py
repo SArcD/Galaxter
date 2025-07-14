@@ -31,58 +31,59 @@ def classify_morphology(morph_str):
 
 # --- Formas de galaxias realistas ---
 def draw_spiral(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*3, size*3), (0,0,0,0))
     draw = ImageDraw.Draw(g)
-    cx, cy = size, size
-    arms = 4
+    cx, cy = size * 1.5, size * 1.5
+    arms = 3
     for arm in range(arms):
         theta_offset = (2 * math.pi / arms) * arm
         points = []
-        for i in range(300):
-            t = i / 300 * (4 * 2 * math.pi)
-            r = size * (i / 300)
+        for i in range(150):  # menos puntos para menos vueltas
+            t = i / 150 * (2 * math.pi * 2)  # solo 2 vueltas
+            r = size * (i / 150)
             x = cx + r * math.cos(t + theta_offset)
             y = cy + r * math.sin(t + theta_offset)
             points.append((x, y))
-        draw.line(points, fill=(200, 220, 255, 255), width=1)
-    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
-    return g.filter(ImageFilter.GaussianBlur(0.5))
+        draw.line(points, fill=(200, 220, 255, 255), width=2)
+    draw.ellipse([cx-4, cy-4, cx+4, cy+4], fill=(255, 255, 255, 255))
+    return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_elliptical(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*3, size*3), (0,0,0,0))
     draw = ImageDraw.Draw(g)
-    cx, cy = size, size
+    cx, cy = size * 1.5, size * 1.5
     for i in range(5, 0, -1):
         rx = int(size * (i / 5))
         ry = int(size * (i / 5) * 0.6)
         alpha = int(brightness * (i / 5) * 0.5)
         draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(150, 220, 255, alpha))
     draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
-    return g.filter(ImageFilter.GaussianBlur(0.5))
+    return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_lenticular(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*3, size*3), (0,0,0,0))
     draw = ImageDraw.Draw(g)
-    cx, cy = size, size
+    cx, cy = size * 1.5, size * 1.5
     for i in range(2, 0, -1):
         rx = int(size * (i/2))
         ry = int(size * (i/2) * 0.3)
         alpha = int(brightness * (i/2) * 0.5)
         draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(180, 220, 255, alpha))
-    draw.line([cx-size//2, cy, cx+size//2, cy], fill=(200,220,255,180), width=1)
+    draw.line([cx-size//2, cy, cx+size//2, cy], fill=(200,220,255,180), width=2)
     draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
-    return g.filter(ImageFilter.GaussianBlur(0.5))
+    return g.filter(ImageFilter.GaussianBlur(1))
 
 def draw_irregular(size, brightness):
-    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    g = Image.new('RGBA', (size*3, size*3), (0,0,0,0))
     draw = ImageDraw.Draw(g)
-    cx, cy = size, size
-    for _ in range(size*2):
-        dx = random.randint(-size//2, size//2)
-        dy = random.randint(-size//2, size//2)
+    cx, cy = size * 1.5, size * 1.5
+    for _ in range(size*6):
+        dx = random.randint(-size, size)
+        dy = random.randint(-size, size)
         draw.point((cx+dx, cy+dy), fill=(120, 200, 255, brightness))
-    draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(255, 255, 255, 255))
-    return g.filter(ImageFilter.GaussianBlur(0.5))
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
+    return g.filter(ImageFilter.GaussianBlur(1))
+
 
 # --- Función principal ---
 def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=1024, height=1024):

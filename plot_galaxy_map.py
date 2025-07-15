@@ -127,23 +127,64 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
                     subcluster_col='Subcluster', width=1024, height=1024):
 
     st.header("Mapa de Cúmulo con formas y colores variados 🌌")
+#    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
+#    morphs = sorted(df[morph_col].dropna().unique())
+#    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
+#    df_filtered = df[df[morph_col].isin(morph_filter)].dropna()
+
+#    # -------------------------------
+#    # 🚩 Controles dinámicos de subclusters
+#    # -------------------------------
+#    all_subclusters = sorted(df[subcluster_col].dropna().unique())
+#    subcluster_visibility = {}
+#    st.sidebar.markdown("### Subclusters visibles")
+
+#    for sub in all_subclusters:
+#        subcluster_visibility[sub] = st.sidebar.checkbox(f"Subcluster {sub}", value=True)
+
+
+    # ----------------------------------------------
+    # 🚩 Filtros de morfología y encendido de estrellas
+    # ----------------------------------------------
     show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
+
     morphs = sorted(df[morph_col].dropna().unique())
     morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
-    df_filtered = df[df[morph_col].isin(morph_filter)].dropna()
 
-    # -------------------------------
-    # 🚩 Controles dinámicos de subclusters
-    # -------------------------------
+    # ----------------------------------------------
+    # 🚩 Filtros dinámicos para Subclusters
+    # ----------------------------------------------
     all_subclusters = sorted(df[subcluster_col].dropna().unique())
-    subcluster_visibility = {}
     st.sidebar.markdown("### Subclusters visibles")
-
+    subcluster_visibility = {}
     for sub in all_subclusters:
         subcluster_visibility[sub] = st.sidebar.checkbox(f"Subcluster {sub}", value=True)
 
+    # ----------------------------------------------
+    # 🚩 Filtros dinámicos para Sub-Subclusters (Subcluster_1)
+    # ----------------------------------------------
+    all_subsubclusters = sorted(df[subsubcluster_col].dropna().unique())
+    st.sidebar.markdown("### Sub-Subclusters visibles")
+    subsubcluster_visibility = {}
+    for subsub in all_subsubclusters:
+        subsubcluster_visibility[subsub] = st.sidebar.checkbox(f"SubSubcluster {subsub}", value=True)
+
+    # ----------------------------------------------
+    # 🚩 Aplica filtros combinados
+    # ----------------------------------------------
+    df_filtered = df[
+        (df[morph_col].isin(morph_filter)) &
+        (df[subcluster_col].isin([k for k, v in subcluster_visibility.items() if v])) &
+        (df[subsubcluster_col].isin([k for k, v in subsubcluster_visibility.items() if v]))
+    ].dropna()
+
+    if df_filtered.empty:
+        st.warning("No hay datos con los filtros actuales.")
+        return
+
+                        
     # Aplica filtro:
-    df_filtered = df_filtered[df_filtered[subcluster_col].isin([k for k, v in subcluster_visibility.items() if v])]
+    #df_filtered = df_filtered[df_filtered[subcluster_col].isin([k for k, v in subcluster_visibility.items() if v])]
 
 
                         

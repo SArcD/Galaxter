@@ -3,118 +3,134 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 import math
 import random
-from noise import pnoise2
-from scipy.stats import gaussian_kde
 
-#from PIL import Image, ImageDraw, ImageFilter, ImageOps
-
-# ✅ Generador de halo Perlin global
-
-#def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=100):
-#    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-#    for x in range(width):
-#        for y in range(height):
-#            n = pnoise2(x * scale, y * scale, octaves=octaves)
-#            val = int(200 * (n + 0.5))
- #           a = min(max(val, 0), alpha)
- #           halo.putpixel((x, y), (0, 180, 150, int(a)))
-#    return halo.filter(ImageFilter.GaussianBlur(40))
-
-def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
-    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-    for x in range(width):
-        for y in range(height):
-            n = pnoise2(x * scale, y * scale, octaves=octaves)
-            val = max(n + 0.5, 0)  # Normaliza
-            val = val ** 2.5        # Ajusta contraste: más exponente = menos brillo base
-            a = int(alpha * val)
-            halo.putpixel((x, y), (0, 180, 150, a))
-    return halo.filter(ImageFilter.GaussianBlur(40))
-
-
-
-# Clasificador de morfología
-
+# -------------------------------------------------------
+# ✅ Clasificador detallado
+# -------------------------------------------------------
 def classify_morphology(morph_str):
     morph_str = morph_str.lower()
     if morph_str.startswith('e'):
         return 'elliptical'
     elif 's0' in morph_str:
         return 'lenticular'
-    elif any(s in morph_str for s in ['sa', 'sb', 'sc', 'sdm']):
-        return 'spiral'
+    elif 'sa' in morph_str:
+        return 'spiral_sa'
+    elif 'sb' in morph_str:
+        return 'spiral_sb'
+    elif 'sc' in morph_str:
+        return 'spiral_sc'
+    elif 'sd' in morph_str:
+        return 'spiral_sd'
     else:
         return 'irregular'
 
-# Funciones draw_*
+# -------------------------------------------------------
+# ✅ Generador de Perlin (opcional, mantén tu versión)
+# -------------------------------------------------------
+def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
+    from noise import pnoise2
+    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    for x in range(width):
+        for y in range(height):
+            n = pnoise2(x * scale, y * scale, octaves=octaves)
+            val = max(n + 0.5, 0)
+            val = val ** 2.5
+            a = int(alpha * val)
+            halo.putpixel((x, y), (0, 180, 150, a))
+    return halo.filter(ImageFilter.GaussianBlur(40))
 
-def draw_spiral(size, brightness):
+# -------------------------------------------------------
+# ✅ Espirales por tipo
+# -------------------------------------------------------
+def draw_spiral_type(size, spiral_type='sa'):
     g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
-    arms = 2
-    for arm in range(arms):
-        theta_offset = (2 * math.pi / arms) * arm
+
+    tightness = {
+        'sa': 0.4,
+        'sb': 0.7,
+        'sc': 1.0,
+        'sd': 1.4
+    }.get(spiral_type, 0.8)
+
+    tint = random.choice([(220, 240, 255), (200, 220, 255), (240, 240, 255)])
+
+    for arm in range(2):
+        theta_offset = (2 * math.pi / 2) * arm
         points = []
         for i in range(150):
             t = i / 150 * (2 * math.pi)
-            r = size * (i / 150)
+            r = size * (i / 150) * tightness
+            if spiral_type == 'sd' and random.random() < 0.05:
+                continue
             x = cx + r * math.cos(t + theta_offset)
             y = cy + r * math.sin(t + theta_offset)
             points.append((x, y))
-        draw.line(points, fill=(200, 220, 255, 255), width=1)
+        draw.line(points, fill=(tint[0], tint[1], tint[2], 255), width=1)
+
     draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
     return g.filter(ImageFilter.GaussianBlur(1))
 
+# -------------------------------------------------------
+# ✅ Elíptica
+# -------------------------------------------------------
 def draw_elliptical(size, brightness):
     g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
+    tint = random.choice([(180, 220, 255), (200, 240, 255), (220, 220, 255)])
     for i in range(5, 0, -1):
         rx = int(size * (i / 5))
         ry = int(size * (i / 5) * 0.6)
         alpha = int(brightness * (i / 5) * 0.5)
-        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(150, 220, 255, alpha))
-    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
+        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(tint[0], tint[1], tint[2], alpha))
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255,255,255,255))
     return g.filter(ImageFilter.GaussianBlur(1))
 
+# -------------------------------------------------------
+# ✅ Lenticular
+# -------------------------------------------------------
 def draw_lenticular(size, brightness):
     g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
+    tint = random.choice([(200, 220, 255), (255, 230, 200), (220, 220, 240)])
     for i in range(2, 0, -1):
         rx = int(size * (i/2))
         ry = int(size * (i/2) * 0.3)
         alpha = int(brightness * (i/2) * 0.5)
-        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(180, 220, 255, alpha))
+        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(tint[0], tint[1], tint[2], alpha))
     draw.line([cx-size//2, cy, cx+size//2, cy], fill=(200,220,255,180), width=1)
-    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255,255,255,255))
     return g.filter(ImageFilter.GaussianBlur(1))
 
+# -------------------------------------------------------
+# ✅ Irregular
+# -------------------------------------------------------
 def draw_irregular(size, brightness):
     g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
     draw = ImageDraw.Draw(g)
     cx, cy = size, size
+    tint = random.choice([(120, 200, 255), (180, 240, 200), (140, 220, 250)])
     for _ in range(size*4):
         dx = random.randint(-size, size)
         dy = random.randint(-size, size)
-        draw.point((cx+dx, cy+dy), fill=(120, 200, 255, brightness))
-    draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(255, 255, 255, 255))
+        draw.point((cx+dx, cy+dy), fill=(tint[0], tint[1], tint[2], brightness))
+    draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(255,255,255,255))
     return g.filter(ImageFilter.GaussianBlur(1))
 
-# Función principal
+# -------------------------------------------------------
+# ✅ Función principal
+# -------------------------------------------------------
+def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='Rf',
+                    subcluster_col='Subcluster', width=1024, height=1024):
 
-def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subcluster_col='Subcluster', rf_col='Rf', width=1024, height=1024):
-    st.header("Mapa de Cúmulo con Halo Perlin + Subclusters") 
+    st.header("Mapa de Cúmulo con formas y colores variados 🌌")
     show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
-    all_morphs = sorted(df[morph_col].dropna().unique())
-    all_subclusters = sorted(df[subcluster_col].dropna().unique())
-    morph_filter = st.sidebar.multiselect("Filtrar morfología", all_morphs, default=all_morphs)
-    subcluster_filter = st.sidebar.multiselect("Filtrar Subclusters", all_subclusters, default=all_subclusters)
-    df_filtered = df[df[morph_col].isin(morph_filter) & df[subcluster_col].isin(subcluster_filter)].dropna()
-    if df_filtered.empty:
-        st.warning("No hay datos.")
-        return
+    morphs = sorted(df[morph_col].dropna().unique())
+    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
+    df_filtered = df[df[morph_col].isin(morph_filter)].dropna()
 
     RA_min, RA_max = df[ra_col].min(), df[ra_col].max()
     Dec_min, Dec_max = df[dec_col].min(), df[dec_col].max()
@@ -122,214 +138,39 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', subclust
     img = Image.new('RGBA', (width, height), (0,0,0,255))
     img.alpha_composite(generate_perlin_halo(width, height))
 
-
-    from PIL import ImageDraw, ImageFilter
-
-    # ----------------------------
-    # 🌟 Generar estrellas de campo
-    # ----------------------------
     if show_stars:
-
-        num_stars = 2000  # Ajusta la densidad a tu gusto
         field = Image.new('RGBA', (width, height), (0,0,0,0))
         draw_field = ImageDraw.Draw(field)
-
-        for _ in range(num_stars):
+        for _ in range(1500):
             x = random.randint(0, width)
             y = random.randint(0, height)
-            r = random.uniform(0.5, 1.8)  # Tamaño en px
-    
-            brightness = random.randint(150, 255)  # Opacidad de 150 a 255
-    
-            # Color: blanco puro o con leve tinte azul o amarillo
-            tint = random.choice([(255, 255, 255), (200, 220, 255), (255, 240, 200)])
-    
+            r = random.uniform(0.5, 1.8)
+            brightness = random.randint(150, 255)
+            tint = random.choice([(255,255,255), (200,220,255), (255,240,200)])
             draw_field.ellipse([x - r, y - r, x + r, y + r], fill=(tint[0], tint[1], tint[2], brightness))
-
-        # Difumina levemente
         field_blur = field.filter(ImageFilter.GaussianBlur(0.5))
-
-        # Combina al fondo
         img.alpha_composite(field_blur)
 
-
-
-
-
-
- 
-
     for _, row in df_filtered.iterrows():
-        RA, Dec, morph_raw = row[ra_col], row[dec_col], row[morph_col]
-        morph = classify_morphology(morph_raw)
+        morph = classify_morphology(row[morph_col])
         try: mag_rf = float(row[rf_col])
         except: mag_rf = -15.0
         size = max(2, int(20 - abs(mag_rf)/2))
+        size = int(size * random.uniform(0.8, 1.2))
         brightness = 255
-        if morph == 'spiral': galaxy = draw_spiral(size, brightness)
-        elif morph == 'elliptical': galaxy = draw_elliptical(size, brightness)
-        elif morph == 'lenticular': galaxy = draw_lenticular(size, brightness)
-        else: galaxy = draw_irregular(size, brightness)
+        if morph.startswith('spiral'):
+            galaxy = draw_spiral_type(size, spiral_type=morph.split('_')[-1])
+        elif morph == 'elliptical':
+            galaxy = draw_elliptical(size, brightness)
+        elif morph == 'lenticular':
+            galaxy = draw_lenticular(size, brightness)
+        else:
+            galaxy = draw_irregular(size, brightness)
+
         galaxy = galaxy.rotate(random.randint(0, 360), expand=True)
-        x = int((RA - RA_min) / (RA_max - RA_min) * width) - galaxy.width // 2
-        y = int((Dec - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2
+        x = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width) - galaxy.width // 2
+        y = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2
         img.alpha_composite(galaxy, (x, y))
 
-#    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
-#    for _, row in subcluster_positions.iterrows():
-#        num_galaxias = len(df_filtered[df_filtered[subcluster_col]==row[subcluster_col]])
-#        if num_galaxias == 0: continue
-#        halo_alpha = min(200, max(10, num_galaxias))
-#        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
-#        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
-#        local_halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-#        draw_local = ImageDraw.Draw(local_halo)
-#        draw_local.ellipse([cx-150, cy-150, cx+150, cy+150], fill=(255, 160, 50, halo_alpha))
-#        local_blurred = local_halo.filter(ImageFilter.GaussianBlur(60))
-#        img.alpha_composite(local_blurred)
-
-    
-#    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
-
-#    for _, row in subcluster_positions.iterrows():
-        # 🔍 Filtra galaxias de este subcluster
-#        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
-#        num_galaxias = len(galaxies_in_subcluster)
-#        if num_galaxias == 0:
-#            continue
-
-#        # ✅ 1. Calcula orientación (covarianza + eigenvectors)
-#        coords = galaxies_in_subcluster[[ra_col, dec_col]].values
- #       coords -= coords.mean(axis=0)  # centra
-#        cov = np.cov(coords, rowvar=False)
-#        eigvals, eigvecs = np.linalg.eigh(cov)
-#        angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
-#        angle_deg = np.degrees(angle_rad)
-
-#        # ✅ 2. Define forma elíptica
-#        halo_alpha = min(200, max(10, num_galaxias))
-#        rx = 200  # Eje mayor
-#        ry = 100  # Eje menor
-
-#        # ✅ 3. Dibuja halo elíptico pequeño
-#        single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
-#        draw_local = ImageDraw.Draw(single_halo)
-#        draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
-#        blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
-
-#        # ✅ 4. Rota para alinearlo
-#        rotated = blurred.rotate(-angle_deg, expand=True)
-
-#        # ✅ 5. Calcula posición global
-#        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
-#        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
-
-#        # ✅ 6. Pega halo rotado centrado
-#        offset_x = cx - rotated.width // 2
-#        offset_y = cy - rotated.height // 2
-#        img.alpha_composite(rotated, (offset_x, offset_y))
-
-#        import numpy as np
-
-#    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
-
-#    for _, row in subcluster_positions.iterrows():
-#        # 🔍 Filtra galaxias de este subcluster
-#        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
-#        num_galaxias = len(galaxies_in_subcluster)
-#        if num_galaxias == 0:
-#            continue
-
-#        # ✅ 1. Calcula orientación (covarianza + eigenvectors)
-#        coords = galaxies_in_subcluster[[ra_col, dec_col]].values
-#        coords -= coords.mean(axis=0)  # centra
-#        cov = np.cov(coords, rowvar=False)
-#        eigvals, eigvecs = np.linalg.eigh(cov)
-#        angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
-#        angle_deg = np.degrees(angle_rad)
-
-#        # ✅ 2. Define forma elíptica
-#        halo_alpha = min(200, max(10, num_galaxias))
-#        rx = 200  # Eje mayor
-#        ry = 100  # Eje menor
-
-#        # ✅ 3. Dibuja halo elíptico pequeño
-#        single_halo = Image.new('RGBA', (rx * 2, ry * 2), (0, 0, 0, 0))
-#        draw_local = ImageDraw.Draw(single_halo)
-#        draw_local.ellipse([0, 0, rx * 2, ry * 2], fill=(255, 160, 50, halo_alpha))
-#        blurred = single_halo.filter(ImageFilter.GaussianBlur(60))
-
-#        # ✅ 4. Rota para alinearlo
-#        rotated = blurred.rotate(-angle_deg, expand=True)
-
-#        # ✅ 5. Calcula posición global
-#        cx = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width)
-#        cy = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height)
-
-        # ✅ 6. Pega halo rotado centrado
-#        offset_x = cx - rotated.width // 2
-#        offset_y = cy - rotated.height // 2
-#        img.alpha_composite(rotated, (offset_x, offset_y))
-
-
-#    import numpy as np
-#    from PIL import ImageOps, ImageChops, Image
-
-
-
-    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
-
-    for _, row in subcluster_positions.iterrows():
-        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
-        num_galaxias = len(galaxies_in_subcluster)
-        if num_galaxias == 0:
-            continue
-
-        # 1️⃣ Datos y KDE
-        coords = galaxies_in_subcluster[[ra_col, dec_col]].values.T
-        kde = gaussian_kde(coords, bw_method='scott')  # O ajusta 'silverman'
-
-        # 2️⃣ Grilla de densidad en coordenadas RA-Dec
-        grid_size = 300
-        xgrid = np.linspace(RA_min, RA_max, grid_size)
-        ygrid = np.linspace(Dec_min, Dec_max, grid_size)
-        X, Y = np.meshgrid(xgrid, ygrid)
-        Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
-
-        # 3️⃣ Normaliza y aplica umbral de densidad para forma orgánica
-        threshold = np.percentile(Z, 95)  # Prueba con 50-70 para mejor forma
-        mask_array = (Z > threshold).astype(np.uint8) * 255
-
-        # 4️⃣ Convierte a máscara PIL
-        mask_img = Image.fromarray(mask_array).convert("L")
-        mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
-
-        # 5️⃣ Difumina para halo suave
-        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(10))
-
-        halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))
-
-        alpha_factor = 0.3  # 50% de la opacidad
-        alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
-        halo_rgba.putalpha(alpha)
-
-     
-       # # 6️⃣ Crea RGBA halo cálido
-       # halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
-       # halo_rgba.putalpha(mask_blurred)
-
-        # 7️⃣ Escala al tamaño del mapa
-        halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
-
-        # 8️⃣ Combina centrado (ya mapeado al marco global)
-        img.alpha_composite(halo_resized)
-
-
- 
-
- 
-    img = img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.FLIP_TOP_BOTTOM)
-    #img = img.transpose(Image.ROTATE_180)
     st.image(img)
-    st.dataframe(df_filtered)
     return img

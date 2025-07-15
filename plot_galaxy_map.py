@@ -172,9 +172,6 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
         y = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2
         img.alpha_composite(galaxy, (x, y))
 
-
-    import numpy as np
-    from PIL import Image, ImageFilter, ImageDraw
     from scipy.stats import gaussian_kde
 
     # -------------------------------

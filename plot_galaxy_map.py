@@ -173,60 +173,6 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
         img.alpha_composite(galaxy, (x, y))
 
 
-        import numpy as np
-        from scipy.stats import gaussian_kde
-
-
-        # -------------------------------
-        # 🚩 Calcula posiciones por subcluster
-        # -------------------------------
-        subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
-
-
-        for _, row in subcluster_positions.iterrows():
-            galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
-            num_galaxias = len(galaxies_in_subcluster)
-            if num_galaxias == 0:
-                continue
-
-            # 1️⃣ Datos y KDE
-            coords = galaxies_in_subcluster[[ra_col, dec_col]].values.T
-            kde = gaussian_kde(coords, bw_method='scott')  # O ajusta 'silverman'
-
-            # 2️⃣ Grilla de densidad en coordenadas RA-Dec
-            grid_size = 300
-            xgrid = np.linspace(RA_min, RA_max, grid_size)
-            ygrid = np.linspace(Dec_min, Dec_max, grid_size)
-            X, Y = np.meshgrid(xgrid, ygrid)
-            Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
-
-            # 3️⃣ Normaliza y aplica umbral de densidad para forma orgánica
-            threshold = np.percentile(Z, 95)  # Prueba con 50-70 para mejor forma
-            mask_array = (Z > threshold).astype(np.uint8) * 255
-
-            # 4️⃣ Convierte a máscara PIL
-            mask_img = Image.fromarray(mask_array).convert("L")
-            mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
-
-            # 5️⃣ Difumina para halo suave
-            mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(10))
-
-            halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))
-
-            alpha_factor = 0.3  # 50% de la opacidad
-            alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
-            halo_rgba.putalpha(alpha)
-
-     
-       # # 6️⃣ Crea RGBA halo cálido
-       # halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
-       # halo_rgba.putalpha(mask_blurred)
-
-            # 7️⃣ Escala al tamaño del mapa
-            halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
-
-        # 8️⃣ Combina centrado (ya mapeado al marco global)
-            img.alpha_composite(halo_resized)
 
                         
 

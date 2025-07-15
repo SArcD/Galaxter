@@ -173,6 +173,52 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
         img.alpha_composite(galaxy, (x, y))
 
 
+    import numpy as np
+    from PIL import Image, ImageFilter, ImageDraw
+    from scipy.stats import gaussian_kde
+
+    # -------------------------------
+    # 🚩 Calcula posiciones por subcluster
+    # -------------------------------
+    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+
+    for _, row in subcluster_positions.iterrows():
+        galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
+        num_galaxias = len(galaxies_in_subcluster)
+        if num_galaxias == 0:
+            continue
+
+        # 1️⃣ Datos KDE
+        coords = galaxies_in_subcluster[[ra_col, dec_col]].values.T
+        kde = gaussian_kde(coords, bw_method='scott')
+
+        # 2️⃣ Grilla de densidad
+        grid_size = 300
+        xgrid = np.linspace(RA_min, RA_max, grid_size)
+        ygrid = np.linspace(Dec_min, Dec_max, grid_size)
+        X, Y = np.meshgrid(xgrid, ygrid)    
+        Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
+
+        # 3️⃣ Máscara orgánica con umbral más suave
+        threshold = np.percentile(Z, 80)  # ☑️ Difuso y extendido
+        mask_array = (Z > threshold).astype(np.uint8) * 255
+
+        # 4️⃣ Convierte a PIL y difumina generosamente
+        mask_img = Image.fromarray(mask_array).convert("L")
+        mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
+        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(40))  # ☑️ Borde suave
+
+        # 5️⃣ Crea halo coherente con Perlin (tono verdoso)
+        halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))  # ☑️ Verde-azul como Perlin
+        alpha_factor = 0.25  # ☑️ Difuso, no tapa galaxias
+        alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
+        halo_rgba.putalpha(alpha)
+
+        # 6️⃣ Escala al tamaño del mapa
+        halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
+
+        # 7️⃣ Combina centrado en el marco (ya está a escala global)
+        img.alpha_composite(halo_resized)
 
                         
 

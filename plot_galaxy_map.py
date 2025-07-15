@@ -132,6 +132,21 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
     morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
     df_filtered = df[df[morph_col].isin(morph_filter)].dropna()
 
+    # -------------------------------
+    # 🚩 Controles dinámicos de subclusters
+    # -------------------------------
+    all_subclusters = sorted(df[subcluster_col].dropna().unique())
+    subcluster_visibility = {}
+    st.sidebar.markdown("### Subclusters visibles")
+
+    for sub in all_subclusters:
+        subcluster_visibility[sub] = st.sidebar.checkbox(f"Subcluster {sub}", value=True)
+
+    # Aplica filtro:
+    df_filtered = df_filtered[df_filtered[subcluster_col].isin([k for k, v in subcluster_visibility.items() if v])]
+
+
+                        
     RA_min, RA_max = df[ra_col].min(), df[ra_col].max()
     Dec_min, Dec_max = df[dec_col].min(), df[dec_col].max()
 

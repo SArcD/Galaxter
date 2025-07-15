@@ -172,5 +172,9 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
         y = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2
         img.alpha_composite(galaxy, (x, y))
 
+    img = img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.FLIP_TOP_BOTTOM)
+    #img = img.transpose(Image.ROTATE_180)
     st.image(img)
+    st.dataframe(df_filtered)
     return img
+                        

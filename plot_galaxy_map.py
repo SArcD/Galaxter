@@ -208,7 +208,7 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
 
             # 5️⃣ Crea halo cálido y suave
             halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
-            alpha_factor = 0.3
+            alpha_factor = 0.1
             alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
             halo_rgba.putalpha(alpha)
 

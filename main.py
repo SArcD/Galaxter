@@ -2212,129 +2212,129 @@ elif opcion == "Proceso":
 
 
 
-        import streamlit as st
-        import numpy as np
-        import pandas as pd
+ #       import streamlit as st
+ #       import numpy as np
+ #       import pandas as pd
 
-        def generate_realistic_kde_svg(
-            df,
-            ra_col='RA',
-            dec_col='Dec',
-            morph_col='M(ave)',
-            subcluster_col='Subcluster',
-            rf_col='Rf',
-            vel_col='Vel'
-        ):
-            st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista SVG (Gradientes + KDE)")
+#        def generate_realistic_kde_svg(
+#            df,
+#            ra_col='RA',
+#            dec_col='Dec',
+#            morph_col='M(ave)',
+#            subcluster_col='Subcluster',
+#            rf_col='Rf',
+#            vel_col='Vel'
+#        ):
+#            st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista SVG (Gradientes + KDE)")
 
-            blur_strength = st.slider("🔆 Blur KDE", 1, 20, 4)
-            brightness_factor = st.slider("💡 Brillo máximo KDE", 0.05, 1.0, 0.2)
+#            blur_strength = st.slider("🔆 Blur KDE", 1, 20, 4)
+#            brightness_factor = st.slider("💡 Brillo máximo KDE", 0.05, 1.0, 0.2)
 
-            active_morphs = st.multiselect(
-                "Morfologías visibles",
-                options=sorted(df[morph_col].dropna().unique()),
-                default=sorted(df[morph_col].dropna().unique())
-            )
+#            active_morphs = st.multiselect(
+#                "Morfologías visibles",
+#                options=sorted(df[morph_col].dropna().unique()),
+#                default=sorted(df[morph_col].dropna().unique())
+#            )
 
-            active_subs = st.multiselect(
-                "Subclusters visibles",
-                options=sorted(df[subcluster_col].dropna().unique()),
-                default=sorted(df[subcluster_col].dropna().unique())
-            )
+#            active_subs = st.multiselect(
+#                "Subclusters visibles",
+#                options=sorted(df[subcluster_col].dropna().unique()),
+#                default=sorted(df[subcluster_col].dropna().unique())
+#            )
             
-            # --- Escalado de RA invertido ---
-            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
-            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
+#            # --- Escalado de RA invertido ---
+#            ra_min, ra_max = df[ra_col].min(), df[ra_col].max()
+#            dec_min, dec_max = df[dec_col].min(), df[dec_col].max()
 
 
-            svg_parts = [
-                '<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" style="background:black;">',
-                '<defs>',
-                f'<filter id="blur"><feGaussianBlur stdDeviation="{blur_strength}"/></filter>',
-                '<radialGradient id="gradHalo" cx="50%" cy="50%" r="50%">'
-                '<stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />'
-                '<stop offset="100%" style="stop-color:rgba(0,0,0,0);" />'
-                '</radialGradient>',
-                '</defs>'
-            ]
+#            svg_parts = [
+#                '<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" style="background:black;">',
+#                '<defs>',
+#                f'<filter id="blur"><feGaussianBlur stdDeviation="{blur_strength}"/></filter>',
+#                '<radialGradient id="gradHalo" cx="50%" cy="50%" r="50%">'
+#                '<stop offset="0%" style="stop-color:rgba(0,255,200,0.5);" />'
+#                '<stop offset="100%" style="stop-color:rgba(0,0,0,0);" />'
+#                '</radialGradient>',
+#                '</defs>'
+#            ]
             
-            x_min, x_max = df[ra_col].min(), df[ra_col].max()
-            y_min, y_max = df[dec_col].min(), df[dec_col].max()
+#            x_min, x_max = df[ra_col].min(), df[ra_col].max()
+#            y_min, y_max = df[dec_col].min(), df[dec_col].max()
 
-            def scale_ra(ra):
-                return int(1000 * (ra - x_min) / (x_max - x_min))
+#            def scale_ra(ra):
+#                return int(1000 * (ra - x_min) / (x_max - x_min))
 
-            def scale_dec(dec):
-                return int(1000 * (1 - (dec - y_min) / (y_max - y_min)))
+#            def scale_dec(dec):
+#                return int(1000 * (1 - (dec - y_min) / (y_max - y_min)))
 
-            # === KDE Halos ===
-            for _, row in df.iterrows():
-                if row[subcluster_col] not in active_subs:
-                    continue
-                x = scale_ra(row[ra_col])
-                y = scale_dec(row[dec_col])
+#            # === KDE Halos ===
+#            for _, row in df.iterrows():
+#                if row[subcluster_col] not in active_subs:
+#                    continue
+#                x = scale_ra(row[ra_col])
+#                y = scale_dec(row[dec_col])
 
-                rf_value = row.get(rf_col, -2)
-                if pd.isna(rf_value):
-                    rf_value = -2
-                radius = int(10 + np.clip(abs(rf_value) * 40, 10, 150))
-                opacity = np.clip(abs(rf_value) * brightness_factor, 0.05, 0.3)
+#                rf_value = row.get(rf_col, -2)
+#                if pd.isna(rf_value):
+#                    rf_value = -2
+#                radius = int(10 + np.clip(abs(rf_value) * 40, 10, 150))
+#                opacity = np.clip(abs(rf_value) * brightness_factor, 0.05, 0.3)
 
-                svg_parts.append(
-                    f'<circle cx="{x}" cy="{y}" r="{radius}" fill="url(#gradHalo)" filter="url(#blur)" opacity="{opacity:.2f}"/>'
-                )
+#                svg_parts.append(
+#                    f'<circle cx="{x}" cy="{y}" r="{radius}" fill="url(#gradHalo)" filter="url(#blur)" opacity="{opacity:.2f}"/>'
+#                )
 
-            morph_colors = {
-                'E': '#FFDAB9',
-                'S': '#00FFFF',
-                'I': '#FF69B4',
-                'UNK': '#CCCCCC'
-            }
+#            morph_colors = {
+#                'E': '#FFDAB9',
+#                'S': '#00FFFF',
+#                'I': '#FF69B4',
+#                'UNK': '#CCCCCC'
+#            }
 
-            for _, row in df.iterrows():
-                morph = str(row.get(morph_col, 'UNK'))
-                sub = row.get(subcluster_col, None)
-                if morph not in active_morphs or sub not in active_subs:
-                    continue
+#            for _, row in df.iterrows():
+#                morph = str(row.get(morph_col, 'UNK'))
+#                sub = row.get(subcluster_col, None)
+#                if morph not in active_morphs or sub not in active_subs:
+#                    continue
 
-                x = scale_ra(row[ra_col])
-                y = scale_dec(row[dec_col])
-                base_color = morph_colors.get(morph[0], '#FFFFFF')
-                size = 6
+#                x = scale_ra(row[ra_col])
+#                y = scale_dec(row[dec_col])
+#                base_color = morph_colors.get(morph[0], '#FFFFFF')
+#                size = 6
 
-                title = (
-                    f"ID: {row.get('ID','')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | "
-                    f"Vel: {row.get(vel_col,'')} | Rf: {row.get(rf_col,''):.2f} | "
-                    f"Morph: {morph} | Sub: {sub}"
-                )
+#                title = (
+#                    f"ID: {row.get('ID','')} | RA: {row[ra_col]:.3f} | Dec: {row[dec_col]:.3f} | "
+#                    f"Vel: {row.get(vel_col,'')} | Rf: {row.get(rf_col,''):.2f} | "
+#                    f"Morph: {morph} | Sub: {sub}"
+#                )
 
-                if "E" in morph:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></circle>'
-                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
-                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size*1.5}" ry="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></ellipse>'
-                else:
-                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{base_color}" opacity="0.5"><title>{title}</title></circle>'
+#                if "E" in morph:
+#                    shape = f'<circle cx="{x}" cy="{y}" r="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></circle>'
+#                elif "Sa" in morph or "Sb" in morph or "Sc" in morph:
+#                    shape = f'<ellipse cx="{x}" cy="{y}" rx="{size*1.5}" ry="{size}" fill="{base_color}" opacity="0.9"><title>{title}</title></ellipse>'
+#                else:
+#                    shape = f'<circle cx="{x}" cy="{y}" r="{size//2}" fill="{base_color}" opacity="0.5"><title>{title}</title></circle>'
 
-                svg_parts.append(shape)
+#                svg_parts.append(shape)
 
-            np.random.seed(42)
-            for _ in range(400):
-                x = np.random.randint(0, 1000)
-                y = np.random.randint(0, 1000)
-                star_size = np.random.uniform(0.2, 1.0)
-                opacity = np.random.uniform(0.05, 0.2)
-                svg_parts.append(
-                    f'<circle cx="{x}" cy="{y}" r="{star_size:.2f}" fill="white" opacity="{opacity:.2f}"/>'
-                )
+#            np.random.seed(42)
+#            for _ in range(400):
+#                x = np.random.randint(0, 1000)
+#                y = np.random.randint(0, 1000)
+#                star_size = np.random.uniform(0.2, 1.0)
+#                opacity = np.random.uniform(0.05, 0.2)
+#                svg_parts.append(
+#                    f'<circle cx="{x}" cy="{y}" r="{star_size:.2f}" fill="white" opacity="{opacity:.2f}"/>'
+#                )
 
-            svg_parts.append('</svg>')
+#            svg_parts.append('</svg>')
 
-            svg_code = "\n".join(svg_parts)
-            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
+#            svg_code = "\n".join(svg_parts)
+#            st.markdown(f'<div style="background:black;">{svg_code}</div>', unsafe_allow_html=True)
 
 
-        with st.expander("🌌 Mapa Realista Deep Field SVG"):
-            generate_realistic_kde_svg(df)
+#        with st.expander("🌌 Mapa Realista Deep Field SVG"):
+#            generate_realistic_kde_svg(df)
 
 
         import streamlit as st

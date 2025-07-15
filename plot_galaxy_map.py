@@ -176,11 +176,13 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
         import numpy as np
         from scipy.stats import gaussian_kde
 
-        # 🚩 Calcula centroide de cada subcluster
+
+        # -------------------------------
+        # 🚩 Calcula posiciones por subcluster
+        # -------------------------------
         subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
 
         for _, row in subcluster_positions.iterrows():
-            # 🔍 Filtra galaxias del subcluster actual
             galaxies_in_subcluster = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
             num_galaxias = len(galaxies_in_subcluster)
             if num_galaxias == 0:
@@ -197,25 +199,25 @@ def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='
             X, Y = np.meshgrid(xgrid, ygrid)
             Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
 
-            # 3️⃣ Máscara orgánica umbralizada
-            threshold = np.percentile(Z, 95)  # Ajusta si quieres halos más pequeños o grandes
+            # 3️⃣ Máscara orgánica con umbral más suave
+            threshold = np.percentile(Z, 80)  # ☑️ Difuso y extendido
             mask_array = (Z > threshold).astype(np.uint8) * 255
 
-            # 4️⃣ Convierte a PIL + difumina
+            # 4️⃣ Convierte a PIL y difumina generosamente
             mask_img = Image.fromarray(mask_array).convert("L")
             mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
-            mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(10))
+            mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(40))  # ☑️ Borde suave
 
-            # 5️⃣ Crea halo cálido y suave
-            halo_rgba = Image.new('RGBA', mask_blurred.size, (255, 160, 50, 0))
-            alpha_factor = 0.1
+            # 5️⃣ Crea halo coherente con Perlin (tono verdoso)
+            halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))  # ☑️ Verde-azul como Perlin
+            alpha_factor = 0.25  # ☑️ Difuso, no tapa galaxias
             alpha = mask_blurred.point(lambda p: int(p * alpha_factor))
             halo_rgba.putalpha(alpha)
 
-            # 6️⃣ Escala al tamaño global
+            # 6️⃣ Escala al tamaño del mapa
             halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
 
-            # 7️⃣ Combina centrado en el marco (ya está a escala del mapa)
+            # 7️⃣ Combina centrado en el marco (ya está a escala global)
             img.alpha_composite(halo_resized)
 
                         

@@ -124,7 +124,7 @@ def draw_irregular(size, brightness):
 # ✅ Función principal
 # -------------------------------------------------------
 def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='Rf',
-                    subcluster_col='Subcluster', width=1024, height=1024):
+                    subcluster_col='Subcluster', subsubcluster_col="Subcluster_1", width=1024, height=1024):
 
     st.header("Mapa de Cúmulo con formas y colores variados 🌌")
 #    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)

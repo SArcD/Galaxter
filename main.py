@@ -2679,10 +2679,30 @@ elif opcion == "Equipo de trabajo":
 
        # Información del equipo
     equipo = [{
-               "nombre": "Dr. Santiago Arceo Díaz",
+               "nombre": "D.C (Astrofísica). Santiago Arceo Díaz",
                "foto": "ArceoS.jpg",
                "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica). Posdoctorante de la Universidad de Colima. Miembro del Sistema Nacional de Investigadoras e Investigadores (Nivel 1).",
-               "CV": "https://scholar.google.com.mx/citations?user=3xPPTLoAAAAJ&hl=es", "contacto": "santiagoarceodiaz@gmail.com"}
+               "CV": "https://scholar.google.com.mx/citations?user=3xPPTLoAAAAJ&hl=es", "contacto": "santiagoarceodiaz@gmail.com"},
+              {
+               "nombre": "M. C Carlos Arturo Flores Hernández",
+               "foto": "FloresC.jpg",
+               "reseña": "Licenciado en Física, Maestro en Astrofísica.",
+               "CV": "https://www.linkedin.com/in/carlos-arturo-flores-hernandez-824019117/?originalSubdomain=mx", "contacto": " "},
+              {
+               "nombre": "D. C (Astrofísica) Juan Manuel Islas Islas",
+               "foto": "IslasJ.jpg",
+               "reseña": "Licenciado en Física, Maestro en Astrofísica y Doctor en Ciencias (Astrofísica).",
+               "CV": "https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ", "contacto": " "},
+              {
+               "nombre": "D. C (Astrofísica) René Alberto Ortega Minakata",
+               "foto": "MinakataR.jpg",
+               "reseña": "Licenciado en Física, Maestro en Astrofísica y Doctor en Ciencias (Astrofísica).",
+               "CV": "https://www.irya.unam.mx/web/es/gente/tecnicos-academicos/r-ortega", "contacto": "r.ortega@irya.unam.mx"},
+              {
+               "nombre": "Dr. Josué de Jesús Trejo Alonso",
+               "foto": "TrejoJ.jpg",
+               "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica).",
+               "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": " "}
                ]
 
     for persona in equipo:

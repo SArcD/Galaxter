@@ -1292,7 +1292,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.plotly_chart(fig, use_container_width=True)
 
             # Tabla y exportación
-            with st.expander("🔍 Ver datos suavizados"):
+            with st.expander("**Ver datos suavizados**"):
                 st.dataframe(df_smooth)
                 st.download_button(
                     "Descargar tabla usada",
@@ -2227,7 +2227,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                 st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander("Dispersión de Variables"):
+        with st.expander("**Dispersión de Variables**"):
             mode = st.radio(            
                 "¿Qué quieres visualizar?",
                 options=['Global', 'Subclusters', 'Validados'],
@@ -2388,7 +2388,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 #        with st.expander("🌌 Mapa Realista Campo Profundo"):
 #            plot_realistic_map_streamlit(df)
 
-        with st.expander("Mapa de acuerdo a Morfología"):
+        with st.expander("**Mapa de acuerdo a Morfología**"):
             plot_realistic_galaxy_map(
                 df,
                 add_kde=True  # True o False
@@ -2846,7 +2846,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             height=1024
         )
 
-        with st.expander("Mapa Final con Resaltado"):
+        with st.expander("**Mapa Final con Resaltado**"):
             st.markdown("Seleccione la variable a mostrar y el número de galaxias a desplegarse (puede seleccionar hasta 100 con los valores mas altos en la variable).")
             st.image(img)  # ✅ Esto mostrará el resultado actualizado
 
@@ -3051,7 +3051,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
 
     
-        with st.expander("🔍 Panel condicional Delta × Vel con KDE"):
+        with st.expander("**Panel condicional Delta × Vel con KDE**"):
             plot_conditional_panel(df)
 
     

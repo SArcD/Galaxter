@@ -827,29 +827,29 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             
             
             st.divider()
-
             import streamlit as st
             import numpy as np
             import pandas as pd
             from sklearn.ensemble import RandomForestClassifier
             from sklearn.model_selection import cross_val_score, learning_curve
             from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+            from sklearn.utils import resample
             import plotly.figure_factory as ff
             import plotly.graph_objects as go
 
             st.header("🎯 Clasificación de morfología con Random Forest")
 
-            # 📌 Solo variables numéricas como predictores
+            # 📌 Variables numéricas como predictores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-            # 👉 Variable objetivo categórica
+            # 👉 Variable objetivo
             target_var = st.selectbox(
                 "Variable objetivo categórica",
                 ["M(ave)", "M(IP)", "M(c)"],
                 key="rf_class_target"
             )
 
-            # 👉 Variables predictoras
+            # 👉 Variables predictoras    
             feature_vars = st.multiselect(
                 "Variables numéricas predictoras",
                 numeric_cols,
@@ -862,9 +862,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             if target_var and feature_vars:
                 X = df[feature_vars].values
-                y = df[target_var].astype(str).values  # Asegúrate de convertir a string
+                y = df[target_var].astype(str).values
 
-                # 🧹 Elimina filas con NaNs
                 mask = ~np.isnan(X).any(axis=1) & pd.notna(y)
                 X = X[mask]
                 y = y[mask]
@@ -872,7 +871,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if len(y) < 5:
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
-                    # 🌳 Random Forest Clasificación
                     clf = RandomForestClassifier(
                         n_estimators=n_estimators,
                         max_depth=max_depth,
@@ -900,11 +898,11 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     cm_fig.update_layout(title="🔵 Matriz de Confusión (Entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
 
-                # ✅ Curva de aprendizaje
+                    # ✅ Curva de aprendizaje
                     train_sizes, train_scores, test_scores = learning_curve(
                         clf, X, y, cv=5, scoring='accuracy',
-                    train_sizes=np.linspace(0.1, 1.0, 5)
-                    )    
+                        train_sizes=np.linspace(0.1, 1.0, 5)
+                    )
                     train_mean = np.mean(train_scores, axis=1)
                     test_mean = np.mean(test_scores, axis=1)
 
@@ -926,26 +924,74 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.plotly_chart(curve_fig, use_container_width=True)
 
                     st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
+    
+                    # 🎛️ Formulario de predicción
+                    st.subheader("🔮 Hacer una predicción nueva")
 
-        
+                    input_vals = []
+                    for feat in feature_vars:
+                        val = st.slider(
+                            f"{feat}",
+                            float(df[feat].min()), float(df[feat].max()), float(df[feat].mean()),
+                            key=f"slider_{feat}_class"
+                        )
+                        input_vals.append(val)
 
-        # 🎛️ Formulario de predicción interactivo
-        st.subheader("🔮 Hacer una predicción nueva")
+                    if st.button("Predecir clase"):
+                        pred_class = clf.predict([input_vals])[0]
+                        proba = clf.predict_proba([input_vals])[0]
+                        proba_dict = dict(zip(clf.classes_, proba))
 
-        input_vals = []
-        for feat in feature_vars:
-            val = st.slider(f"{feat}", float(df[feat].min()), float(df[feat].max()), float(df[feat].mean()), key=f"slider_{feat}_class")
-            input_vals.append(val)
+                        st.write(f"**Clase predicha:** {pred_class}")
+                        st.write("**Probabilidades (modelo base):**")
+                        st.write(proba_dict)
 
-        if st.button("Predecir clase"):
-            pred_class = clf.predict([input_vals])[0]
-            proba = clf.predict_proba([input_vals])
-            proba_dict = dict(zip(clf.classes_, proba[0]))
+                        # ✅ Bootstrapping para incertidumbre
+                        st.subheader("📏 Incertidumbre con Bootstrap")
+                        num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
+                        bootstrap_probas = []
 
-            st.write(f"**Clase predicha:** {pred_class}")
-            st.write("**Probabilidades:**")
-            st.write(proba_dict)
+                        for _ in range(num_bootstrap):
+                            X_res, y_res = resample(X, y, replace=True)
+                            clf_b = RandomForestClassifier(
+                                n_estimators=n_estimators,
+                                max_depth=max_depth,
+                                random_state=None
+                            )
+                            clf_b.fit(X_res, y_res)
+                            p = clf_b.predict_proba([input_vals])[0]
+                            bootstrap_probas.append(p)
 
+                        bootstrap_probas = np.array(bootstrap_probas)
+                        proba_mean = bootstrap_probas.mean(axis=0)
+                        proba_std = bootstrap_probas.std(axis=0)
+
+                        results = pd.DataFrame({
+                            "Clase": clf.classes_,
+                            "Probabilidad media": proba_mean,
+                            "Desviación estándar": proba_std
+                        })
+                        st.write("📊 **Distribución bootstrap de la predicción:**")
+                        st.dataframe(results)
+
+                        # 🎯 Histograma para cada clase
+                        st.subheader("📊 Distribución Bootstrap de Probabilidades")
+                        for idx, class_label in enumerate(clf.classes_):
+                            fig = go.Figure()
+                            fig.add_trace(go.Histogram(
+                                x=bootstrap_probas[:, idx],
+                                nbinsx=20,
+                                marker_color='blue'
+                            ))
+                            fig.update_layout(
+                                title=f"Distribución Bootstrap para clase: {class_label}",
+                                xaxis_title="Probabilidad predicha",
+                                yaxis_title="Frecuencia",
+                                height=300
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+
+   
             
 
             st.divider()

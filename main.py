@@ -2037,68 +2037,53 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 )
 
 
+        with st.expander("subclustering"):
+            parent_col = 'Subcluster'   # Nivel inicial
+            current_level = 1
 
-        parent_col = 'Subcluster'   # Nivel inicial
-        current_level = 1
+            while True:
+                st.subheader(f"🔄 Clustering nivel {current_level}")
 
-        while True:
-            st.subheader(f"🔄 Clustering nivel {current_level}")
+                # Número de clusters para este nivel
+                num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 2)
 
-            # Número de clusters para este nivel
-            num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 2)
+                # Ejecuta clustering sobre parent_col y guarda nuevas columnas niveladas
+                df = run_subclustering_iterative(
+                    df,
+                    parent_col=parent_col,
+                    selected_cols=selected_cols,
+                    num_clusters=num_clusters,
+                    level=current_level
+                )
 
-            # ⚙️ Ejecuta clustering sobre parent_col y guarda nuevas columnas niveladas
-            df = run_subclustering_iterative(
-                df,
-                parent_col=parent_col,
-                selected_cols=selected_cols,
-                num_clusters=num_clusters,
-                level=current_level
-            )
+                # Ejecuta DS sobre la columna recién creada
+                df, passed = run_ds_iterative(
+                    df,
+                    cluster_col=f'Subcluster_{current_level}',
+                    level=current_level
+                )
 
-            # ⚙️ Ejecuta DS sobre la columna recién creada
-            df, passed = run_ds_iterative(
-                df,
-                cluster_col=f'Subcluster_{current_level}',
-                level=current_level
-            )
-
-            # ⚙️ Visualiza TSNE + boxplots del nivel actual
-            #plot_tsne_and_boxplots(
-            #    df,
-            #    cluster_col=f'Subcluster_{current_level}',
-            #    selected_cols=selected_cols,
-            #    level=current_level
-            #)
-
-            #plot_tsne_and_boxplots(
-            #    df,              # ✅ df
-            #    parent_col,      # ✅ parent_col (string, ej: 'Subcluster_2')
-            #    selected_cols,   # ✅ lista de columnas numéricas
-            #    level            # ✅ nivel entero
-            #)
-
-            plot_tsne_and_boxplots(
-                df,
-                parent_col=f'Subcluster_{current_level}',
-                selected_cols=selected_cols,
-                level=current_level
-            )
+                plot_tsne_and_boxplots(
+                    df,
+                    parent_col=f'Subcluster_{current_level}',
+                    selected_cols=selected_cols,
+                    level=current_level
+                )
 
             
-            # Visualiza mapa con galaxias validadas en este nivel
-            plot_validated_map(
-                df,
-                current_level
-            )
+                # Visualiza mapa con galaxias validadas en este nivel
+                plot_validated_map(
+                    df,
+                    current_level
+                )
 
-            # ¿Quieres otro nivel?
-            if not st.checkbox(f"➡️ Clustering otro nivel basado en nivel {current_level}?", value=False):
-                break
+                # ¿Quieres otro nivel?
+                if not st.checkbox(f"➡️ Clustering otro nivel basado en nivel {current_level}?", value=False):
+                    break
 
-            # 🔗 Actualiza parent_col para que el próximo nivel divida estos clusters
-            parent_col = f'Subcluster_{current_level}'
-            current_level += 1
+                # Actualiza parent_col para que el próximo nivel divida estos clusters
+                parent_col = f'Subcluster_{current_level}'
+                current_level += 1
 
         import plotly.express as px
 
@@ -3085,27 +3070,27 @@ elif opcion == "Equipo de trabajo":
 
        # Información del equipo
     equipo = [{
-               "nombre": "D.C (Astrofísica). Santiago Arceo Díaz",
+               "nombre": "D. C. (Astrofísica). Santiago Arceo Díaz",
                "foto": "ArceoS.jpg",
                "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica). Posdoctorante de la Universidad de Colima. Miembro del Sistema Nacional de Investigadoras e Investigadores (Nivel 1).",
                "CV": "https://scholar.google.com.mx/citations?user=3xPPTLoAAAAJ&hl=es", "contacto": "santiagoarceodiaz@gmail.com"},
               {
-               "nombre": "M. C Carlos Arturo Flores Hernández",
+               "nombre": "M. C. (Astrofísica) Carlos Arturo Flores Hernández",
                "foto": "FloresC.jpeg",
                "reseña": "Licenciado en Física, Maestro en Astrofísica.",
                "CV": "https://www.linkedin.com/in/carlos-arturo-flores-hernandez-824019117/?originalSubdomain=mx", "contacto": " "},
               {
-               "nombre": "D. C (Astrofísica) Juan Manuel Islas Islas",
+               "nombre": "D. C. (Astrofísica) Juan Manuel Islas Islas",
                "foto": "IslasJ.jpeg",
                "reseña": "Licenciado en Física, Maestro en Astrofísica y Doctor en Ciencias (Astrofísica).",
                "CV": "https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ", "contacto": " "},
               {
-               "nombre": "D. C (Astrofísica) René Alberto Ortega Minakata",
+               "nombre": "D. C. (Astrofísica) René Alberto Ortega Minakata",
                "foto": "MinakataR.jpg",
                "reseña": "Licenciado en Física, Maestro en Astrofísica y Doctor en Ciencias (Astrofísica).",
                "CV": "https://www.irya.unam.mx/web/es/gente/tecnicos-academicos/r-ortega", "contacto": "r.ortega@irya.unam.mx"},
               {
-               "nombre": "Dr. Josué de Jesús Trejo Alonso",
+               "nombre": "D. C. (Astrofísica) Josué de Jesús Trejo Alonso",
                "foto": "TrejoJ.png",
                "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica).",
                "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": " "}

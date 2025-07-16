@@ -852,7 +852,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         z=cm,
                         x=list(clf.classes_),
                         y=list(clf.classes_),
-                        colorscale="Blues"
+                        colorscale="plasma
                     )
                     cm_fig.update_layout(title="Matriz de Confusión (entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
@@ -1628,7 +1628,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             fig.add_trace(go.Histogram2dContour(
                 x=df_sub['RA'],
                 y=df_sub['Dec'],
-                colorscale='Blues',
+                colorscale='plasma',
                 reversescale=True,
                 showscale=False,
                 opacity=0.3,

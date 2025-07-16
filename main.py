@@ -653,7 +653,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         x=x1_range,
                         y=x2_range,
                         z=zz_pred,
-                        colorscale='',
+                        colorscale='plasma',
                         opacity=0.7,
                         name='Superficie RF'
                     ))

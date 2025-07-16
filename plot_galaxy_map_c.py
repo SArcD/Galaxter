@@ -25,9 +25,9 @@ def plot_galaxy_map_cosmology(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)'
     st.markdown("Esta visualización incluye: halo de Perlin, estrellas de campo, galaxias según morfología y halos locales por subcluster.")
 
     # ---------------------- Filtros en sidebar ----------------------
-    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
+    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True, key=f"dd")
     morphs = sorted(df[morph_col].dropna().unique())
-    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
+    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs, key=f"ddd")
 
     all_subclusters = sorted(set(df[subcluster_col].dropna()))
     st.sidebar.markdown("### Subclusters visibles")

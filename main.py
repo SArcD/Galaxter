@@ -7,6 +7,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # Título de la app
 #st.image("GCexplorer.PNG", use_column_width=True)

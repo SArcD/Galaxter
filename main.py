@@ -227,25 +227,25 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             if search_var:
                 best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
-                    if best_match_var:
-                        col = best_match_var[0]
-                        st.success(f"Mostrando distribución para: **{col}**")
+                if best_match_var:
+                    col = best_match_var[0]
+                    st.success(f"Mostrando distribución para: **{col}**")
 
-                        # ✅ Agrega el slider para elegir el número de bins
-                        nbins = st.slider(
-                        "Selecciona el número de bins (clases) para el histograma:",
-                        min_value=5,
-                        max_value=100,
-                        value=30,
-                        step=1
-                        )
+                    # ✅ Agrega el slider para elegir el número de bins
+                    nbins = st.slider(
+                    "Selecciona el número de bins (clases) para el histograma:",
+                    min_value=5,
+                    max_value=100,
+                    value=30,
+                    step=1
+                    )
 
-                        # ✅ Genera el histograma con el valor elegido
-                        fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
-                        st.plotly_chart(fig)
+                    # ✅ Genera el histograma con el valor elegido
+                    fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
+                    st.plotly_chart(fig)
 
-                    else:
-                        st.warning("No se encontró ninguna variable numérica similar.")
+                else:
+                    st.warning("No se encontró ninguna variable numérica similar.")
             else:
                 st.info("Empieza a escribir para buscar la variable numérica.")
 

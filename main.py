@@ -839,7 +839,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         safe_k = max(1, min_samples - 1)
     
                         # 🎛️ Control deslizante solo hasta safe_k
-                        k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(5, safe_k))
+                        k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(1, safe_k))
                         st.success(f"✔️ Clases balanceadas con SMOTE: {dict(pd.Series(y).value_counts())}")
 
                     # 🌳 Random Forest Clasificación

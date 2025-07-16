@@ -676,9 +676,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
                     st.plotly_chart(fig, use_container_width=True)
 
-            # 🎥 Gráfico Plotly 2D
-#            fig2d = go.Figure()
-
             # Controles interactivos para invertir ejes
             invert_x = st.checkbox(f"Invertir eje {x1_var}", value=False, key="invert_x_rf")
             invert_y = st.checkbox(f"Invertir eje {x2_var}", value=False, key="invert_y_rf")
@@ -731,7 +728,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Formulario para predicción puntual con rangos definidos
             # ----------------------------------------------------------
             st.subheader("Predicción puntual con Random Forest")
-
+            st.markdown("**Use los deslizadores para definir los valores de los predictores y debajo verá el valor estimado por el modelo de Random Forest.**")
             # Rango dinámico basado en los datos filtrados
             x1_min, x1_max = X1.min(), X1.max()
             x2_min, x2_max = X2.min(), X2.max()
@@ -756,15 +753,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.success(f"Predicción de **{y_var}** para {x1_var} = {input_x1:.2f} y {x2_var} = {input_x2:.2f}: **{predicted_y:.2f}**")
 
             # Opcional: guarda en lista, descarga o agrega historial
-            if st.button("Guardar predicción"):
+            if st.button("**Guardar predicción**"):
                 st.write("Guardado: ", {
                     f"{x1_var}": input_x1,
                     f"{x2_var}": input_x2,
                     f"{y_var}_predicho": predicted_y
                 })
 
-            
-            
             st.divider()
 
             import streamlit as st
@@ -781,6 +776,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.header("Clasificación de morfología con Random Forest + SMOTE")
 
+
+            st.markdown("**Aquí puede usar las variables numéricas para predecir morfología usando modelos de Random Forest (se recomienda activar el botón de SMOTE, si considera que las clases morfolóficas están desbalanceadas).**")
+            
             # Variables numéricas como predictores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 

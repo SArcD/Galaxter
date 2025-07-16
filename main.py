@@ -735,6 +735,41 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
                     st.plotly_chart(fig, use_container_width=True)
 
+            # 🎥 Gráfico Plotly 2D
+            fig2d = go.Figure()
+
+            # 🟢 Heatmap de la predicción
+            fig2d.add_trace(go.Heatmap(
+                x=x1_range,
+                y=x2_range,
+                z=zz_pred,
+                colorscale='Viridis',
+                colorbar=dict(title=y_var),
+                name='Predicción RF',
+                showscale=True
+            ))
+
+            # ⚫ Puntos reales encima
+            fig2d.add_trace(go.Scatter(
+                x=X1,
+                y=X2,
+                mode='markers',
+                marker=dict(size=6, color='black', line=dict(width=0.5, color='white')),
+                text=hover_texts,
+                hovertemplate='%{text}',
+                name='Datos Reales'
+            ))
+
+            # ➕ Layout
+            fig2d.update_layout(
+                title=f"RF Superficie de Predicción 2D<br>R² = {r2_rf:.3f} | RMSE = {rmse_rf:.3f}",
+                xaxis_title=x1_var,
+                yaxis_title=x2_var,
+                height=600
+            )
+
+            st.plotly_chart(fig2d, use_container_width=True)
+
 
             # ----------------------------------------------------------
             # 📝 Formulario para predicción puntual con rangos definidos

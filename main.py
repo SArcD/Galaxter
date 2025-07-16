@@ -2847,6 +2847,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         )
 
         with st.expander("Mapa Final con Resaltado"):
+            st.markdown("Seleccione la variable a mostrar y el número de galaxias a desplegarse (puede seleccionar hasta 100 con los valores mas altos en la variable).")
             st.image(img)  # ✅ Esto mostrará el resultado actualizado
 
 

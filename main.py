@@ -205,9 +205,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Lista de columnas numéricas en tu DataFrame
             numeric_colss = df.select_dtypes(include='number').columns.tolist()
 
-            # Caja de búsqueda para variable numérica
-            st.markdown("**Teclee el nombre de una variable numérica para generar un histograma con su distribución:**")
-
             import plotly.express as px
             import streamlit as st
             import difflib
@@ -222,7 +219,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             ]
 
             search_vars = st.multiselect(
-                "Selecciona una o más variables numéricas para mostrar histogramas:",
+                "**Selecciona una o más variables numéricas para mostrar histogramas (puede manipular o guardar la gráfica con los botones que aparecen si coloca el cursor en la parte superior derecha):**",
                 options=numeric_colss
             )
 
@@ -260,15 +257,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             else:
                 st.info("Selecciona al menos una variable numérica para visualizar su histograma.")
 
-
-            
             st.divider()
 
             st.subheader("Pair Plot de variables numéricas")
 
             # Multiselect para elegir variables para el pair plot
             selected_pair_cols = st.multiselect(
-                "Selecciona dos variables para el pair plot (o selecciona más para todos)",
+                "**Selecciona al menos dos variables para ver su gráfico de pares**",
                 options=numeric_colss,
                 default=numeric_colss[:2] if len(numeric_colss) >= 2 else numeric_colss
             )
@@ -283,7 +278,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 )
                 st.plotly_chart(fig_pair)
             else:
-                st.info("Selecciona al menos dos variables para el pair plot.")
+                st.info("Selecciona al menos dos variables.")
 
 
             import plotly.express as px
@@ -305,6 +300,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from sklearn.ensemble import RandomForestRegressor
             import numpy as np
 
+            st.markdown("**Seleccione una variable predictora y al menos una variable a predecir. Debajo verá un dos gráficos de dispersión en los que se muestran dos ajustes: lineal y Random Forest. En cada caso se despliega también el coeficiente de determinación**")
             # Solo variables numéricas para los selectores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
@@ -452,8 +448,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Solo variables numéricas para selector
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-            st.header("🔎 Ajuste por rango de variable X")
-
+            st.header("Ajuste por rango de variable X")
+            st.markdown("**Seleccione una variable predictora y al menos una variable a predecir. Debajo verá un dos gráficos de dispersión en los que se muestran dos ajustes: lineal y Random Forest. En cada caso se despliega también el coeficiente de determinación**")
             # Selectores de variable X e Y
             x_var_range = st.selectbox("Variable X para filtrar rango", numeric_cols, key="x_var_range")
             y_vars_range = st.multiselect("Variables Y", numeric_cols, key="y_vars_range")
@@ -592,8 +588,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # 2 variables predictoras -> 1 target + RF + superficie 3D
             # -------------------------------------------------------------
 
-            st.header("Random Forest: Superficie de Predicción 3D")
-    
+            st.header("Random Forest: Modelos con dos variables predictoras")
+            st.markdown("**Seleccione dos variables predictoras y una variable a predecir, debajo verá desplegado, a partir de un modelo de Random Forest: un gráfico tridimensional con los puntos de scater y la superficie de predicción y, debajo de eso, una superficie de decisión (debajo del selector de variables pude definir la resolución de la malla).**")
             # Variables numéricas
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 

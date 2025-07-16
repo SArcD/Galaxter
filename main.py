@@ -193,7 +193,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         import plotly.express as px
         import plotly.figure_factory as ff
 
-        with st.expander("Análisis exploratorio: Distribución univariada, bivariada, correlación entre las varirables y modelos predictivos."):
+        with st.expander("**Análisis exploratorio: Distribución univariada, bivariada, correlación entre las varirables y modelos predictivos.**"):
             st.subheader("Distribución univariada de una variable numérica")
 
             # Lista de columnas numéricas en tu DataFrame
@@ -1708,8 +1708,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             return df
 
-        with st.expander("Clustering Jerárquico automatizado"):
-            
+        with st.expander("**Clustering Jerárquico automatizado**"):
+            st.markdown("En esta sección se aplica clustering jerárquico aglomerativo a la base de datos. Puede seleccionar las variables para crear los subclusters y también su número. Después de seleccionarlos, verá desplegado el mapa de dispersión de los subclusters, los diagramas de caja donde se comparan en sus variables numéricas, la prueba DS para cada uno y, por último, el mapa con las galaxias ya separadas por subcluster (puede ocultar aquellos que no pasan la prueba DS simplemente dando click en su etiqueta). ")
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             # Define tus columnas preferidas:
@@ -2038,7 +2038,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 )
 
 
-        with st.expander("subclustering"):
+        with st.expander("**Sub-sub-clustering**"):
             parent_col = 'Subcluster'   # Nivel inicial
             current_level = 1
 
@@ -2270,8 +2270,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             vel_col='Vel',
             add_kde=True
         ):
-            st.subheader("🌌 Campo Profundo Abell 85 — Mapa Realista + KDE opcional")
-
+            st.subheader("Mapa con las galaxias separadas de acuerdo a Morfología")
+            st.markdown("Aquí puede ver las galaxias separas por morfología (**Nota: de momento solo se divide entre galaxias elípticas y espirales**)")
             fig = go.Figure()
 
             # 🔹 Estrellas de fondo
@@ -2393,13 +2393,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 df,
                 add_kde=True  # True o False
             )
-
-
-
- #       import streamlit as st
- #   
-        import streamlit as st
- #       import numpy as np
 
 
   #      import plotly.graph_objects as go

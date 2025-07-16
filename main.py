@@ -410,6 +410,20 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         hoverinfo='skip'
                     ), row=1, col=1)
 
+                    # 🚩 Justo aquí pones la anotación del modelo lineal:
+                    eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
+                    fig.add_annotation(
+                        xref="paper", yref="paper",
+                        x=0.95, y=0.95,
+                        text=eq_text,
+                        showarrow=False,
+                        align="right",
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        row=1, col=1   # ☑️ Solo para el primer subplot
+                    )
+                    
                     # 🔵 RF Scatter
                     fig.add_trace(go.Scatter(
                         x=X.flatten(),
@@ -430,23 +444,41 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         hoverinfo='skip'
                     ), row=1, col=2)
 
+                    # 🚩 Aquí agregas la anotación de desempeño RF:
+                    from sklearn.metrics import mean_squared_error
+                    r2_rf = rf_model.score(X, Y)
+                    rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
+                    rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
+
+                    fig.add_annotation(
+                        xref="paper", yref="paper",
+                        x=0.95, y=0.95,
+                        text=rf_text,
+                        showarrow=False,
+                        align="right",
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        row=1, col=2   # ☑️ Solo para el subplot RF
+                    )
+
                     # ✅ Ecuación y R² para lineal
                     slope = lin_model.coef_[0]
                     intercept = lin_model.intercept_
                     r_squared = lin_model.score(X, Y)
                     eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
 
-                    fig.add_annotation(
-                        xref="paper", yref="paper",
-                        x=0.05, y=0.95,
-                        text=eq_text,
-                        showarrow=False,
-                        align="left",
-                        bgcolor="white",
-                        bordercolor="black",
-                        borderwidth=1,
-                        row=1, col=1
-                    )
+                    #fig.add_annotation(
+                    #    xref="paper", yref="paper",
+                    #    x=0.05, y=0.95,
+                    #    text=eq_text,
+                    #    showarrow=False,
+                    #    align="left",
+                    #    bgcolor="white",
+                    #    bordercolor="black",
+                    #    borderwidth=1,
+                    #    row=1, col=1
+                    #)
 
                     fig.update_layout(height=500, title=f"{y_var} vs {x_var} - Lineal vs RF")
                     st.plotly_chart(fig, use_container_width=True)

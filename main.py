@@ -868,11 +868,18 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
                     # 📊 Matriz de confusión
                     cm = confusion_matrix(y, y_pred)
+                    #cm_fig = ff.create_annotated_heatmap(
+                    #    z=cm,
+                    #    x=clf.classes_, y=clf.classes_,
+                    #    colorscale="Blues"
+                    #)
                     cm_fig = ff.create_annotated_heatmap(
                         z=cm,
-                        x=clf.classes_, y=clf.classes_,
+                        x=clf.classes_.tolist(),
+                        y=clf.classes_.tolist(),
                         colorscale="Blues"
                     )
+
                     cm_fig.update_layout(title="Matriz de Confusión")
                     st.plotly_chart(cm_fig)
 

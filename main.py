@@ -220,34 +220,87 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
    #         else:
    #             st.info("Empieza a escribir para buscar la variable numérica.")
 
-            import difflib
+   #         import difflib
+   #         import plotly.express as px
+
+   #         # Suponiendo que ya definiste `numeric_colss` y `df`
+
+   #         if search_var:
+   #             best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
+   #             if best_match_var:
+   #                 col = best_match_var[0]
+   #                 st.success(f"Mostrando distribución para: **{col}**")
+
+   #                 # ✅ Agrega el slider para elegir el número de bins
+   #                 nbins = st.slider(
+   #                 "Selecciona el número de bins (clases) para el histograma:",
+   #                 min_value=5,
+   #                 max_value=100,
+   #                 value=30,
+   #                 step=1
+   #                 )
+
+   #                 # ✅ Genera el histograma con el valor elegido
+   #                 fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
+   #                 st.plotly_chart(fig)
+
+   #             else:
+   #                 st.warning("No se encontró ninguna variable numérica similar.")
+   #         else:
+   #             st.info("Empieza a escribir para buscar la variable numérica.")
+
+
             import plotly.express as px
+            import streamlit as st
+            import difflib
+            import random
 
-            # Suponiendo que ya definiste `numeric_colss` y `df`
 
-            if search_var:
-                best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
-                if best_match_var:
-                    col = best_match_var[0]
-                    st.success(f"Mostrando distribución para: **{col}**")
+            # 🎨 Paleta de colores opcional
+            colors = [
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+                "#bcbd22", "#17becf"
+            ]
 
-                    # ✅ Agrega el slider para elegir el número de bins
+            search_vars = st.multiselect(
+                "Selecciona una o más variables numéricas para mostrar histogramas:",
+                options=numeric_colss
+            )
+
+            if search_vars:
+                for idx, col in enumerate(search_vars):
+                    st.subheader(f"📊 Histograma de: **{col}**")
+
+                    # Slider para definir el número de bins
                     nbins = st.slider(
-                    "Selecciona el número de bins (clases) para el histograma:",
-                    min_value=5,
-                    max_value=100,
-                    value=30,
-                    step=1
+                        f"Número de bins para {col}",
+                        min_value=5,
+                        max_value=100,
+                        value=30,
+                        key=f"slider_{col}"
                     )
 
-                    # ✅ Genera el histograma con el valor elegido
-                    fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
-                    st.plotly_chart(fig)
+                    # Escoge color único para este histograma
+                    color = colors[idx % len(colors)]
 
-                else:
-                    st.warning("No se encontró ninguna variable numérica similar.")
+                    fig = px.histogram(
+                        df,
+                        x=col,
+                        nbins=nbins,
+                        title=f"Distribución de {col}"
+                    )
+
+                    # Aplica color único + borde negro
+                    fig.update_traces(marker=dict(
+                        color=color,
+                        line=dict(color="black", width=1)
+                    ))
+
+                    st.plotly_chart(fig, use_container_width=True)
+
             else:
-                st.info("Empieza a escribir para buscar la variable numérica.")
+                st.info("Selecciona al menos una variable numérica para visualizar su histograma.")
 
 
             

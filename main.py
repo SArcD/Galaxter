@@ -775,15 +775,14 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             import streamlit as st
             import numpy as np
             import pandas as pd
+            from collections import Counter
             from sklearn.ensemble import RandomForestClassifier
             from sklearn.model_selection import cross_val_score, learning_curve
-            from sklearn.metrics import accuracy_score, classification_report, confusion_matrix    
+            from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
             from sklearn.utils import resample
+            from imblearn.over_sampling import SMOTE
             import plotly.figure_factory as ff
             import plotly.graph_objects as go
-
-            # Solo si tienes imbalanced-learn
-            from imblearn.over_sampling import SMOTE
 
             st.header("Clasificación de morfología con Random Forest + SMOTE")
 
@@ -791,30 +790,24 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             # Variable objetivo
-            target_var = st.selectbox(            
+            target_var = st.selectbox(
                 "Variable objetivo categórica",
-                ["M(ave)", "M(IP)", "M(c)"],        
+                ["M(ave)", "M(IP)", "M(c)"],
                 key="rf_class_target"
             )
 
-            # Variables predictoras    
-            feature_vars = st.multiselect(        
+            # Variables predictoras
+            feature_vars = st.multiselect(
                 "Variables numéricas predictoras",
-                numeric_cols,        
+                numeric_cols,
                 default=numeric_cols
             )
 
-            # ⚙Hiperparámetros
+            # Hiperparámetros
             max_depth = st.slider("Profundidad máxima del árbol", 1, 20, 5)
             n_estimators = st.slider("Número de árboles", 10, 500, 200, step=10)
-            # 🎛️ Hiperparámetro extra para SMOTE
 
-            from collections import Counter
-            from imblearn.over_sampling import SMOTE
-
-
-            
-            # SMOTE
+            # Opción SMOTE
             use_smote = st.checkbox("Aplicar SMOTE para balancear clases", value=False)
 
             if target_var and feature_vars:
@@ -827,22 +820,29 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if len(y) < 5:
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
-                    # SMOTE
+                    # SMOTE con filtro de clases demasiado pequeñas
                     if use_smote:
-                        sm = SMOTE(random_state=42)
-                        X, y = sm.fit_resample(X, y)
-                        # ✅ Cuenta muestras por clase
+                        class_counts = Counter(y)
+                        too_small_classes = [cls for cls, cnt in class_counts.items() if cnt < 2]
+
+                        if too_small_classes:
+                            st.warning(f"⚠️ Clases ignoradas porque tienen <2 muestras: {too_small_classes}")
+                            mask_keep = ~np.isin(y, too_small_classes)
+                            X, y = X[mask_keep], y[mask_keep]
+
                         class_counts = Counter(y)
                         min_samples = min(class_counts.values())
 
-                        # ✅ Límite máximo realista para k_neighbors
-                        safe_k = max(1, min_samples - 1)
-    
-                        # 🎛️ Control deslizante solo hasta safe_k
-                        k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(1, safe_k))
-                        st.success(f"✔️ Clases balanceadas con SMOTE: {dict(pd.Series(y).value_counts())}")
+                        if min_samples < 2:
+                            st.warning("⚠️ No hay clases con suficientes muestras para aplicar SMOTE.")
+                        else:
+                            safe_k = max(1, min_samples - 1)
+                            k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(5, safe_k))
+                            sm = SMOTE(k_neighbors=k_neighbors, random_state=42)
+                            X, y = sm.fit_resample(X, y)
+                            st.success(f"✔️ Clases balanceadas con SMOTE: {dict(pd.Series(y).value_counts())}")
 
-                    # 🌳 Random Forest Clasificación
+                    # Random Forest
                     clf = RandomForestClassifier(
                         n_estimators=n_estimators,
                         max_depth=max_depth,
@@ -852,12 +852,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     y_pred = clf.predict(X)
                     accuracy = accuracy_score(y, y_pred)
 
-                    st.write(f"**Exactitud (Entrenamiento):** {accuracy:.3f}")
+                    st.write(f"✅ **Exactitud (Entrenamiento):** {accuracy:.3f}")
                     st.text(classification_report(y, y_pred))
 
                     # Validación cruzada
                     cv_scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-                    st.success(f"**Accuracy CV promedio:** {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
+                    st.success(f"📊 **Accuracy CV promedio:** {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
 
                     # Matriz de confusión
                     cm = confusion_matrix(y, y_pred)
@@ -867,7 +867,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         y=list(clf.classes_),
                         colorscale="Blues"
                     )
-                    cm_fig.update_layout(title="Matriz de Confusión (Entrenamiento)")
+                    cm_fig.update_layout(title="🔵 Matriz de Confusión (Entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
 
                     # Curva de aprendizaje
@@ -895,10 +895,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                     st.plotly_chart(curve_fig, use_container_width=True)
 
-                    st.info("Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
-        
+                    st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
+
                     # Formulario de predicción
-                    st.subheader("Hacer una predicción nueva")
+                    st.subheader("🔮 Hacer una predicción nueva")
                     input_vals = []
                     for feat in feature_vars:
                         val = st.slider(
@@ -918,7 +918,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.write(proba_dict)
 
                         # Bootstrap para incertidumbre
-                        st.subheader("Incertidumbre con Bootstrap")
+                        st.subheader("📏 Incertidumbre con Bootstrap")
                         num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
                         bootstrap_probas = []
 
@@ -933,7 +933,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             proba_b = clf_b.predict_proba([input_vals])[0]
                             classes_b = clf_b.classes_
 
-                            # Map clases
                             proba_full = []
                             for cls in clf.classes_:
                                 if cls in classes_b:
@@ -953,10 +952,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             "Probabilidad media": proba_mean,
                             "Desviación estándar": proba_std
                         })
-                        st.write("**Distribución bootstrap de la predicción:**")
+                        st.write("📊 **Distribución bootstrap de la predicción:**")
                         st.dataframe(results)
 
-                        st.subheader("Distribución Bootstrap de Probabilidades")
+                        st.subheader("📊 Distribución Bootstrap de Probabilidades")
                         for idx, class_label in enumerate(clf.classes_):
                             fig = go.Figure()
                             fig.add_trace(go.Histogram(

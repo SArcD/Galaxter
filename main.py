@@ -2872,7 +2872,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             df_with_dist = calculate_comoving_distance(df)
 
             from plot_galaxy_map_c import plot_galaxy_map_with_distances
-            img = plot_galaxy_map_c(df_with_dist)
+            img = plot_galaxy_map_with_distances(df)
             img.save("mapa_galaxias_corregido.png")
             img.show()
 

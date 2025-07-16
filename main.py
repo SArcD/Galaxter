@@ -736,37 +736,32 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.plotly_chart(fig, use_container_width=True)
 
 
-# ✅ Suponiendo que estas líneas están arriba en tu pipeline:
-# selected_cols = st.multiselect("Variables predictoras:", opciones, default=opciones)
-# df = full_pipeline(df, selected_cols, num_clusters)
+            # ----------------------------------------------------------
+            # 📝 Formulario para predicción puntual con rangos definidos
+            # ----------------------------------------------------------
+            st.subheader("🔮 Predicción puntual con Random Forest")
 
-            # Después de mostrar el gráfico:
-            st.subheader("🔮 Formulario de Predicción")
+            # Rango dinámico basado en los datos filtrados
+            x1_min, x1_max = X1.min(), X1.max()
+            x2_min, x2_max = X2.min(), X2.max()
 
-            # Usa las mismas variables que seleccionaste arriba
-            if selected_cols:
-                user_inputs = {}
-                st.write(f"Variables seleccionadas: {selected_cols}")
-    
-                for var in selected_cols:
-                    user_inputs[var] = st.number_input(f"Ingresar valor para {var}:", value=0.0, step=0.1)
-    
-                if st.button("Generar Predicción"):
-                    input_df = pd.DataFrame([user_inputs])
-        
-        # ✅ Aquí cargarías tu modelo real, ejemplo:
-        # from joblib import load
-        # model = load("modelo_entrenado.joblib")
-        # pred = model.predict(input_df)[0]
-        
-                    # Simulación de predicción:
-                    pred = np.random.choice(["Clase A", "Clase B", "Clase C"])
-        
-                    st.success(f"✅ Predicción del modelo: **{pred}**")
-                    st.write("Datos introducidos:", input_df)
-            else:
-                st.info("ℹ️ No has seleccionado variables predictoras arriba.")
+            # 🕹️ Sliders para definir los valores de predicción
+            input_x1 = st.slider(f"Selecciona {x1_var}", float(x1_min), float(x1_max), float(np.mean(X1)))
+            input_x2 = st.slider(f"Selecciona {x2_var}", float(x2_min), float(x2_max), float(np.mean(X2)))
 
+            # 📊 Construye input para predicción    
+            input_array = np.array([[input_x1, input_x2]])
+            predicted_y = rf_model.predict(input_array)[0]
+
+            st.success(f"🌟 Predicción de **{y_var}** para {x1_var} = {input_x1:.2f} y {x2_var} = {input_x2:.2f}: **{predicted_y:.2f}**")
+
+            # 🔘 Opcional: guarda en lista, descarga o agrega historial
+            if st.button("Guardar predicción"):
+                st.write("🚩 Guardado: ", {
+                    f"{x1_var}": input_x1,
+                    f"{x2_var}": input_x2,
+                    f"{y_var}_predicho": predicted_y
+                })
 
             
             

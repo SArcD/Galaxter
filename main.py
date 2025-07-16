@@ -792,7 +792,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Variable objetivo
             target_var = st.selectbox(
                 "Variable objetivo categórica",
-                ["M(ave)", "M(IP)", "M(c)"],
+                ["M(ave)", "M(C)"],
                 key="rf_class_target"
             )
 
@@ -867,7 +867,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         y=list(clf.classes_),
                         colorscale="Blues"
                     )
-                    cm_fig.update_layout(title="🔵 Matriz de Confusión (Entrenamiento)")
+                    cm_fig.update_layout(title="Matriz de Confusión (Entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
 
                     # Curva de aprendizaje
@@ -895,10 +895,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                     st.plotly_chart(curve_fig, use_container_width=True)
 
-                    st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
+                    st.info("Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
 
                     # Formulario de predicción
-                    st.subheader("🔮 Hacer una predicción nueva")
+                    st.subheader("Hacer una predicción nueva")
                     input_vals = []
                     for feat in feature_vars:
                         val = st.slider(
@@ -918,7 +918,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.write(proba_dict)
 
                         # Bootstrap para incertidumbre
-                        st.subheader("📏 Incertidumbre con Bootstrap")
+                        st.subheader("Incertidumbre con Bootstrap")
                         num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
                         bootstrap_probas = []
 
@@ -952,10 +952,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             "Probabilidad media": proba_mean,
                             "Desviación estándar": proba_std
                         })
-                        st.write("📊 **Distribución bootstrap de la predicción:**")
+                        st.write("**Distribución bootstrap de la predicción:**")
                         st.dataframe(results)
 
-                        st.subheader("📊 Distribución Bootstrap de Probabilidades")
+                        st.subheader("Distribución Bootstrap de Probabilidades")
                         for idx, class_label in enumerate(clf.classes_):
                             fig = go.Figure()
                             fig.add_trace(go.Histogram(

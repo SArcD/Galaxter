@@ -983,11 +983,11 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
 
         # Expansor con mapa interactivo del cúmulo Abell 85
-        with st.expander("Ver mapa interactivo del cúmulo Abell 85"):
+        with st.expander("**Mapas interactivos**"):
             import plotly.express as px
             import plotly.graph_objects as go
             import pandas as pd
-
+            st.markdown("Seleccione una de las variables numéricas para grear un mapa de calor de esta variable. Adicionalmente, puede seleccionar solo galaxias en alguno de los quintiles, definir el número de galaxias que quiere marcar (hasta 100 con los valores mas grandes para la variable seleccionada representadas por las estrellas numeradas) y si desea mostrar las galaxias mas brillantes (hasta 100, representadas por los diamantes numerados).")
             num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
             cat_vars = ['M(parn)', 'Act']
             all_vars = num_vars + cat_vars
@@ -1063,7 +1063,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     fig.add_trace(trace)
 
                 
-                # ⭐ y 💎 sliders
+                # sliders
                 st.write("Número de galaxias a destacar por variable seleccionada:")
                 num_extreme = st.slider("Cantidad de galaxias extremas", min_value=1, max_value=100, value=5)
 
@@ -1190,7 +1190,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             # ✅ Encabezado
             st.subheader("Mapa KDE Gaussiano")
-
+            st.markdown("Se muestra un mapa continuo generado a partir de un perfil de densidad Gaussiano. Puede seleccionar el ancho de banda, el mapa de color y la resolución de la malla  (**nota: aún necesita revisarse**)")
+            
             # ✅ Variables disponibles
             smooth_var = st.selectbox(
                 "Variable para mapa suavizado:",
@@ -1304,10 +1305,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             import plotly.express as px
             from astropy.cosmology import FlatLambdaCDM
 
-            st.subheader("Mapa 3D comóvil interactivo para Abell 85")
+            st.subheader("Mapa 3D comóvil interactivo")
 
             # Controles para parámetros arbitrarios
-            st.markdown("### Parámetros de cosmología y proyección")
+            st.markdown("## Parámetros de cosmología y proyección")
 
             col1, col2, col3 = st.columns(3)
 

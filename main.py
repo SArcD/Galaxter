@@ -199,14 +199,14 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         import plotly.express as px
         import plotly.figure_factory as ff
 
-        with st.expander("Análisis exploratorio: Distribución univariada, bivariada y corelación entre las varirables."):
+        with st.expander("Análisis exploratorio: Distribución univariada, bivariada, correlación entre las varirables y modelos predictivos."):
             st.subheader("Distribución univariada de una variable numérica")
 
             # Lista de columnas numéricas en tu DataFrame
             numeric_colss = df.select_dtypes(include='number').columns.tolist()
 
             # Caja de búsqueda para variable numérica
-            search_var = st.text_input("Teclee el nombre de una variable numérica para generar un histograma con su distribución:", key="var_search_dist")
+            st.markdown("**Teclee el nombre de una variable numérica para generar un histograma con su distribución:**")
 
             import plotly.express as px
             import streamlit as st

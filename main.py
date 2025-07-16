@@ -495,8 +495,142 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     fig.update_layout(height=500, title=f"{y_var} vs {x_var} - Lineal vs RF")
                     st.plotly_chart(fig, use_container_width=True)
 
+            st.dovider()
 
 
+            import streamlit as st
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+            from sklearn.linear_model import LinearRegression
+            from sklearn.ensemble import RandomForestRegressor
+            from sklearn.metrics import mean_squared_error
+            import numpy as np
+
+            # 📌 Solo variables numéricas para selector
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+            st.header("🔎 Ajuste por rango de variable X")
+
+            # Selectores de variable X e Y
+            x_var_range = st.selectbox("Variable X para filtrar rango", numeric_cols, key="x_var_range")
+            y_vars_range = st.multiselect("Variables Y", numeric_cols, key="y_vars_range")
+
+            if x_var_range and y_vars_range:
+                x_min, x_max = float(df[x_var_range].min()), float(df[x_var_range].max())
+
+                # 🎚️ Slider de rango
+                range_values = st.slider(
+                    f"Selecciona rango de {x_var_range}",
+                    min_value=x_min, max_value=x_max,
+                    value=(x_min, x_max),
+                    step=(x_max - x_min) / 100
+                )
+
+                mask_range = (df[x_var_range] >= range_values[0]) & (df[x_var_range] <= range_values[1])
+
+                df_range = df[mask_range].copy()
+
+                if df_range.empty:
+                    st.warning("No hay datos en este rango.")
+                else:
+                    for idx, y_var in enumerate(y_vars_range):
+                        X = df_range[[x_var_range]].values.astype(float)
+                        Y = df_range[y_var].values.astype(float)
+
+                        # Ajuste lineal
+                        lin_model = LinearRegression().fit(X, Y)
+                        Y_pred = lin_model.predict(X)
+
+                        # Random Forest
+                        rf_model = RandomForestRegressor(n_estimators=100).fit(X, Y)
+                        Y_rf_pred = rf_model.predict(X)
+
+                        # Hover con TODAS las columnas
+                        hover_texts = []
+                        for i in range(len(df_range)):
+                            row_values = [f"<b>{col}:</b> {df_range.iloc[i][col]}" for col in df.columns]
+                            hover_texts.append("<br>".join(row_values))
+
+                        # Subplots lado a lado
+                        fig = make_subplots(rows=1, cols=2, subplot_titles=("Ajuste Lineal", "Random Forest"))
+
+                        color = f"hsl({idx * 60 % 360}, 70%, 50%)"
+
+                        # Scatter y línea Lineal
+                        fig.add_trace(go.Scatter(
+                            x=X.flatten(), y=Y,
+                            mode='markers',
+                            marker=dict(color=color, size=7, line=dict(width=0.5, color='black')),
+                            text=hover_texts,
+                            hovertemplate='%{text}',
+                            name=f'{y_var} vs {x_var_range}'
+                        ), row=1, col=1)
+
+                        fig.add_trace(go.Scatter(
+                            x=X.flatten(), y=Y_pred,
+                            mode='lines',
+                            line=dict(color='black', dash='dash'),
+                            name='Ajuste Lineal',
+                            hoverinfo='skip'
+                        ), row=1, col=1)
+
+                        # Scatter y línea RF
+                        fig.add_trace(go.Scatter(
+                            x=X.flatten(), y=Y,
+                            mode='markers',
+                            marker=dict(color=color, size=7, line=dict(width=0.5, color='black')),
+                            text=hover_texts,
+                            hovertemplate='%{text}',
+                            name=f'{y_var} vs {x_var_range} (RF)'
+                        ), row=1, col=2)
+
+                        fig.add_trace(go.Scatter(
+                            x=X.flatten(), y=Y_rf_pred,
+                            mode='lines',
+                            line=dict(color='green', dash='dot'),
+                            name='Random Forest',
+                            hoverinfo='skip'
+                        ), row=1, col=2)
+
+                        # Métricas Lineal
+                        slope = lin_model.coef_[0]
+                        intercept = lin_model.intercept_
+                        r_squared = lin_model.score(X, Y)
+                        eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
+
+                        fig.add_annotation(
+                            xref="paper", yref="paper",
+                            x=0.99, y=0.99,
+                            text=eq_text,
+                            showarrow=False,
+                            align="right",
+                            bgcolor="white",
+                            bordercolor="black",
+                            borderwidth=1,
+                            xanchor="right",
+                            row=1, col=1
+                        )
+
+                        # Métricas RF
+                        r2_rf = rf_model.score(X, Y)
+                        rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
+                        rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
+
+                        fig.add_annotation(
+                            xref="paper", yref="paper",
+                            x=0.99, y=0.99,
+                            text=rf_text,
+                            showarrow=False,
+                            align="right",
+                            bgcolor="white",
+                            bordercolor="black",
+                            borderwidth=1,
+                            xanchor="right",
+                            row=1, col=2
+                        )
+
+                        fig.update_layout(height=500, title=f"{y_var} vs {x_var_range} en rango [{range_values[0]:.2f}, {range_values[1]:.2f}]")
+                        st.plotly_chart(fig, use_container_width=True)
 
             
 

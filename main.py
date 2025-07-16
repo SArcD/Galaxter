@@ -454,7 +454,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     # 🚩 Justo aquí pones la anotación del modelo lineal:
                     eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
                     fig.add_annotation(
-                        xref="paper", yref="paper",
+                        xref="x", yref="y",
                         x=0.95, y=0.95,
                         text=eq_text,
                         showarrow=False,
@@ -481,7 +481,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     #rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
 
                     fig.add_annotation(
-                        xref="paper", yref="paper",
+                        xref="x2", yref="y2",
                         x=0.95, y=0.95,
                         text=rf_text,
                         showarrow=False,

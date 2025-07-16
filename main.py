@@ -333,93 +333,114 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             import statsmodels.api as sm
             import streamlit as st
 
+            import streamlit as st
+            import plotly.graph_objects as go
+            import plotly.subplots as sp
+            from sklearn.linear_model import LinearRegression
+            from sklearn.ensemble import RandomForestRegressor
+            from sklearn.metrics import mean_squared_error
+            import numpy as np
 
-            colors = [
-                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
-                "#bcbd22", "#17becf"
-            ]
+            # 👉 Variables seleccionables
+            x_var = st.selectbox("Variable X", df.columns)    
+            y_var = st.selectbox("Variable Y", df.columns)
+            n_estimators = st.slider("Árboles Random Forest", 10, 300, 100, step=10)
 
-            # 👉 Selecciona variable X
-            x_var = st.selectbox(
-                "Selecciona la variable para el eje X:",
-                options=numeric_colss
-            )
+            if x_var and y_var:
 
-            # 👉 Selecciona una o más variables Y
-            y_vars = st.multiselect(
-                "Selecciona una o más variables para el eje Y:",
-                options=[col for col in numeric_colss if col != x_var]
-            )
+                X = df[[x_var]].values
+                Y = df[y_var].values
 
-            if x_var and y_vars:
-                for idx, y_col in enumerate(y_vars):
-                    st.subheader(f"📊 Pair Plot: {x_var} vs {y_col}")
+                # ⚡️ Linear Regression
+                lin_model = LinearRegression().fit(X, Y)
+                Y_lin = lin_model.predict(X)
+                slope, intercept = lin_model.coef_[0], lin_model.intercept_
+                r2_lin = lin_model.score(X, Y)
 
-                    X = df[x_var]
-                    Y = df[y_col]
+                # ⚡️ Random Forest
+                rf = RandomForestRegressor(n_estimators=n_estimators, random_state=42).fit(X, Y)
+                Y_rf = rf.predict(X)
+                r2_rf = rf.score(X, Y)
+                rmse_rf = mean_squared_error(Y, Y_rf, squared=False)
 
-                    # ⚡ Ajuste lineal con statsmodels
-                    X_with_const = sm.add_constant(X)
-                    model = sm.OLS(Y, X_with_const).fit()
-                    intercept, slope = model.params
-                    r_squared = model.rsquared
+                # 🔵 Hover: TODAS las columnas
+                hover_texts = []
+                for i in range(len(df)):
+                    txt = "<br>".join([f"<b>{col}:</b> {df.iloc[i][col]}" for col in df.columns])
+                    hover_texts.append(txt)
 
-                    # ⚡ Línea de regresión
-                    line_x = np.linspace(X.min(), X.max(), 100)
-                    line_y = intercept + slope * line_x
+                # 🎨 Color
+                point_color = 'hsl(200,70%,50%)'
 
-                    # 🎨 Scatter plot con línea y texto
-                    fig = go.Figure()
+                # 📌 Subplots: dos gráficos lado a lado
+                fig = sp.make_subplots(rows=1, cols=2, subplot_titles=("Ajuste Lineal + RF", "Superficie de Decisión RF"))
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=X,
-                            y=Y,
-                            mode='markers',
-                            marker=dict(
-                                color=colors[idx % len(colors)],
-                                size=8,
-                                line=dict(width=1, color="black")
-                            ),
-                            name='Datos'
-                        )
-                    )
+                # 🔵 Scatter
+                fig.add_trace(go.Scatter(
+                    x=df[x_var], y=df[y_var],
+                    mode='markers',
+                    marker=dict(color=point_color, size=6, line=dict(color='black', width=0.5)),
+                    text=hover_texts, hovertemplate='%{text}',
+                    name='Datos'
+                ), row=1, col=1)
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=line_x,
-                            y=line_y,
-                            mode='lines',
-                            line=dict(color='black', dash='dash'),
-                            name='Ajuste lineal'
-                        )
-                    )
+                # 🔴 Línea lineal
+                fig.add_trace(go.Scatter(
+                    x=df[x_var], y=Y_lin,
+                    mode='lines',
+                    line=dict(color='black', dash='dash'),
+                    name='Ajuste Lineal'
+                ), row=1, col=1)
 
-                    # ⚡ Texto de la ecuación y R²
-                    equation_text = f"y = {intercept:.2f} + {slope:.2f}x<br>R² = {r_squared:.3f}"
+                # 🟢 Línea RF
+                fig.add_trace(go.Scatter(
+                    x=df[x_var], y=Y_rf,
+                    mode='lines',
+                    line=dict(color='green'),
+                    name='Random Forest'
+                ), row=1, col=1)
 
-                    fig.add_annotation(
-                        x=X.min(),
-                        y=Y.max(),
-                        text=equation_text,
-                        showarrow=False,
-                        xanchor='left',
-                        yanchor='top',
-                        font=dict(size=12, color='black')
-                    )
+                # ✏️ Ecuación
+                eq_text = (
+                    f"📏 Linear: y = {slope:.2f}x + {intercept:.2f}<br>R² = {r2_lin:.3f}<br>"
+                    f"🌲 RF: R² = {r2_rf:.3f} | RMSE = {rmse_rf:.2f}"
+                )
+                fig.add_annotation(
+                    text=eq_text, xref="paper", yref="paper",
+                    x=0.02, y=1.05, showarrow=False, align="left",
+                    bordercolor="black", borderwidth=1, bgcolor="white",
+                    row=1, col=1
+                )
 
-                    fig.update_layout(
-                        title=f"Scatter: {x_var} vs {y_col}",
-                        xaxis_title=x_var,
-                        yaxis_title=y_col,
-                        height=500
-                    )
+                # 🌄 Superficie de Decisión RF
+                X_grid = np.linspace(X.min(), X.max(), 300).reshape(-1, 1)
+                Y_rf_grid = rf.predict(X_grid)
 
-                    st.plotly_chart(fig, use_container_width=True)
+                fig.add_trace(go.Scatter(
+                    x=X_grid.flatten(), y=Y_rf_grid,
+                    mode='lines',
+                    line=dict(color='green'),
+                    name='RF Superficie'
+                ), row=1, col=2)
 
-            else:
-                st.info("Selecciona una variable X y al menos una variable Y para mostrar los pair plots.")
+                fig.add_trace(go.Scatter(
+                    x=df[x_var], y=df[y_var],
+                    mode='markers',
+                    marker=dict(color=point_color, size=6, line=dict(color='black', width=0.5)),
+                    text=hover_texts, hovertemplate='%{text}',
+                    name='Datos'
+                ), row=1, col=2)
+
+                fig.update_layout(
+                    height=500, width=1100,
+                    title_text=f"Comparación: {y_var} vs {x_var} 📈",
+                )
+                fig.update_xaxes(title_text=x_var)
+                fig.update_yaxes(title_text=y_var)
+
+                st.plotly_chart(fig, use_container_width=True)
+
+
 
 
             

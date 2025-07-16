@@ -2869,7 +2869,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 df['Dist'] = cosmo.comoving_distance(df['z_gal']).value  # en Mpc
                 return df
 
-            df_with_dist = calculate_comoving_distance(df)
+            #df_with_dist = calculate_comoving_distance(df)
 
             from plot_galaxy_map_c import plot_galaxy_map_with_distances
             img = plot_galaxy_map_with_distances(df)

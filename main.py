@@ -736,6 +736,39 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.plotly_chart(fig, use_container_width=True)
 
 
+# ✅ Suponiendo que estas líneas están arriba en tu pipeline:
+# selected_cols = st.multiselect("Variables predictoras:", opciones, default=opciones)
+# df = full_pipeline(df, selected_cols, num_clusters)
+
+            # Después de mostrar el gráfico:
+            st.subheader("🔮 Formulario de Predicción")
+
+            # Usa las mismas variables que seleccionaste arriba
+            if selected_cols:
+                user_inputs = {}
+                st.write(f"Variables seleccionadas: {selected_cols}")
+    
+                for var in selected_cols:
+                    user_inputs[var] = st.number_input(f"Ingresar valor para {var}:", value=0.0, step=0.1)
+    
+                if st.button("Generar Predicción"):
+                    input_df = pd.DataFrame([user_inputs])
+        
+        # ✅ Aquí cargarías tu modelo real, ejemplo:
+        # from joblib import load
+        # model = load("modelo_entrenado.joblib")
+        # pred = model.predict(input_df)[0]
+        
+                    # Simulación de predicción:
+                    pred = np.random.choice(["Clase A", "Clase B", "Clase C"])
+        
+                    st.success(f"✅ Predicción del modelo: **{pred}**")
+                    st.write("Datos introducidos:", input_df)
+            else:
+                st.info("ℹ️ No has seleccionado variables predictoras arriba.")
+
+
+            
             
             st.divider()
 

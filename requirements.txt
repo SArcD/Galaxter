@@ -13,3 +13,4 @@ scikit-gstat
 pykrige
 pillow
 noise
+imbalanced-learn	

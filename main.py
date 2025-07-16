@@ -468,8 +468,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     # 🚩 Aquí agregas la anotación de desempeño RF:
                     from sklearn.metrics import mean_squared_error
                     r2_rf = rf_model.score(X, Y)
-                    rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
+                    from sklearn.metrics import mean_squared_error
+                    import numpy as np
+
+                    # ➡️ MSE normal:
+                    mse_rf = mean_squared_error(Y, Y_rf_pred)
+
+                    # ➡️ RMSE es la raíz cuadrada:
+                    rmse_rf = np.sqrt(mse_rf)
+                    #rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
                     rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
+                    #rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
 
                     fig.add_annotation(
                         xref="paper", yref="paper",

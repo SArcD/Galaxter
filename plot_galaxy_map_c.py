@@ -6,7 +6,7 @@ import streamlit as st
 
 def plot_galaxy_map_with_distances(df, H0=70.0, Om0=0.3, z_cluster=0.0555,
                                     ra_col='RA', dec_col='Dec', vel_col='Vel',
-                                    morph_col='Cl_d', rf_col='Rf', base_size=6):
+                                    morph_col='M(ave)', rf_col='Rf', base_size=6):
     """
     Genera una imagen tipo mapa estelar, escalando las galaxias según su distancia comóvil.
     """

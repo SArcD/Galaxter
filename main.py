@@ -684,7 +684,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     rmse_rf = np.sqrt(mean_squared_error(Y, Y_pred))
 
                     # 📊 Malla para superficie
-                    grid_size = 30
+#                    grid_size = 30
+                    grid_size = st.slider("Resolución de la malla", 10, 100, 30, step=5, key="rf_grid_size")
+
                     x1_range = np.linspace(X1.min(), X1.max(), grid_size)
                     x2_range = np.linspace(X2.min(), X2.max(), grid_size)
                     xx1, xx2 = np.meshgrid(x1_range, x2_range)

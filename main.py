@@ -2850,7 +2850,16 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.markdown("Seleccione la variable a mostrar y el número de galaxias a desplegarse (puede seleccionar hasta 100 con los valores mas altos en la variable).")
             st.image(img)  # ✅ Esto mostrará el resultado actualizado
 
+        with st.expander("**Mapa con tamaños aparentes**")
+            # 2. Calcular distancia comóvil
+            df_with_dist = calculate_comoving_distance(df)
 
+            # 3. Generar imagen
+            img = plot_galaxy_map(df_with_dist)
+            img.save("mapa_galaxias_corregido.png")
+            img.show()
+
+        
 
         import streamlit as st
         import plotly.express as px

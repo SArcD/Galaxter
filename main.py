@@ -830,9 +830,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             import streamlit as st
             import numpy as np
+            import pandas as pd
             from sklearn.ensemble import RandomForestClassifier
+            from sklearn.model_selection import cross_val_score, learning_curve
             from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
             import plotly.figure_factory as ff
+            import plotly.graph_objects as go
 
             st.header("🎯 Clasificación de morfología con Random Forest")
 
@@ -840,14 +843,26 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             # 👉 Variable objetivo categórica
-            target_var = st.selectbox("Variable objetivo categórica", ["M(ave)", "M(IP)", "M(c)"], key="rf_class_target")
+            target_var = st.selectbox(
+                "Variable objetivo categórica",
+                ["M(ave)", "M(IP)", "M(c)"],
+                key="rf_class_target"
+            )
 
             # 👉 Variables predictoras
-            feature_vars = st.multiselect("Variables numéricas predictoras", numeric_cols, default=numeric_cols)
+            feature_vars = st.multiselect(
+                "Variables numéricas predictoras",
+                numeric_cols,
+                default=numeric_cols
+            )
+
+            # 🌳 Hiperparámetros ajustables
+            max_depth = st.slider("Profundidad máxima del árbol", 1, 20, 5)
+            n_estimators = st.slider("Número de árboles", 10, 500, 200, step=10)
 
             if target_var and feature_vars:
                 X = df[feature_vars].values
-                y = df[target_var].astype(str).values  # Asegúrate de convertir a string si no está categórica
+                y = df[target_var].astype(str).values  # Asegúrate de convertir a string
 
                 # 🧹 Elimina filas con NaNs
                 mask = ~np.isnan(X).any(axis=1) & pd.notna(y)
@@ -858,30 +873,61 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
                     # 🌳 Random Forest Clasificación
-                    clf = RandomForestClassifier(n_estimators=200)
+                    clf = RandomForestClassifier(
+                        n_estimators=n_estimators,
+                        max_depth=max_depth,
+                        random_state=42
+                    )
                     clf.fit(X, y)
                     y_pred = clf.predict(X)
                     accuracy = accuracy_score(y, y_pred)
 
-                    st.write(f"**Exactitud:** {accuracy:.3f}")
+                    st.write(f"✅ **Exactitud (Entrenamiento):** {accuracy:.3f}")
                     st.text(classification_report(y, y_pred))
 
-                    # 📊 Matriz de confusión
+                    # ✅ Validación cruzada
+                    cv_scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+                    st.success(f"📊 **Accuracy CV promedio:** {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
+
+                    # ✅ Matriz de confusión
                     cm = confusion_matrix(y, y_pred)
-                    #cm_fig = ff.create_annotated_heatmap(
-                    #    z=cm,
-                    #    x=clf.classes_, y=clf.classes_,
-                    #    colorscale="Blues"
-                    #)
                     cm_fig = ff.create_annotated_heatmap(
                         z=cm,
-                        x=clf.classes_.tolist(),
-                        y=clf.classes_.tolist(),
+                        x=list(clf.classes_),
+                        y=list(clf.classes_),
                         colorscale="Blues"
                     )
+                    cm_fig.update_layout(title="🔵 Matriz de Confusión (Entrenamiento)")
+                    st.plotly_chart(cm_fig, use_container_width=True)
 
-                    cm_fig.update_layout(title="Matriz de Confusión")
-                    st.plotly_chart(cm_fig)
+                # ✅ Curva de aprendizaje
+                    train_sizes, train_scores, test_scores = learning_curve(
+                        clf, X, y, cv=5, scoring='accuracy',
+                    train_sizes=np.linspace(0.1, 1.0, 5)
+                    )    
+                    train_mean = np.mean(train_scores, axis=1)
+                    test_mean = np.mean(test_scores, axis=1)
+
+                    curve_fig = go.Figure()
+                    curve_fig.add_trace(go.Scatter(
+                        x=train_sizes, y=train_mean,
+                        mode='lines+markers', name='Training Score'
+                    ))
+                    curve_fig.add_trace(go.Scatter(
+                        x=train_sizes, y=test_mean,
+                        mode='lines+markers', name='Cross-Validation Score'
+                    ))
+                    curve_fig.update_layout(
+                        title="📈 Curva de Aprendizaje Random Forest",
+                        xaxis_title="Tamaño del conjunto de entrenamiento",
+                        yaxis_title="Accuracy",
+                        height=400
+                    )
+                    st.plotly_chart(curve_fig, use_container_width=True)
+
+                    st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
+
+        
 
         # 🎛️ Formulario de predicción interactivo
         st.subheader("🔮 Hacer una predicción nueva")

@@ -736,6 +736,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.plotly_chart(fig, use_container_width=True)
 
             # 🎥 Gráfico Plotly 2D
+#            fig2d = go.Figure()
+
+            # ✅ Controles interactivos para invertir ejes
+            invert_x = st.checkbox(f"Invertir eje {x1_var}", value=False, key="invert_x_rf")
+            invert_y = st.checkbox(f"Invertir eje {x2_var}", value=False, key="invert_y_rf")
+
+            # 🎥 Gráfico Plotly 2D    
             fig2d = go.Figure()
 
             # 🟢 Heatmap de la predicción
@@ -760,7 +767,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 name='Datos Reales'
             ))
 
-            # ➕ Layout
+            # ➕ Layout básico
             fig2d.update_layout(
                 title=f"RF Superficie de Predicción 2D<br>R² = {r2_rf:.3f} | RMSE = {rmse_rf:.3f}",
                 xaxis_title=x1_var,
@@ -768,6 +775,14 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 height=600
             )
 
+            # ✅ Aplica inversión si corresponde    
+            if invert_x:
+                fig2d.update_xaxes(autorange='reversed')
+
+            if invert_y:
+                fig2d.update_yaxes(autorange='reversed')
+
+            # ✅ Despliega
             st.plotly_chart(fig2d, use_container_width=True)
 
 

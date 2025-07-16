@@ -126,7 +126,8 @@ def draw_irregular(size, brightness):
 def plot_galaxy_map(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='Rf',
                     subcluster_col='Subcluster', subsubcluster_col="Subcluster_1", width=1024, height=1024):
 
-    st.header("Mapa de Cúmulo con formas y colores variados 🌌")
+    st.header("Simulación visual del Cúmulo")
+    st.markdown("En esta sección verá una representación visual del cúmulo, en el que las galaxias se representan de manera aproximada. Los contornos de luz rodean a los miembros de cada sub-cluster (puede ocultar o mostrar algunos elementos de la imagen en la barra lateral izquierda: el campo de estrellas galaxias clasificadas con cierta morfología, así como los miembros de subclusters y sub-sub-clusters). Debajo de la imagen verá desplegado el dataframe con columnas de clasificación a subcluster y sub-sub-clusters, si la galaxia en cuestión está en un subcluster que pasó la prueba DS, su posición en el diagrama T-SNE y su pertenecia a un grupo morfológicos.)")
 #    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
 #    morphs = sorted(df[morph_col].dropna().unique())
 #    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)

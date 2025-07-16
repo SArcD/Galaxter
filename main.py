@@ -327,6 +327,104 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             else:
                 st.info("Selecciona al menos dos variables para el pair plot.")
 
+
+            import plotly.express as px
+            import plotly.graph_objects as go
+            import statsmodels.api as sm
+            import streamlit as st
+
+
+            colors = [
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+                "#bcbd22", "#17becf"
+            ]
+
+            # 👉 Selecciona variable X
+            x_var = st.selectbox(
+                "Selecciona la variable para el eje X:",
+                options=numeric_colss
+            )
+
+            # 👉 Selecciona una o más variables Y
+            y_vars = st.multiselect(
+                "Selecciona una o más variables para el eje Y:",
+                options=[col for col in numeric_colss if col != x_var]
+            )
+
+            if x_var and y_vars:
+                for idx, y_col in enumerate(y_vars):
+                    st.subheader(f"📊 Pair Plot: {x_var} vs {y_col}")
+
+                    X = df[x_var]
+                    Y = df[y_col]
+
+                    # ⚡ Ajuste lineal con statsmodels
+                    X_with_const = sm.add_constant(X)
+                    model = sm.OLS(Y, X_with_const).fit()
+                    intercept, slope = model.params
+                    r_squared = model.rsquared
+
+                    # ⚡ Línea de regresión
+                    line_x = np.linspace(X.min(), X.max(), 100)
+                    line_y = intercept + slope * line_x
+
+                    # 🎨 Scatter plot con línea y texto
+                    fig = go.Figure()
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=X,
+                            y=Y,
+                            mode='markers',
+                            marker=dict(
+                                color=colors[idx % len(colors)],
+                                size=8,
+                                line=dict(width=1, color="black")
+                            ),
+                            name='Datos'
+                        )
+                    )
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=line_x,
+                            y=line_y,
+                            mode='lines',
+                            line=dict(color='black', dash='dash'),
+                            name='Ajuste lineal'
+                        )
+                    )
+
+                    # ⚡ Texto de la ecuación y R²
+                    equation_text = f"y = {intercept:.2f} + {slope:.2f}x<br>R² = {r_squared:.3f}"
+
+                    fig.add_annotation(
+                        x=X.min(),
+                        y=Y.max(),
+                        text=equation_text,
+                        showarrow=False,
+                        xanchor='left',
+                        yanchor='top',
+                        font=dict(size=12, color='black')
+                    )
+
+                    fig.update_layout(
+                        title=f"Scatter: {x_var} vs {y_col}",
+                        xaxis_title=x_var,
+                        yaxis_title=y_col,
+                        height=500
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
+
+            else:
+                st.info("Selecciona una variable X y al menos una variable Y para mostrar los pair plots.")
+
+
+            
+
+            
             st.divider()
 
             st.subheader("3️⃣ Matriz de correlación")

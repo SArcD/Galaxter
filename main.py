@@ -735,7 +735,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             )
 
             input_x2 = st.slider(
-                f"Seleccione {x2_var}",
+                f"Seleccion {x2_var}",
                 float(x2_min), float(x2_max), float(np.mean(X2)),
                 key=f"slider_{x2_var}"
             )

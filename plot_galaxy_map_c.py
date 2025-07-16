@@ -105,7 +105,7 @@ def plot_galaxy_map_with_distances(df, ra_col='RA', dec_col='Dec', morph_col='M(
     # -------------------------------------------------------
     st.header("Simulación visual del cúmulo (con distancia)")
     #show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
-    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True, key=f"{widget_prefix}_stars")
+    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True, key=f"0_stars")
 
     morph_filter = st.sidebar.multiselect("Filtrar morfología", sorted(df[morph_col].dropna().unique()),
                                           default=sorted(df[morph_col].dropna().unique()))

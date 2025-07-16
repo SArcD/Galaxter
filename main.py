@@ -745,9 +745,18 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             x1_min, x1_max = X1.min(), X1.max()
             x2_min, x2_max = X2.min(), X2.max()
 
-            # 🕹️ Sliders para definir los valores de predicción
-            input_x1 = st.slider(f"Selecciona {x1_var}", float(x1_min), float(x1_max), float(np.mean(X1)))
-            input_x2 = st.slider(f"Selecciona {x2_var}", float(x2_min), float(x2_max), float(np.mean(X2)))
+            # 🕹️ Sliders para definir los valores de predicción con keys únicos
+            input_x1 = st.slider(
+                f"Selecciona {x1_var}",
+                float(x1_min), float(x1_max), float(np.mean(X1)),
+                key=f"slider_{x1_var}_rf"
+            )
+    
+            input_x2 = st.slider(
+                f"Selecciona {x2_var}",
+                float(x2_min), float(x2_max), float(np.mean(X2)),
+                key=f"slider_{x2_var}_rf"
+            )
 
             # 📊 Construye input para predicción    
             input_array = np.array([[input_x1, input_x2]])

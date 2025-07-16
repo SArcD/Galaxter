@@ -133,17 +133,16 @@ Por favor cargue un archivo .csv con la base de datos (versión actual del archi
         # Leer archivo
         df = pd.read_csv(uploaded_file)
         st.write("Datos cargados:", df.head())
-        # expansor
-        # Expander con explicaciones
+        # Expansor con explicaciones
         with st.expander("**Ver explicación de las columnas**"):
-            # 🔑 Aquí defines tus descripciones
+            # Descripciones
             descripcion_columnas = {
             'SDSS': 'Nombre del catálogo Sloan Digital Sky Survey del objeto.',
             'ID': 'Identificador único del objeto, usualmente coordenadas codificadas.',
             'RA': 'Ascensión recta (Right Ascension) en grados (coordenada celeste este-oeste).',
             'Dec': 'Declinación (Declination) en grados (coordenada celeste norte-sur).',
             'Vel': 'Velocidad radial del objeto en km/s, indica movimiento relativo al observador.',
-            'Rf': 'Magnitud absoluta o relativa (posiblemente magnitud fotométrica corregida).',
+            'Rf': 'Magnitud en el "rojo" (posiblemente magnitud fotométrica corregida).',
             'Cl_d': 'Distancia al centro del cúmulo en Mpc o arcmin (según convención).',
             'Delta': 'Desviación estadística o parámetro de subestructura local (p.ej. parámetro δ de D-S).',
             'plt.mjd.fiber': 'Placa, fecha modificada juliana (MJD) y número de fibra del SDSS, o nota de espectro.',
@@ -173,12 +172,12 @@ Por favor cargue un archivo .csv con la base de datos (versión actual del archi
         import difflib
 
         # 🕵️‍♂️ Barra de búsqueda para encontrar columnas por nombre
-        st.subheader("Buscar variable por nombre")
+        st.subheader("Buscar variable por su clave")
         st.markdown("""
 <div style="text-align: justify">
 En esta sección puede colocar el nombre de cualquiera de las columnas de la base de datos para ver una reseña breve de su significado (nota: aún necesita revisarse) </div>
 """, unsafe_allow_html=True)
-        search_query = st.text_input("Escribe parte del nombre de la variable:", key="var_search_desc")
+        search_query = st.text_input("**Escribe parte del nombre de la variable:**", key="var_search_desc")
 
         if search_query:
             # Lista de nombres de columnas

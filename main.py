@@ -200,8 +200,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         import plotly.express as px
         import plotly.figure_factory as ff
 
-        with st.expander("📊 Análisis exploratorio: Distribución univariada, bivariada y corelación entre las varirables."):
-            st.subheader("1️⃣ Distribución univariada de una variable numérica")
+        with st.expander("Análisis exploratorio: Distribución univariada, bivariada y corelación entre las varirables."):
+            st.subheader("Distribución univariada de una variable numérica")
 
             # Lista de columnas numéricas en tu DataFrame
             numeric_colss = df.select_dtypes(include='number').columns.tolist()
@@ -209,55 +209,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Caja de búsqueda para variable numérica
             search_var = st.text_input("Teclee el nombre de una variable numérica para generar un histograma con su distribución:", key="var_search_dist")
 
-   #         if search_var:
-   #             best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
-   #             if best_match_var:
-   #                 col = best_match_var[0]
-   #                 st.success(f"Mostrando distribución para: **{col}**")
-   #                 fig = px.histogram(df, x=col, nbins=30, title=f"Distribución de {col}")
-   #                 st.plotly_chart(fig)
-   #             else:
-   #                 st.warning("No se encontró ninguna variable numérica similar.")
-   #         else:
-   #             st.info("Empieza a escribir para buscar la variable numérica.")
-
-   #         import difflib
-   #         import plotly.express as px
-
-   #         # Suponiendo que ya definiste `numeric_colss` y `df`
-
-   #         if search_var:
-   #             best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
-   #             if best_match_var:
-   #                 col = best_match_var[0]
-   #                 st.success(f"Mostrando distribución para: **{col}**")
-
-   #                 # ✅ Agrega el slider para elegir el número de bins
-   #                 nbins = st.slider(
-   #                 "Selecciona el número de bins (clases) para el histograma:",
-   #                 min_value=5,
-   #                 max_value=100,
-   #                 value=30,
-   #                 step=1
-   #                 )
-
-   #                 # ✅ Genera el histograma con el valor elegido
-   #                 fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
-   #                 st.plotly_chart(fig)
-
-   #             else:
-   #                 st.warning("No se encontró ninguna variable numérica similar.")
-   #         else:
-   #             st.info("Empieza a escribir para buscar la variable numérica.")
-
-
             import plotly.express as px
             import streamlit as st
             import difflib
             import random
 
 
-            # 🎨 Paleta de colores opcional
+            # Paleta de colores opcional
             colors = [
                 "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
                 "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
@@ -271,7 +229,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             if search_vars:
                 for idx, col in enumerate(search_vars):
-                    st.subheader(f"📊 Histograma de: **{col}**")
+                    st.subheader(f"Histograma de: **{col}**")
 
                     # Slider para definir el número de bins
                     nbins = st.slider(
@@ -307,7 +265,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             
             st.divider()
 
-            st.subheader("2️⃣ Pair Plot de variables numéricas")
+            st.subheader("Pair Plot de variables numéricas")
 
             # Multiselect para elegir variables para el pair plot
             selected_pair_cols = st.multiselect(
@@ -348,7 +306,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from sklearn.ensemble import RandomForestRegressor
             import numpy as np
 
-            # 📌 Solo variables numéricas para los selectores
+            # Solo variables numéricas para los selectores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             x_var = st.selectbox("Variable X", numeric_cols)
@@ -360,7 +318,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     X = df[[x_var]].values.astype(float)
                     Y = df[y_var].values.astype(float)
 
-                    # 🧹 Elimina NaNs
+                    # Elimina NaNs
                     mask = ~np.isnan(X).flatten() & ~np.isnan(Y)
                     X = X[mask].reshape(-1, 1)
                     Y = Y[mask]
@@ -369,28 +327,28 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.warning(f"Sin datos suficientes para {y_var}")
                         continue
 
-                    # 📈 Ajuste lineal
+                    # Ajuste lineal
                     lin_model = LinearRegression().fit(X, Y)
                     Y_pred = lin_model.predict(X)
 
-                    # 🌳 Random Forest
+                    # Random Forest
                     rf_model = RandomForestRegressor(n_estimators=100).fit(X, Y)
                     Y_rf_pred = rf_model.predict(X)
 
-                    # 🎨 Colores únicos
+                    # Colores únicos
                     color = f"hsl({idx * 60 % 360}, 70%, 50%)"
 
-                    # 📝 Hover: todas las columnas
+                    # Hover: todas las columnas
                     hover_texts = []
                     df_valid = df[mask]  # Filtrado por mask
                     for i in range(len(df_valid)):
                         row_values = [f"<b>{col}:</b> {df_valid.iloc[i][col]}" for col in df.columns]
                         hover_texts.append("<br>".join(row_values))
 
-                    # 📊 Subplots
+                    # Subplots
                     fig = make_subplots(rows=1, cols=2, subplot_titles=("Ajuste Lineal", "Random Forest"))
 
-                    # 🔵 Scatter
+                    # Scatter
                     fig.add_trace(go.Scatter(
                         x=X.flatten(),
                         y=Y,
@@ -411,7 +369,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     ), row=1, col=1)
 
 
-                    # 🔵 RF Scatter
+                    # RF Scatter
                     fig.add_trace(go.Scatter(
                         x=X.flatten(),
                         y=Y,
@@ -433,25 +391,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
 
 
-                    # ✅ Ecuación y R² para lineal
+                    # Ecuación y R² para lineal
                     slope = lin_model.coef_[0]
                     intercept = lin_model.intercept_
                     r_squared = lin_model.score(X, Y)
                     eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
 
-                    #fig.add_annotation(
-                    #    xref="paper", yref="paper",
-                    #    x=0.05, y=0.95,
-                    #    text=eq_text,
-                    #    showarrow=False,
-                    #    align="left",
-                    #    bgcolor="white",
-                    #    bordercolor="black",
-                    #    borderwidth=1,
-                    #    row=1, col=1
-                    #)
-
-                    # 🚩 Justo aquí pones la anotación del modelo lineal:
                     eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
                     fig.add_annotation(
                         xref="x", yref="y",
@@ -465,16 +410,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         row=1, col=1   # ☑️ Solo para el primer subplot
                     )
 
-                    # 🚩 Aquí agregas la anotación de desempeño RF:
                     from sklearn.metrics import mean_squared_error
                     r2_rf = rf_model.score(X, Y)
                     from sklearn.metrics import mean_squared_error
                     import numpy as np
 
-                    # ➡️ MSE normal:
+                    # MSE normal:
                     mse_rf = mean_squared_error(Y, Y_rf_pred)
 
-                    # ➡️ RMSE es la raíz cuadrada:
+                    # RMSE es la raíz cuadrada:
                     rmse_rf = np.sqrt(mse_rf)
                     #rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
                     rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
@@ -489,7 +433,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         bgcolor="white",
                         bordercolor="black",
                         borderwidth=1,
-                        row=1, col=2   # ☑️ Solo para el subplot RF
+                        row=1, col=2   # Solo para el subplot RF
                     )
                     
                     fig.update_layout(height=500, title=f"{y_var} vs {x_var} - Lineal vs RF")
@@ -506,7 +450,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from sklearn.metrics import mean_squared_error
             import numpy as np
 
-            # 📌 Solo variables numéricas para selector
+            # Solo variables numéricas para selector
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             st.header("🔎 Ajuste por rango de variable X")
@@ -646,15 +590,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from sklearn.ensemble import RandomForestRegressor
 
             # -------------------------------------------------------------
-            # 🌳 2 variables predictoras -> 1 target + RF + superficie 3D
+            # 2 variables predictoras -> 1 target + RF + superficie 3D
             # -------------------------------------------------------------
 
-            st.header("🌳 Random Forest: Superficie de Predicción 3D")
+            st.header("Random Forest: Superficie de Predicción 3D")
     
-            # 📌 Variables numéricas
+            # Variables numéricas
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-            # 🔘 Selectores
+            # Selectores
             x1_var = st.selectbox("Variable X1", numeric_cols, key="rf_x1")
             x2_var = st.selectbox("Variable X2", numeric_cols, key="rf_x2")
             y_var = st.selectbox("Variable Target (Y)", numeric_cols, key="rf_y")
@@ -664,7 +608,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 X2 = df[[x2_var]].values.flatten()
                 Y = df[[y_var]].values.flatten()
 
-                # 🧹 Quita NaNs
+                # Quita NaNs
                 mask = ~np.isnan(X1) & ~np.isnan(X2) & ~np.isnan(Y)
                 X1, X2, Y = X1[mask], X2[mask], Y[mask]
 
@@ -673,17 +617,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if len(Y) < 5:
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
-                    # 🌳 Random Forest
+                    # Random Forest
                     rf_model = RandomForestRegressor(n_estimators=200)
                     rf_model.fit(X, Y)
                     Y_pred = rf_model.predict(X)
 
-                    # ➕ Métricas
+                    # Métricas
                     r2_rf = rf_model.score(X, Y)
                     from sklearn.metrics import mean_squared_error
                     rmse_rf = np.sqrt(mean_squared_error(Y, Y_pred))
 
-                    # 📊 Malla para superficie
+                    # Malla para superficie
 #                    grid_size = 30
                     grid_size = st.slider("Resolución de la malla", 10, 100, 30, step=5, key="rf_grid_size")
 
@@ -693,7 +637,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     grid_points = np.c_[xx1.ravel(), xx2.ravel()]
                     zz_pred = rf_model.predict(grid_points).reshape(xx1.shape)
 
-                    # 🎨 Hover personalizado con TODAS las columnas        
+                    # Hover personalizado con TODAS las columnas        
                     hover_texts = []
                     df_valid = df[mask]
                     for i in range(len(df_valid)):
@@ -703,7 +647,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     # 🎥 Gráfico Plotly 3D
                     fig = go.Figure()
 
-                    # 🟢 Puntos reales
+                    # Puntos reales
                     fig.add_trace(go.Scatter3d(
                         x=X1,
                         y=X2,
@@ -715,7 +659,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         name='Datos Reales'
                     ))
 
-                    # 🟣 Superficie RF
+                    # Superficie RF
                     fig.add_trace(go.Surface(
                         x=x1_range,
                         y=x2_range,
@@ -740,14 +684,14 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # 🎥 Gráfico Plotly 2D
 #            fig2d = go.Figure()
 
-            # ✅ Controles interactivos para invertir ejes
+            # Controles interactivos para invertir ejes
             invert_x = st.checkbox(f"Invertir eje {x1_var}", value=False, key="invert_x_rf")
             invert_y = st.checkbox(f"Invertir eje {x2_var}", value=False, key="invert_y_rf")
 
-            # 🎥 Gráfico Plotly 2D    
+            # Gráfico Plotly 2D    
             fig2d = go.Figure()
 
-            # 🟢 Heatmap de la predicción
+            # Heatmap de la predicción
             fig2d.add_trace(go.Heatmap(
                 x=x1_range,
                 y=x2_range,
@@ -777,21 +721,21 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 height=600
             )
 
-            # ✅ Aplica inversión si corresponde    
+            # Aplica inversión si corresponde    
             if invert_x:
                 fig2d.update_xaxes(autorange='reversed')
 
             if invert_y:
                 fig2d.update_yaxes(autorange='reversed')
 
-            # ✅ Despliega
+            # Despliega
             st.plotly_chart(fig2d, use_container_width=True)
 
 
             # ----------------------------------------------------------
-            # 📝 Formulario para predicción puntual con rangos definidos
+            # Formulario para predicción puntual con rangos definidos
             # ----------------------------------------------------------
-            st.subheader("🔮 Predicción puntual con Random Forest")
+            st.subheader("Predicción puntual con Random Forest")
 
             # Rango dinámico basado en los datos filtrados
             x1_min, x1_max = X1.min(), X1.max()
@@ -810,15 +754,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 key=f"slider_{x2_var}"
             )
 
-            # 📊 Construye input para predicción    
+            # Construye input para predicción    
             input_array = np.array([[input_x1, input_x2]])
             predicted_y = rf_model.predict(input_array)[0]
 
-            st.success(f"🌟 Predicción de **{y_var}** para {x1_var} = {input_x1:.2f} y {x2_var} = {input_x2:.2f}: **{predicted_y:.2f}**")
+            st.success(f"Predicción de **{y_var}** para {x1_var} = {input_x1:.2f} y {x2_var} = {input_x2:.2f}: **{predicted_y:.2f}**")
 
-            # 🔘 Opcional: guarda en lista, descarga o agrega historial
+            # Opcional: guarda en lista, descarga o agrega historial
             if st.button("Guardar predicción"):
-                st.write("🚩 Guardado: ", {
+                st.write("Guardado: ", {
                     f"{x1_var}": input_x1,
                     f"{x2_var}": input_x2,
                     f"{y_var}_predicho": predicted_y
@@ -841,31 +785,32 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Solo si tienes imbalanced-learn
             from imblearn.over_sampling import SMOTE
 
-            st.header("🎯 Clasificación de morfología con Random Forest + SMOTE")
+            st.header("Clasificación de morfología con Random Forest + SMOTE")
 
-            # 📌 Variables numéricas como predictores
+            # Variables numéricas como predictores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-            # 👉 Variable objetivo
+            # Variable objetivo
             target_var = st.selectbox(            
                 "Variable objetivo categórica",
                 ["M(ave)", "M(IP)", "M(c)"],        
                 key="rf_class_target"
             )
 
-            # 👉 Variables predictoras    
+            # Variables predictoras    
             feature_vars = st.multiselect(        
                 "Variables numéricas predictoras",
                 numeric_cols,        
                 default=numeric_cols
             )
 
-            # ⚙️ Hiperparámetros
+            # ⚙Hiperparámetros
             max_depth = st.slider("Profundidad máxima del árbol", 1, 20, 5)
             n_estimators = st.slider("Número de árboles", 10, 500, 200, step=10)
-
-            # ➕ SMOTE
-            use_smote = st.checkbox("⚖️ Aplicar SMOTE para balancear clases", value=False)
+            # 🎛️ Hiperparámetro extra para SMOTE
+            k_neighbors = st.slider("k_neighbors para SMOTE", 1, 10, 1)
+            # SMOTE
+            use_smote = st.checkbox("Aplicar SMOTE para balancear clases", value=False)
 
             if target_var and feature_vars:
                 X = df[feature_vars].values
@@ -877,7 +822,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if len(y) < 5:
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
-                    # 🟢 SMOTE
+                    # SMOTE
                     if use_smote:
                         sm = SMOTE(random_state=42)
                         X, y = sm.fit_resample(X, y)
@@ -893,14 +838,14 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     y_pred = clf.predict(X)
                     accuracy = accuracy_score(y, y_pred)
 
-                    st.write(f"✅ **Exactitud (Entrenamiento):** {accuracy:.3f}")
+                    st.write(f"**Exactitud (Entrenamiento):** {accuracy:.3f}")
                     st.text(classification_report(y, y_pred))
 
-                    # ✅ Validación cruzada
+                    # Validación cruzada
                     cv_scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-                    st.success(f"📊 **Accuracy CV promedio:** {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
+                    st.success(f"**Accuracy CV promedio:** {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
 
-                    # ✅ Matriz de confusión
+                    # Matriz de confusión
                     cm = confusion_matrix(y, y_pred)
                     cm_fig = ff.create_annotated_heatmap(
                         z=cm,
@@ -908,10 +853,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         y=list(clf.classes_),
                         colorscale="Blues"
                     )
-                    cm_fig.update_layout(title="🔵 Matriz de Confusión (Entrenamiento)")
+                    cm_fig.update_layout(title="Matriz de Confusión (Entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
 
-                    # ✅ Curva de aprendizaje
+                    # Curva de aprendizaje
                     train_sizes, train_scores, test_scores = learning_curve(
                         clf, X, y, cv=5, scoring='accuracy',
                         train_sizes=np.linspace(0.1, 1.0, 5)
@@ -936,10 +881,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                     st.plotly_chart(curve_fig, use_container_width=True)
 
-                    st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
+                    st.info("Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
         
-                    # 🎛️ Formulario de predicción
-                    st.subheader("🔮 Hacer una predicción nueva")
+                    # Formulario de predicción
+                    st.subheader("Hacer una predicción nueva")
                     input_vals = []
                     for feat in feature_vars:
                         val = st.slider(
@@ -958,8 +903,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.write("**Probabilidades (modelo base):**")
                         st.write(proba_dict)
 
-                        # ✅ Bootstrap para incertidumbre
-                        st.subheader("📏 Incertidumbre con Bootstrap")
+                        # Bootstrap para incertidumbre
+                        st.subheader("Incertidumbre con Bootstrap")
                         num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
                         bootstrap_probas = []
 
@@ -994,10 +939,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             "Probabilidad media": proba_mean,
                             "Desviación estándar": proba_std
                         })
-                        st.write("📊 **Distribución bootstrap de la predicción:**")
+                        st.write("**Distribución bootstrap de la predicción:**")
                         st.dataframe(results)
 
-                        st.subheader("📊 Distribución Bootstrap de Probabilidades")
+                        st.subheader("Distribución Bootstrap de Probabilidades")
                         for idx, class_label in enumerate(clf.classes_):
                             fig = go.Figure()
                             fig.add_trace(go.Histogram(
@@ -1016,7 +961,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.divider()
             
-            st.subheader("3️⃣ Matriz de correlación")
+            st.subheader("Matriz de correlación")
 
             # Calcular y graficar matriz de correlación
             if numeric_colss:

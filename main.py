@@ -1216,23 +1216,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             dec = df_smooth['Dec'].values
             weights = df_smooth[smooth_var].values
 
-
-            # ============================
-            # 🔑 Peso inteligente
-            # ============================
-            #if smooth_var in ['Cl_d', 'Rf']:
-            #    # Invertir pesos: menor Cl_d o Rf = más peso
-            #    max_val = np.nanmax(weights)
-            #    min_val = np.nanmin(weights)
-            #    weights = max_val - weights + min_val + 1e-6  # Evita división por cero
-            #    weights = weights / weights.sum()  # Normaliza
-            #else:
-            #    # Variables directas: normaliza para estabilidad
-            #    weights = weights - np.nanmin(weights)
-            #    weights = weights / weights.sum() if weights.sum() != 0 else np.ones_like(weights) / len(weights)
-
-
-            # ✅ Peso inteligente corregido
+            # Peso inteligente corregido
             if smooth_var == 'Rf':
                 weights = np.max(weights) - weights + np.min(weights) + 1e-6
             elif smooth_var == 'Cl_d':
@@ -1241,13 +1225,11 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 pass  # Otros índices, igual
 
             weights = np.clip(weights, 1e-6, None)  # Evita ceros
-            weights = weights / np.sum(weights)     # Normaliza robusto
-
-            
+            weights = weights / np.sum(weights)     # Normaliza robusto     
             
             xi, yi = np.mgrid[ra.min():ra.max():grid_size*1j, dec.min():dec.max():grid_size*1j]
 
-            # ✅ KDE fijo o adaptativo
+            # KDE fijo o adaptativo
             if kde_type.startswith("Fijo"):
                 kde = gaussian_kde(np.vstack([ra, dec]), weights=weights, bw_method=bw)
                 zi = kde(np.vstack([xi.ravel(), yi.ravel()]))    
@@ -1259,7 +1241,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             if use_log:
                 zi = np.log1p(zi)
 
-            # ✅ Gráfico interactivo
+            # Gráfico interactivo
             fig = go.Figure()
 
 
@@ -1268,7 +1250,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 x=xi[:,0],
                 y=yi[0],
                 contours=dict(
-                    coloring='heatmap',   # 👈 Superficie coloreada
+                    coloring='heatmap',   # Superficie coloreada
                     showlabels=True
                 ),
                 colorscale=cmap,
@@ -1276,7 +1258,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 line_width=1
             ))
 
-            # ✅ Puntos originales con hover robusto
+            # Puntos originales con hover robusto
             fig.add_trace(go.Scatter(
                 x=ra,
                 y=dec,
@@ -1295,7 +1277,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 ])
             ))
 
-            # ✅ Layout
+          
             fig.update_layout(
                 title=f"KDE {'Adaptativo' if kde_type.startswith('Adaptativo') else 'Fijo'} • Escala {'Log' if use_log else 'Lineal'} • {smooth_var}",
                 xaxis_title="Ascensión Recta (RA, grados)",
@@ -1308,33 +1290,24 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig, use_container_width=True)
 
-            # ✅ Tabla y exportación
+            # Tabla y exportación
             with st.expander("🔍 Ver datos suavizados"):
                 st.dataframe(df_smooth)
                 st.download_button(
-                    "💾 Descargar tabla usada",
+                    "Descargar tabla usada",
                     df_smooth.to_csv(index=False).encode('utf-8'),
                     file_name="datos_suavizados.csv",
                     mime="text/csv"
                 )
 
-
-
-
-
-            
-
-
-
-
             import numpy as np
             import plotly.express as px
             from astropy.cosmology import FlatLambdaCDM
 
-            st.subheader("🌌 Mapa 3D comóvil interactivo para Abell 85")
+            st.subheader("Mapa 3D comóvil interactivo para Abell 85")
 
-            # ✅ Controles para parámetros arbitrarios
-            st.markdown("### ⚙️ Parámetros de cosmología y proyección")
+            # Controles para parámetros arbitrarios
+            st.markdown("### Parámetros de cosmología y proyección")
 
             col1, col2, col3 = st.columns(3)
 
@@ -1734,9 +1707,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             return df
 
-        with st.expander("🚀 Ejecución Pipeline Automático"):
- #           selected_cols = st.multiselect("Variables numéricas:", df.select_dtypes(include='number').columns.tolist())
-
+        with st.expander("Clustering Jerárquico automatizado"):
             
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
@@ -1768,97 +1739,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         import plotly.express as px
         import plotly.graph_objects as go
         import streamlit as st
-
-        # ================================
-        # 📌 Clustering jerárquico interno
-        # ================================
-        #def run_subclustering_iterative(df, parent_col, parent_label, selected_cols, num_clusters, level):
-        #    df_sub = df[df[parent_col] == parent_label].copy()
-        #    scaler = StandardScaler()
-        #    scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
-        #    Z = linkage(scaled_data, method='ward')
-
-        #    cluster_col = f'Subcluster_{level}'
-        #    labels = fcluster(Z, t=num_clusters, criterion='maxclust')
-        #    df_sub[cluster_col] = labels
-        #    df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
-
-        #    # PCA + t-SNE
-        #    n_points = scaled_data.shape[0]
-        #    perplexity = max(5, min(30, n_points - 1))
-        #    pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-        #    tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
-        #    df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
-        #    df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
-        #    df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
-        #    df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
-
-        #    return df
-
-
-#        def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
-#            cluster_col = f'Subcluster_{level}'
-
-#            unique_parents = df[parent_col].dropna().unique()
-
-#            for parent_label in unique_parents:
-#                df_sub = df[df[parent_col] == parent_label].copy()
-#                if df_sub.shape[0] < 2:
-#                    continue
-
-#                scaler = StandardScaler()
-#                scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
-#                Z = linkage(scaled_data, method='ward')
-#
-#                labels = fcluster(Z, t=num_clusters, criterion='maxclust')
-#                df_sub[cluster_col] = labels
-#                df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
-
-#                # PCA + t-SNE
-#                n_points = scaled_data.shape[0]
-#                perplexity = max(5, min(30, n_points - 1))
-#                pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-#                tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
-
-#                df_sub[f'TSNE1_{level}'] = tsne_result[:, 0]
-#                df_sub[f'TSNE2_{level}'] = tsne_result[:, 1]
-#                df.loc[df_sub.index, f'TSNE1_{level}'] = df_sub[f'TSNE1_{level}']
-#                df.loc[df_sub.index, f'TSNE2_{level}'] = df_sub[f'TSNE2_{level}']
-
-#            return df
-
-
-#        def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
-#            cluster_col = f'Subcluster_{level}'
-#            tsne1_col = f'TSNE1_{level}'
-#            tsne2_col = f'TSNE2_{level}'
-
-#            unique_parents = df[parent_col].dropna().unique()
-
-#            for parent_label in unique_parents:
-#                df_sub = df[df[parent_col] == parent_label].copy()
-#                if df_sub.shape[0] < 5:
-#                    continue
-
-#                scaler = StandardScaler()
-#                scaled_data = scaler.fit_transform(df_sub[selected_cols].dropna())
-#                Z = linkage(scaled_data, method='ward')
-
-#                labels = fcluster(Z, t=num_clusters, criterion='maxclust')
-#                df_sub[cluster_col] = labels
-#                df.loc[df_sub.index, cluster_col] = df_sub[cluster_col]
-
-#                n_points = scaled_data.shape[0]
-#                perplexity = max(5, min(30, n_points - 1))
-#                pca_result = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-#                tsne_result = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(pca_result)
-
-#                df_sub[tsne1_col] = tsne_result[:, 0]
-#                df_sub[tsne2_col] = tsne_result[:, 1]
-#                df.loc[df_sub.index, tsne1_col] = df_sub[tsne1_col]
-#                df.loc[df_sub.index, tsne2_col] = df_sub[tsne2_col]
-
-#            return df
 
 
         def run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, level):
@@ -2081,8 +1961,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             df_pass = df[df[pass_col] == 1].copy()
             df_fail = df[df[pass_col] != 1].copy()
 
-            st.subheader(f"📌 Subclusters validados (nivel {level}): {len(passed_list)}")
-            show_all = st.checkbox("👁️ Mostrar galaxias que NO pasan (símbolo X)")
+            st.subheader(f"Subclusters validados (nivel {level}): {len(passed_list)}")
+            show_all = st.checkbox("Mostrar galaxias que NO pasan (símbolo X)")
 
             fig = go.Figure()
 
@@ -2157,24 +2037,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 )
 
 
-        
-
-
-#        current_level = 1
-#        parent_col = 'Subcluster'
-#        while True:
-#            st.subheader(f"🔄 Clustering nivel {current_level}")
-#            num_clusters = st.slider(f"Clusters para nivel {current_level}", 2, 10, 3)
-#            df = run_subclustering_iterative(df, parent_col, selected_cols, num_clusters, current_level)
-#            df, passed = run_ds_iterative(df, f'Subcluster_{current_level}', current_level)
-#            plot_tsne_and_boxplots(df, f'Subcluster_{current_level}', selected_cols, current_level)
-#            plot_validated_map(df, current_level)
-
-#            if not st.checkbox(f"➡️ Clustering otro nivel basado en nivel {current_level}?", value=False):
-#                break
-
-#            parent_col = f'Subcluster_{current_level}'
-#            current_level += 1
 
         parent_col = 'Subcluster'   # Nivel inicial
         current_level = 1
@@ -2224,13 +2086,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             )
 
             
-            # ⚙️ Visualiza mapa con galaxias validadas en este nivel
+            # Visualiza mapa con galaxias validadas en este nivel
             plot_validated_map(
                 df,
                 current_level
             )
 
-            # 🔄 ¿Quieres otro nivel?
+            # ¿Quieres otro nivel?
             if not st.checkbox(f"➡️ Clustering otro nivel basado en nivel {current_level}?", value=False):
                 break
 
@@ -2379,7 +2241,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                 st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander("📊 Dispersión de Variables"):
+        with st.expander("Dispersión de Variables"):
             mode = st.radio(            
                 "¿Qué quieres visualizar?",
                 options=['Global', 'Subclusters', 'Validados'],
@@ -2540,7 +2402,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 #        with st.expander("🌌 Mapa Realista Campo Profundo"):
 #            plot_realistic_map_streamlit(df)
 
-        with st.expander("🌌 Mapa Realista Final"):
+        with st.expander("Mapa de acuerdo a Morfología"):
             plot_realistic_galaxy_map(
                 df,
                 add_kde=True  # True o False

@@ -828,6 +828,75 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             
             st.divider()
 
+            import streamlit as st
+            import numpy as np
+            from sklearn.ensemble import RandomForestClassifier
+            from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+            import plotly.figure_factory as ff
+
+            st.header("🎯 Clasificación de morfología con Random Forest")
+
+            # 📌 Solo variables numéricas como predictores
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+            # 👉 Variable objetivo categórica
+            target_var = st.selectbox("Variable objetivo categórica", ["M(ave)", "M(IP)", "M(c)"], key="rf_class_target")
+
+            # 👉 Variables predictoras
+            feature_vars = st.multiselect("Variables numéricas predictoras", numeric_cols, default=numeric_cols)
+
+            if target_var and feature_vars:
+                X = df[feature_vars].values
+                y = df[target_var].astype(str).values  # Asegúrate de convertir a string si no está categórica
+
+                # 🧹 Elimina filas con NaNs
+                mask = ~np.isnan(X).any(axis=1) & pd.notna(y)
+                X = X[mask]
+                y = y[mask]
+
+                if len(y) < 5:
+                    st.warning("No hay suficientes datos después del filtrado.")
+                else:
+                    # 🌳 Random Forest Clasificación
+                    clf = RandomForestClassifier(n_estimators=200)
+                    clf.fit(X, y)
+                    y_pred = clf.predict(X)
+                    accuracy = accuracy_score(y, y_pred)
+
+                    st.write(f"**Exactitud:** {accuracy:.3f}")
+                    st.text(classification_report(y, y_pred))
+
+                    # 📊 Matriz de confusión
+                    cm = confusion_matrix(y, y_pred)
+                    cm_fig = ff.create_annotated_heatmap(
+                        z=cm,
+                        x=clf.classes_, y=clf.classes_,
+                        colorscale="Blues"
+                    )
+                    cm_fig.update_layout(title="Matriz de Confusión")
+                    st.plotly_chart(cm_fig)
+
+        # 🎛️ Formulario de predicción interactivo
+        st.subheader("🔮 Hacer una predicción nueva")
+
+        input_vals = []
+        for feat in feature_vars:
+            val = st.slider(f"{feat}", float(df[feat].min()), float(df[feat].max()), float(df[feat].mean()), key=f"slider_{feat}_class")
+            input_vals.append(val)
+
+        if st.button("Predecir clase"):
+            pred_class = clf.predict([input_vals])[0]
+            proba = clf.predict_proba([input_vals])
+            proba_dict = dict(zip(clf.classes_, proba[0]))
+
+            st.write(f"**Clase predicha:** {pred_class}")
+            st.write("**Probabilidades:**")
+            st.write(proba_dict)
+
+            
+
+            st.divider()
+            
             st.subheader("3️⃣ Matriz de correlación")
 
             # Calcular y graficar matriz de correlación

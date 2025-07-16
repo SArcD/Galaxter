@@ -808,7 +808,24 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             max_depth = st.slider("Profundidad máxima del árbol", 1, 20, 5)
             n_estimators = st.slider("Número de árboles", 10, 500, 200, step=10)
             # 🎛️ Hiperparámetro extra para SMOTE
-            k_neighbors = st.slider("k_neighbors para SMOTE", 1, 10, 1)
+
+            from collections import Counter
+            from imblearn.over_sampling import SMOTE
+
+            # ✅ Cuenta muestras por clase
+            class_counts = Counter(y)
+            min_samples = min(class_counts.values())
+
+            # ✅ Límite máximo realista para k_neighbors
+            safe_k = max(1, min_samples - 1)
+
+            # 🎛️ Control deslizante solo hasta safe_k
+            k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(5, safe_k))
+
+            # 🔘 Opción para usar SMOTE
+            use_smote = st.checkbox("Usar SMOTE (balanceo de clases)", value=False)
+
+            
             # SMOTE
             use_smote = st.checkbox("Aplicar SMOTE para balancear clases", value=False)
 

@@ -747,13 +747,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             # 🕹️ Sliders para definir los valores de predicción con keys únicos
             input_x1 = st.slider(
-                f"Selecciona {x1_var}",
+                f"Seleccione {x1_var}",
                 float(x1_min), float(x1_max), float(np.mean(X1)),
                 key=f"slider_{x1_var}_rf"
             )
     
             input_x2 = st.slider(
-                f"Selecciona {x2_var}",
+                f"Seleccione {x2_var}",
                 float(x2_min), float(x2_max), float(np.mean(X2)),
                 key=f"slider_{x2_var}_rf"
             )

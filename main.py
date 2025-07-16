@@ -613,7 +613,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
                         # Métricas RF
                         r2_rf = rf_model.score(X, Y)
-                        rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
+                        #rmse_rf = mean_squared_error(Y, Y_rf_pred, squared=False)
+                        import numpy as np
+                        mse_rf = mean_squared_error(Y, Y_rf_pred)
+                        rmse_rf = np.sqrt(mse_rf)
                         rf_text = f"R² = {r2_rf:.3f}<br>RMSE = {rmse_rf:.3f}"
 
                         fig.add_annotation(

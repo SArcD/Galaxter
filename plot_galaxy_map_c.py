@@ -4,79 +4,132 @@ import random
 from astropy.cosmology import FlatLambdaCDM
 import streamlit as st
 
-def plot_galaxy_map_with_distances(df, H0=70.0, Om0=0.3, z_cluster=0.0555,
-                                    ra_col='RA', dec_col='Dec', vel_col='Vel',
-                                    morph_col='M(ave)', rf_col='Rf', base_size=6):
-    """
-    Genera una imagen tipo mapa estelar, escalando las galaxias según su distancia comóvil.
-    """
+from astropy.cosmology import FlatLambdaCDM
+from astropy import units as u
+from scipy.stats import gaussian_kde
+from PIL import Image, ImageDraw, ImageFilter
+import numpy as np
+import streamlit as st
+import random
+import math
 
-    # Función interna para clasificar morfología
-    def classify_morphology(morph_str):
-        try:
-            morph_str = morph_str.lower()
-            if 'e' in morph_str:
-                return 'eliptica'
-            elif 's' in morph_str:
-                return 'espiral'
-            else:
-                return 'irregular'
-        except:
-            return 'desconocida'
+def plot_galaxy_map_cosmology(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='Rf',
+                               subcluster_col='Subcluster', subsubcluster_col="Subcluster_1",
+                               width=1024, height=1024):
+    
+    # 🌌 Cosmología plana
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    DEFAULT_REDSHIFT = 0.0555  # Redshift medio de Abell 85
 
-    # Función interna para calcular distancias comóviles
-    def calculate_comoving_distance(df_local, H0, Om0, z_cluster):
-        df_local = df_local.copy()
-        c = 3e5  # km/s
-        cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
-        df_local['z_gal'] = z_cluster + (df_local[vel_col] / c) * (1 + z_cluster)
-        df_local['Dist'] = cosmo.comoving_distance(df_local['z_gal']).value  # en Mpc
-        return df_local
+    st.header("🌌 Simulación visual del Cúmulo (Tamaños corregidos por redshift z=0.0555)")
+    st.markdown("Esta visualización incluye: halo de Perlin, estrellas de campo, galaxias según morfología y halos locales por subcluster.")
 
-    # Parámetros interactivos
-    widget_prefix = "galaxy_map"
-    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True, key=f"{widget_prefix}_stars")
-    morph_filter = st.sidebar.multiselect("Filtrar por morfología", options=df[morph_col].dropna().unique().tolist(),
-                                          default=df[morph_col].dropna().unique().tolist(), key=f"{widget_prefix}_filter")
+    # ---------------------- Filtros en sidebar ----------------------
+    show_stars = st.sidebar.checkbox("Mostrar estrellas de campo", value=True)
+    morphs = sorted(df[morph_col].dropna().unique())
+    morph_filter = st.sidebar.multiselect("Filtrar morfología", morphs, default=morphs)
 
-    df = calculate_comoving_distance(df, H0, Om0, z_cluster)
-    df_filtered = df[df[morph_col].isin(morph_filter)].dropna(subset=[ra_col, dec_col, morph_col, rf_col])
+    all_subclusters = sorted(set(df[subcluster_col].dropna()))
+    st.sidebar.markdown("### Subclusters visibles")
+    subcluster_visibility = {str(sub): st.sidebar.checkbox(f"Subcluster {sub}", value=True, key=f"sub_{sub}") for sub in all_subclusters}
 
-    # Imagen base
-    img_size = (800, 800)
-    img = Image.new("RGB", img_size, "black")
-    draw = ImageDraw.Draw(img)
+    all_subsubclusters = sorted(set(df[subsubcluster_col].dropna()))
+    st.sidebar.markdown("### Sub-Subclusters visibles")
+    subsubcluster_visibility = {str(sub): st.sidebar.checkbox(f"SubSubcluster {sub}", value=True, key=f"subsub_{sub}") for sub in all_subsubclusters}
 
-    ra = df_filtered[ra_col]
-    dec = df_filtered[dec_col]
-    rf = df_filtered[rf_col]
-    morph = df_filtered[morph_col].apply(classify_morphology)
+    # ---------------------- Filtro de DataFrame ----------------------
+    df_filtered = df[
+        (df[morph_col].isin(morph_filter)) &
+        (df[subcluster_col].astype(str).isin([k for k, v in subcluster_visibility.items() if v])) &
+        (df[subsubcluster_col].astype(str).isin([k for k, v in subsubcluster_visibility.items() if v]))
+    ].dropna()
 
-    # Normalización
-    ra_scaled = (ra - ra.min()) / (ra.max() - ra.min()) * img_size[0]
-    dec_scaled = img_size[1] - (dec - dec.min()) / (dec.max() - dec.min()) * img_size[1]
+    if df_filtered.empty:
+        st.warning("No hay datos con los filtros actuales.")
+        return
 
-    # Escala por distancia
-    distances = df_filtered['Dist'].values
-    scale_factor = np.mean(distances) / distances
-    scale_factor = np.clip(scale_factor, 0.5, 2.0)
+    RA_min, RA_max = df[ra_col].min(), df[ra_col].max()
+    Dec_min, Dec_max = df[dec_col].min(), df[dec_col].max()
 
-    colors = {
-        'eliptica': (255, 128, 0),
-        'espiral': (0, 255, 255),
-        'irregular': (255, 0, 255),
-        'desconocida': (200, 200, 200)
-    }
+    # ---------------------- Fondo base ----------------------
+    img = Image.new('RGBA', (width, height), (0, 0, 0, 255))
+    img.alpha_composite(generate_perlin_halo(width, height))
 
-    for (x, y), morph_type, sf in zip(zip(ra_scaled, dec_scaled), morph, scale_factor):
-        size = int(base_size * sf * random.uniform(0.9, 1.2))
-        bbox = [x - size, y - size, x + size, y + size]
-        draw.ellipse(bbox, fill=colors.get(morph_type, (255, 255, 255)))
-
+    # ---------------------- Estrellas de campo ----------------------
     if show_stars:
-        for _ in range(300):
-            x = random.randint(0, img_size[0] - 1)
-            y = random.randint(0, img_size[1] - 1)
-            img.putpixel((x, y), (255, 255, 255))
+        field = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        draw_field = ImageDraw.Draw(field)
+        for _ in range(1500):
+            x = random.randint(0, width)
+            y = random.randint(0, height)
+            r = random.uniform(0.5, 1.8)
+            brightness = random.randint(150, 255)
+            tint = random.choice([(255,255,255), (200,220,255), (255,240,200)])
+            draw_field.ellipse([x - r, y - r, x + r, y + r], fill=(tint[0], tint[1], tint[2], brightness))
+        field_blur = field.filter(ImageFilter.GaussianBlur(0.5))
+        img.alpha_composite(field_blur)
+
+    # ---------------------- Dibujo de galaxias ----------------------
+    for _, row in df_filtered.iterrows():
+        morph = classify_morphology(row[morph_col])
+        try:
+            DA = cosmo.angular_diameter_distance(DEFAULT_REDSHIFT).to(u.Mpc).value
+            angular_size_kpc = 5
+            theta_rad = angular_size_kpc / (DA * 1000)
+            theta_arcsec = theta_rad * (180 / math.pi) * 3600
+            size = max(2, min(int(theta_arcsec / 2), 50))
+        except:
+            size = 5
+
+        size = int(size * random.uniform(0.8, 1.2))
+        brightness = 255
+
+        if morph.startswith('spiral'):
+            galaxy = draw_spiral_type(size, spiral_type=morph.split('_')[-1])
+        elif morph == 'elliptical':
+            galaxy = draw_elliptical(size, brightness)
+        elif morph == 'lenticular':
+            galaxy = draw_lenticular(size, brightness)
+        else:
+            galaxy = draw_irregular(size, brightness)
+
+        galaxy = galaxy.rotate(random.randint(0, 360), expand=True)
+        x = int((row[ra_col] - RA_min) / (RA_max - RA_min) * width) - galaxy.width // 2
+        y = int((row[dec_col] - Dec_min) / (Dec_max - Dec_min) * height) - galaxy.height // 2
+        img.alpha_composite(galaxy, (x, y))
+
+    # ---------------------- Halos KDE por subcluster ----------------------
+    subcluster_positions = df_filtered.groupby(subcluster_col)[[ra_col, dec_col]].mean().reset_index()
+    for _, row in subcluster_positions.iterrows():
+        galaxies = df_filtered[df_filtered[subcluster_col] == row[subcluster_col]]
+        if galaxies.empty:
+            continue
+
+        coords = galaxies[[ra_col, dec_col]].values.T
+        kde = gaussian_kde(coords, bw_method='scott')
+
+        grid_size = 300
+        xgrid = np.linspace(RA_min, RA_max, grid_size)
+        ygrid = np.linspace(Dec_min, Dec_max, grid_size)
+        X, Y = np.meshgrid(xgrid, ygrid)
+        Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
+
+        threshold = np.percentile(Z, 80)
+        mask_array = (Z > threshold).astype(np.uint8) * 255
+        mask_img = Image.fromarray(mask_array).convert("L")
+        mask_img = mask_img.resize((grid_size, grid_size), resample=Image.BILINEAR)
+        mask_blurred = mask_img.filter(ImageFilter.GaussianBlur(40))
+
+        halo_rgba = Image.new('RGBA', mask_blurred.size, (0, 180, 150, 0))
+        alpha = mask_blurred.point(lambda p: int(p * 0.25))
+        halo_rgba.putalpha(alpha)
+        halo_resized = halo_rgba.resize((width, height), resample=Image.BILINEAR)
+        img.alpha_composite(halo_resized)
+
+    # ---------------------- Final: espejo y despliegue ----------------------
+    img = img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.FLIP_TOP_BOTTOM)
+    st.image(img, caption="🌠 Tamaños aparentes corregidos por cosmología (z=0.0555)")
+    st.dataframe(df_filtered)
 
     return img
+

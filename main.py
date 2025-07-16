@@ -172,8 +172,11 @@ Por favor cargue un archivo .csv con la base de datos (versión actual del archi
         import difflib
 
         # 🕵️‍♂️ Barra de búsqueda para encontrar columnas por nombre
-        st.subheader("🔍 Buscar variable por nombre")
-
+        st.subheader("Buscar variable por nombre")
+        st.markdown("""
+<div style="text-align: justify">
+En esta sección puede colocar el nombre de cualquiera de las columnas de la base de datos para ver una reseña breve de su significado (nota: aún necesita revisarse) </div>
+""", unsafe_allow_html=True)
         search_query = st.text_input("Escribe parte del nombre de la variable:", key="var_search_desc")
 
         if search_query:
@@ -196,27 +199,58 @@ Por favor cargue un archivo .csv con la base de datos (versión actual del archi
         import plotly.express as px
         import plotly.figure_factory as ff
 
-        with st.expander("📊 Análisis exploratorio: Distribuciones, Pair Plot y Correlación"):
+        with st.expander("📊 Análisis exploratorio: Distribución univariada, bivariada y corelación entre las varirables."):
             st.subheader("1️⃣ Distribución univariada de una variable numérica")
 
             # Lista de columnas numéricas en tu DataFrame
             numeric_colss = df.select_dtypes(include='number').columns.tolist()
 
             # Caja de búsqueda para variable numérica
-            search_var = st.text_input("🔍 Busca una variable numérica para graficar su distribución:", key="var_search_dist")
+            search_var = st.text_input("Teclee el nombre de una variable numérica para generar un histograma con su distribución:", key="var_search_dist")
+
+   #         if search_var:
+   #             best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
+   #             if best_match_var:
+   #                 col = best_match_var[0]
+   #                 st.success(f"Mostrando distribución para: **{col}**")
+   #                 fig = px.histogram(df, x=col, nbins=30, title=f"Distribución de {col}")
+   #                 st.plotly_chart(fig)
+   #             else:
+   #                 st.warning("No se encontró ninguna variable numérica similar.")
+   #         else:
+   #             st.info("Empieza a escribir para buscar la variable numérica.")
+
+            import difflib
+            import plotly.express as px
+
+            # Suponiendo que ya definiste `numeric_colss` y `df`
 
             if search_var:
                 best_match_var = difflib.get_close_matches(search_var, numeric_colss, n=1, cutoff=0.1)
-                if best_match_var:
-                    col = best_match_var[0]
-                    st.success(f"Mostrando distribución para: **{col}**")
-                    fig = px.histogram(df, x=col, nbins=30, title=f"Distribución de {col}")
-                    st.plotly_chart(fig)
-                else:
-                    st.warning("No se encontró ninguna variable numérica similar.")
+                    if best_match_var:
+                        col = best_match_var[0]
+                        st.success(f"Mostrando distribución para: **{col}**")
+
+                        # ✅ Agrega el slider para elegir el número de bins
+                        nbins = st.slider(
+                        "Selecciona el número de bins (clases) para el histograma:",
+                        min_value=5,
+                        max_value=100,
+                        value=30,
+                        step=1
+                        )
+
+                        # ✅ Genera el histograma con el valor elegido
+                        fig = px.histogram(df, x=col, nbins=nbins, title=f"Distribución de {col} con {nbins} bins")
+                        st.plotly_chart(fig)
+
+                    else:
+                        st.warning("No se encontró ninguna variable numérica similar.")
             else:
                 st.info("Empieza a escribir para buscar la variable numérica.")
 
+
+            
             st.divider()
 
             st.subheader("2️⃣ Pair Plot de variables numéricas")

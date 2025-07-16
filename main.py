@@ -731,13 +731,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             input_x1 = st.slider(
                 f"Seleccione {x1_var}",
                 float(x1_min), float(x1_max), float(np.mean(X1)),
-                key=f"slider_{x1_var}_rf_input"
+                key=f"slider_{x1_var}_rf_input_s"
             )
 
             input_x2 = st.slider(
                 f"Seleccion {x2_var}",
                 float(x2_min), float(x2_max), float(np.mean(X2)),
-                key=f"slider_{x2_var}"
+                key=f"slider_{x2_var}_random"
             )
 
             # Construye input para predicción    

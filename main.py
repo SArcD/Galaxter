@@ -1036,7 +1036,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     x="RA",
                     y="Dec",
                     color=selected_var,
-                    color_continuous_scale='plasma',
+                    color_continuous_scale='viridis',
                     hover_name="ID",
                     hover_data=hover_data,
                     title=f"Mapa filtrado por: {selected_var}"

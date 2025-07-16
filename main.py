@@ -744,18 +744,18 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             # Rango dinámico basado en los datos filtrados
             x1_min, x1_max = X1.min(), X1.max()
             x2_min, x2_max = X2.min(), X2.max()
-
-            # 🕹️ Sliders para definir los valores de predicción con keys únicos
+    
+            # 🕹️ Sliders con keys únicos y contextuales
             input_x1 = st.slider(
                 f"Seleccione {x1_var}",
                 float(x1_min), float(x1_max), float(np.mean(X1)),
-                key=f"slider_{x1_var}_rf"
+                key=f"slider_{x1_var}_rf_input"
             )
-    
+
             input_x2 = st.slider(
                 f"Seleccione {x2_var}",
                 float(x2_min), float(x2_max), float(np.mean(X2)),
-                key=f"slider_{x2_var}_rf"
+                key=f"slider_{x2_var}_rf_input"
             )
 
             # 📊 Construye input para predicción    

@@ -2852,6 +2852,23 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
         with st.expander("**Mapa con tamaños aparentes**"):
             # 2. Calcular distancia comóvil
+
+
+            from astropy.cosmology import FlatLambdaCDM
+
+            def calculate_comoving_distance(df, H0=70.0, Om0=0.3, z_cluster=0.0555):
+                """
+                Calcula la distancia comóvil a partir del redshift estimado con velocidad.
+                Agrega columnas z_gal y Dist al DataFrame.
+                """
+                import numpy as np
+                df = df.copy()
+                c = 3e5  # km/s
+                cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
+                df['z_gal'] = z_cluster + (df['Vel'] / c) * (1 + z_cluster)
+                df['Dist'] = cosmo.comoving_distance(df['z_gal']).value  # en Mpc
+                return df
+
             df_with_dist = calculate_comoving_distance(df)
 
             # 3. Generar imagen

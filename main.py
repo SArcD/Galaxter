@@ -2685,12 +2685,12 @@ elif opcion == "Equipo de trabajo":
                "CV": "https://scholar.google.com.mx/citations?user=3xPPTLoAAAAJ&hl=es", "contacto": "santiagoarceodiaz@gmail.com"},
               {
                "nombre": "M. C Carlos Arturo Flores Hernández",
-               "foto": "FloresC.jpg",
+               "foto": "FloresC.jpeg",
                "reseña": "Licenciado en Física, Maestro en Astrofísica.",
                "CV": "https://www.linkedin.com/in/carlos-arturo-flores-hernandez-824019117/?originalSubdomain=mx", "contacto": " "},
               {
                "nombre": "D. C (Astrofísica) Juan Manuel Islas Islas",
-               "foto": "IslasJ.jpg",
+               "foto": "IslasJ.jpeg",
                "reseña": "Licenciado en Física, Maestro en Astrofísica y Doctor en Ciencias (Astrofísica).",
                "CV": "https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ", "contacto": " "},
               {
@@ -2700,7 +2700,7 @@ elif opcion == "Equipo de trabajo":
                "CV": "https://www.irya.unam.mx/web/es/gente/tecnicos-academicos/r-ortega", "contacto": "r.ortega@irya.unam.mx"},
               {
                "nombre": "Dr. Josué de Jesús Trejo Alonso",
-               "foto": "TrejoJ.jpg",
+               "foto": "TrejoJ.png",
                "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica).",
                "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": " "}
                ]

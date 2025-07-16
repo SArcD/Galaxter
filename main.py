@@ -410,20 +410,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         hoverinfo='skip'
                     ), row=1, col=1)
 
-                    # 🚩 Justo aquí pones la anotación del modelo lineal:
-                    eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
-                    fig.add_annotation(
-                        xref="paper", yref="paper",
-                        x=0.95, y=0.95,
-                        text=eq_text,
-                        showarrow=False,
-                        align="right",
-                        bgcolor="white",
-                        bordercolor="black",
-                        borderwidth=1,
-                        row=1, col=1   # ☑️ Solo para el primer subplot
-                    )
-                    
+
                     # 🔵 RF Scatter
                     fig.add_trace(go.Scatter(
                         x=X.flatten(),
@@ -480,6 +467,21 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     #    row=1, col=1
                     #)
 
+                    # 🚩 Justo aquí pones la anotación del modelo lineal:
+                    eq_text = f"y = {slope:.2f}x + {intercept:.2f}<br>R² = {r_squared:.3f}"
+                    fig.add_annotation(
+                        xref="paper", yref="paper",
+                        x=0.95, y=0.95,
+                        text=eq_text,
+                        showarrow=False,
+                        align="right",
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        row=1, col=1   # ☑️ Solo para el primer subplot
+                    )
+                    
+                    
                     fig.update_layout(height=500, title=f"{y_var} vs {x_var} - Lineal vs RF")
                     st.plotly_chart(fig, use_container_width=True)
 

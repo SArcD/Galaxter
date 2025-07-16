@@ -777,7 +777,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.header("Clasificación de morfología con Random Forest + SMOTE")
 
 
-            st.markdown("**Aquí puede usar las variables numéricas para predecir morfología usando modelos de Random Forest (se recomienda activar el botón de SMOTE, si considera que las clases morfolóficas están desbalanceadas).**")
+            st.markdown("**Aquí puede usar las variables numéricas para predecir morfología usando modelos de Random Forest (se recomienda activar el botón de SMOTE, si considera que las clases morfolóficas están desbalanceadas). Use los botones y deslizadores para definir los predictores, la profundidad de los modelos de árbol en Random Forest y el número de vecinos (si usa SMOTE).**")
             
             # Variables numéricas como predictores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
@@ -860,9 +860,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         y=list(clf.classes_),
                         colorscale="Blues"
                     )
-                    cm_fig.update_layout(title="Matriz de Confusión (Entrenamiento)")
+                    cm_fig.update_layout(title="Matriz de Confusión (entrenamiento)")
                     st.plotly_chart(cm_fig, use_container_width=True)
-
+                    st.markdown("**Muestra la cantidad de predicciones correctas (en la diagonal) vs las incorrectas (celdas fuera de la diagonal).**")
                     # Curva de aprendizaje
                     train_sizes, train_scores, test_scores = learning_curve(
                         clf, X, y, cv=5, scoring='accuracy',
@@ -888,10 +888,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     )
                     st.plotly_chart(curve_fig, use_container_width=True)
 
+                    st.markdown("**Muestra la diferencia de precisión entre el modelo de Random Forest y la validadción cruzada.**")
+                    
                     st.info("Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
 
                     # Formulario de predicción
-                    st.subheader("Hacer una predicción nueva")
+                    st.subheader("Hacer una predicción")
                     input_vals = []
                     for feat in feature_vars:
                         val = st.slider(
@@ -968,7 +970,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.divider()
             
             st.subheader("Matriz de correlación")
-
+            st.markdown("**Muestra la matriz de correlación entre las variables consideradas en la base de datos.**")
             # Calcular y graficar matriz de correlación
             if numeric_colss:
                 corr_matrix = df[numeric_colss].corr()

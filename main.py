@@ -640,6 +640,105 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             
             st.divider()
 
+            import streamlit as st    
+            import plotly.graph_objects as go
+            import numpy as np
+            from sklearn.ensemble import RandomForestRegressor
+
+            # -------------------------------------------------------------
+            # 🌳 2 variables predictoras -> 1 target + RF + superficie 3D
+            # -------------------------------------------------------------
+
+            st.header("🌳 Random Forest: Superficie de Predicción 3D")
+    
+            # 📌 Variables numéricas
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+            # 🔘 Selectores
+            x1_var = st.selectbox("Variable X1", numeric_cols, key="rf_x1")
+            x2_var = st.selectbox("Variable X2", numeric_cols, key="rf_x2")
+            y_var = st.selectbox("Variable Target (Y)", numeric_cols, key="rf_y")
+
+            if x1_var and x2_var and y_var:
+                X1 = df[[x1_var]].values.flatten()
+                X2 = df[[x2_var]].values.flatten()
+                Y = df[[y_var]].values.flatten()
+
+                # 🧹 Quita NaNs
+                mask = ~np.isnan(X1) & ~np.isnan(X2) & ~np.isnan(Y)
+                X1, X2, Y = X1[mask], X2[mask], Y[mask]
+
+                X = np.column_stack((X1, X2))
+
+                if len(Y) < 5:
+                    st.warning("No hay suficientes datos después del filtrado.")
+                else:
+                    # 🌳 Random Forest
+                    rf_model = RandomForestRegressor(n_estimators=200)
+                    rf_model.fit(X, Y)
+                    Y_pred = rf_model.predict(X)
+
+                    # ➕ Métricas
+                    r2_rf = rf_model.score(X, Y)
+                    from sklearn.metrics import mean_squared_error
+                    rmse_rf = np.sqrt(mean_squared_error(Y, Y_pred))
+
+                    # 📊 Malla para superficie
+                    grid_size = 30
+                    x1_range = np.linspace(X1.min(), X1.max(), grid_size)
+                    x2_range = np.linspace(X2.min(), X2.max(), grid_size)
+                    xx1, xx2 = np.meshgrid(x1_range, x2_range)
+                    grid_points = np.c_[xx1.ravel(), xx2.ravel()]
+                    zz_pred = rf_model.predict(grid_points).reshape(xx1.shape)
+
+                    # 🎨 Hover personalizado con TODAS las columnas        
+                    hover_texts = []
+                    df_valid = df[mask]
+                    for i in range(len(df_valid)):
+                        row_values = [f"<b>{col}:</b> {df_valid.iloc[i][col]}" for col in df.columns]
+                        hover_texts.append("<br>".join(row_values))
+
+                    # 🎥 Gráfico Plotly 3D
+                    fig = go.Figure()
+
+                    # 🟢 Puntos reales
+                    fig.add_trace(go.Scatter3d(
+                        x=X1,
+                        y=X2,
+                        z=Y,
+                        mode='markers',
+                        marker=dict(size=5, color='black'),
+                        text=hover_texts,
+                        hovertemplate='%{text}',
+                        name='Datos Reales'
+                    ))
+
+                    # 🟣 Superficie RF
+                    fig.add_trace(go.Surface(
+                        x=x1_range,
+                        y=x2_range,
+                        z=zz_pred,
+                        colorscale='Viridis',
+                        opacity=0.7,
+                        name='Superficie RF'
+                    ))
+
+                    fig.update_layout(
+                        title=f"RF Superficie de Predicción 3D<br>R² = {r2_rf:.3f} | RMSE = {rmse_rf:.3f}",
+                        scene=dict(
+                            xaxis_title=x1_var,
+                            yaxis_title=x2_var,
+                            zaxis_title=y_var
+                        ),
+                        height=700
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
+
+
+            
+            st.divider()
+
             st.subheader("3️⃣ Matriz de correlación")
 
             # Calcular y graficar matriz de correlación

@@ -495,7 +495,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     fig.update_layout(height=500, title=f"{y_var} vs {x_var} - Lineal vs RF")
                     st.plotly_chart(fig, use_container_width=True)
 
-            st.dovider()
+            st.divider()
 
 
             import streamlit as st

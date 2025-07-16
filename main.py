@@ -120,7 +120,11 @@ Adicionalmente, cada sección de la aplicación se ha diseñado para que, en cas
 
 
 elif opcion == "Proceso":
-
+    st.markdown("""
+<div style="text-align: justify">
+Por favor cargue un archivo .csv con la base de datos (versión actual del archivo: "Tabla_mainA85_b.csv".
+</div>
+""", unsafe_allow_html=True)
     # Cargar archivo CSV desde el usuario
     uploaded_file = st.file_uploader("Sube tu archivo CSV", type="csv")
 

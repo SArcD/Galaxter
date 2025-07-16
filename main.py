@@ -2853,7 +2853,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
         with st.expander("**Mapa con tamaños aparentes**"):
             from astropy.cosmology import FlatLambdaCDM
             from plot_galaxy_map_c import plot_galaxy_map_with_distances
-            img = plot_galaxy_map_with_distances(df)
+            img = plot_galaxy_map_cosmology(df)
             #img.save("mapa_galaxias_corregido.png")
             st.image(img)
 

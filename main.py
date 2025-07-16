@@ -812,18 +812,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from collections import Counter
             from imblearn.over_sampling import SMOTE
 
-            # ✅ Cuenta muestras por clase
-            class_counts = Counter(y)
-            min_samples = min(class_counts.values())
-
-            # ✅ Límite máximo realista para k_neighbors
-            safe_k = max(1, min_samples - 1)
-
-            # 🎛️ Control deslizante solo hasta safe_k
-            k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(5, safe_k))
-
-            # 🔘 Opción para usar SMOTE
-            use_smote = st.checkbox("Usar SMOTE (balanceo de clases)", value=False)
 
             
             # SMOTE
@@ -843,6 +831,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     if use_smote:
                         sm = SMOTE(random_state=42)
                         X, y = sm.fit_resample(X, y)
+                        # ✅ Cuenta muestras por clase
+                        class_counts = Counter(y)
+                        min_samples = min(class_counts.values())
+
+                        # ✅ Límite máximo realista para k_neighbors
+                        safe_k = max(1, min_samples - 1)
+    
+                        # 🎛️ Control deslizante solo hasta safe_k
+                        k_neighbors = st.slider("k_neighbors para SMOTE", 1, safe_k, min(5, safe_k))
                         st.success(f"✔️ Clases balanceadas con SMOTE: {dict(pd.Series(y).value_counts())}")
 
                     # 🌳 Random Forest Clasificación

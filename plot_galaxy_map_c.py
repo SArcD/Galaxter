@@ -13,6 +13,19 @@ import streamlit as st
 import random
 import math
 
+def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
+    from noise import pnoise2
+    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    for x in range(width):
+        for y in range(height):
+            n = pnoise2(x * scale, y * scale, octaves=octaves)
+            val = max(n + 0.5, 0)
+            val = val ** 2.5
+            a = int(alpha * val)
+            halo.putpixel((x, y), (0, 180, 150, a))
+    return halo.filter(ImageFilter.GaussianBlur(40))
+
+
 def plot_galaxy_map_cosmology(df, ra_col='RA', dec_col='Dec', morph_col='M(ave)', rf_col='Rf',
                                subcluster_col='Subcluster', subsubcluster_col="Subcluster_1",
                                width=1024, height=1024):

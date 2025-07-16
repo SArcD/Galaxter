@@ -214,7 +214,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             search_vars = st.multiselect(
                 "**Selecciona una o más variables numéricas para mostrar histogramas (puede manipular o guardar la gráfica con los botones que aparecen si coloca el cursor en la parte superior derecha):**",
-                options=numeric_colss
+                options=numeric_colss, default=numeric_colss[:2]
             )
 
             if search_vars:

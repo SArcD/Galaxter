@@ -5,22 +5,8 @@ from astropy.cosmology import FlatLambdaCDM
 from PIL import Image, ImageDraw
 import random
 
-def calculate_comoving_distance(df, H0=70.0, Om0=0.3, z_cluster=0.0555):
-    """
-    Calcula la distancia comóvil para cada galaxia en el DataFrame a partir de su velocidad radial.
-    """
-    c = 3e5  # km/s
-    cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
-    df = df.copy()
 
-    # Redshift efectivo (considerando movimiento peculiar)
-    df['z_gal'] = z_cluster + (df['Vel'] / c) * (1 + z_cluster)
-    df['Dist'] = cosmo.comoving_distance(df['z_gal']).value  # Mpc
-
-    return df
-
-
-def plot_galaxy_map(df, image_size=(2048, 2048), background_color=(0, 0, 0)):
+def plot_galaxy_map_c(df, image_size=(2048, 2048), background_color=(0, 0, 0)):
     """
     Dibuja la imagen simulada de galaxias con tamaños aparentes corregidos por distancia comóvil.
     """

@@ -949,6 +949,21 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         # ✅ Bootstrapping para incertidumbre
                         st.subheader("📏 Incertidumbre con Bootstrap")
                         num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
+                        #bootstrap_probas = []
+
+                        #for _ in range(num_bootstrap):
+                        #    X_res, y_res = resample(X, y, replace=True)
+                        #    clf_b = RandomForestClassifier(
+                        #        n_estimators=n_estimators,
+                        #        max_depth=max_depth,
+                        #        random_state=None
+                        #    )
+                        #    clf_b.fit(X_res, y_res)
+                        #    p = clf_b.predict_proba([input_vals])[0]
+                        #    bootstrap_probas.append(p)
+
+                        #bootstrap_probas = np.array(bootstrap_probas)
+
                         bootstrap_probas = []
 
                         for _ in range(num_bootstrap):
@@ -959,8 +974,20 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                                 random_state=None
                             )
                             clf_b.fit(X_res, y_res)
-                            p = clf_b.predict_proba([input_vals])[0]
-                            bootstrap_probas.append(p)
+    
+                            # Asegura compatibilidad de clases:
+                            proba_b = clf_b.predict_proba([input_vals])[0]
+                            classes_b = clf_b.classes_
+    
+                            proba_full = []
+                            for cls in clf.classes_:
+                                if cls in classes_b:
+                                    idx = np.where(classes_b == cls)[0][0]
+                                    proba_full.append(proba_b[idx])
+                                else:
+                                    proba_full.append(0.0)
+    
+                            bootstrap_probas.append(proba_full)
 
                         bootstrap_probas = np.array(bootstrap_probas)
                         proba_mean = bootstrap_probas.mean(axis=0)

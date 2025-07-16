@@ -827,50 +827,63 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             
             
             st.divider()
+
             import streamlit as st
             import numpy as np
             import pandas as pd
             from sklearn.ensemble import RandomForestClassifier
             from sklearn.model_selection import cross_val_score, learning_curve
-            from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+            from sklearn.metrics import accuracy_score, classification_report, confusion_matrix    
             from sklearn.utils import resample
             import plotly.figure_factory as ff
             import plotly.graph_objects as go
 
-            st.header("🎯 Clasificación de morfología con Random Forest")
+            # Solo si tienes imbalanced-learn
+            from imblearn.over_sampling import SMOTE
+
+            st.header("🎯 Clasificación de morfología con Random Forest + SMOTE")
 
             # 📌 Variables numéricas como predictores
             numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
             # 👉 Variable objetivo
-            target_var = st.selectbox(
+            target_var = st.selectbox(            
                 "Variable objetivo categórica",
-                ["M(ave)", "M(IP)", "M(c)"],
+                ["M(ave)", "M(IP)", "M(c)"],        
                 key="rf_class_target"
             )
 
             # 👉 Variables predictoras    
-            feature_vars = st.multiselect(
+            feature_vars = st.multiselect(        
                 "Variables numéricas predictoras",
-                numeric_cols,
+                numeric_cols,        
                 default=numeric_cols
             )
 
-            # 🌳 Hiperparámetros ajustables
+            # ⚙️ Hiperparámetros
             max_depth = st.slider("Profundidad máxima del árbol", 1, 20, 5)
             n_estimators = st.slider("Número de árboles", 10, 500, 200, step=10)
+
+            # ➕ SMOTE
+            use_smote = st.checkbox("⚖️ Aplicar SMOTE para balancear clases", value=False)
 
             if target_var and feature_vars:
                 X = df[feature_vars].values
                 y = df[target_var].astype(str).values
 
                 mask = ~np.isnan(X).any(axis=1) & pd.notna(y)
-                X = X[mask]
-                y = y[mask]
+                X, y = X[mask], y[mask]
 
                 if len(y) < 5:
                     st.warning("No hay suficientes datos después del filtrado.")
                 else:
+                    # 🟢 SMOTE
+                    if use_smote:
+                        sm = SMOTE(random_state=42)
+                        X, y = sm.fit_resample(X, y)
+                        st.success(f"✔️ Clases balanceadas con SMOTE: {dict(pd.Series(y).value_counts())}")
+
+                    # 🌳 Random Forest Clasificación
                     clf = RandomForestClassifier(
                         n_estimators=n_estimators,
                         max_depth=max_depth,
@@ -924,10 +937,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.plotly_chart(curve_fig, use_container_width=True)
 
                     st.info("💡 Revisa la curva: Si hay brecha grande entre entrenamiento y validación, puede haber sobreajuste.")
-    
+        
                     # 🎛️ Formulario de predicción
                     st.subheader("🔮 Hacer una predicción nueva")
-
                     input_vals = []
                     for feat in feature_vars:
                         val = st.slider(
@@ -946,24 +958,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.write("**Probabilidades (modelo base):**")
                         st.write(proba_dict)
 
-                        # ✅ Bootstrapping para incertidumbre
+                        # ✅ Bootstrap para incertidumbre
                         st.subheader("📏 Incertidumbre con Bootstrap")
                         num_bootstrap = st.slider("Número de bootstraps", 50, 500, 100, 50, key="bootstrap_rf_class")
-                        #bootstrap_probas = []
-
-                        #for _ in range(num_bootstrap):
-                        #    X_res, y_res = resample(X, y, replace=True)
-                        #    clf_b = RandomForestClassifier(
-                        #        n_estimators=n_estimators,
-                        #        max_depth=max_depth,
-                        #        random_state=None
-                        #    )
-                        #    clf_b.fit(X_res, y_res)
-                        #    p = clf_b.predict_proba([input_vals])[0]
-                        #    bootstrap_probas.append(p)
-
-                        #bootstrap_probas = np.array(bootstrap_probas)
-
                         bootstrap_probas = []
 
                         for _ in range(num_bootstrap):
@@ -974,11 +971,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                                 random_state=None
                             )
                             clf_b.fit(X_res, y_res)
-    
-                            # Asegura compatibilidad de clases:
                             proba_b = clf_b.predict_proba([input_vals])[0]
                             classes_b = clf_b.classes_
-    
+
+                            # Map clases
                             proba_full = []
                             for cls in clf.classes_:
                                 if cls in classes_b:
@@ -986,7 +982,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                                     proba_full.append(proba_b[idx])
                                 else:
                                     proba_full.append(0.0)
-    
+
                             bootstrap_probas.append(proba_full)
 
                         bootstrap_probas = np.array(bootstrap_probas)
@@ -1001,7 +997,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                         st.write("📊 **Distribución bootstrap de la predicción:**")
                         st.dataframe(results)
 
-                        # 🎯 Histograma para cada clase
                         st.subheader("📊 Distribución Bootstrap de Probabilidades")
                         for idx, class_label in enumerate(clf.classes_):
                             fig = go.Figure()
@@ -1018,8 +1013,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             )
                             st.plotly_chart(fig, use_container_width=True)
 
-   
-            
 
             st.divider()
             

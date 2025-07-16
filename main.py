@@ -1,4 +1,3 @@
-# app.py
 
 import streamlit as st
 import pandas as pd
@@ -9,11 +8,6 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Título de la app
-#st.image("GCexplorer.PNG", use_column_width=True)
-#st.image("Designer.png")
-
-#import streamlit as st
 
 # Crea dos columnas: una para el logo, otra para el texto
 col1, col2 = st.columns([1, 3])
@@ -988,179 +982,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 st.warning("No hay variables numéricas para calcular correlación.")
 
 
-
-
-
-
-        # Expansor cpm el mapa de Abell 85
-#        with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-#            import plotly.express as px
-#            import plotly.graph_objects as go
-#            import pandas as pd
-#            import streamlit as st
-
-#            # -------------------------------
-#            # 🌌 Expansor con mapa interactivo
-#            # -------------------------------
-#            num_vars = ['Vel', 'Cl_d', '(u-g)', '(g-r)', '(r-i)', '(i-z)', 'Delta', 'Rf']
-#            cat_vars = ['M(parn)', 'Act']
-#            all_vars = num_vars + cat_vars
-    
-#            selected_var = st.selectbox(
-#                "Variable para filtrar y colorear puntos:",
-#                options=all_vars
-#            )
-
-#            df_filtered = df.copy()
-
-#            # -------------------------------
-#            # 📌 Filtrado con rangos o categorías
-#            # -------------------------------
-#            if selected_var in num_vars:
-#                try:
-#                    df_filtered['range_label'] = pd.qcut(df_filtered[selected_var], 5, duplicates='drop')
-#                    labels = df_filtered['range_label'].cat.categories.astype(str).tolist()
-#                    selected_labels = st.multiselect(
-#                        "Selecciona uno o varios rangos:",
-#                        options=labels,
-#                        default=labels
-#                    )
-#                    df_filtered = df_filtered[df_filtered['range_label'].astype(str).isin(selected_labels)]
-#                except Exception as e:
-#                    st.warning(f"No se pudieron crear rangos para esta variable. Detalle: {e}")
-#            elif selected_var in cat_vars:
-#                labels = df_filtered[selected_var].dropna().unique().tolist()
-#                selected_labels = st.multiselect(
-#                    "Selecciona una o varias categorías:",
-#                    options=labels,
-#                    default=labels
-#                )
-#                df_filtered = df_filtered[df_filtered[selected_var].isin(selected_labels)]
-
-#            # -------------------------------
-#            # ✅ Hover enriquecido
-#            # -------------------------------
-#            hover_data = {
-#                "RA": True, "Dec": True,
-#                "Vel": True, "Cl_d": True, "Delta": True,
-#                "(u-g)": True, "(g-r)": True, "(r-i)": True, "(i-z)": True,
- #               "M(IP)": True, "M(ave)": True, "Act": True
-#            }
-
-#            required_cols = {'RA', 'Dec', 'ID'} | set(hover_data.keys())
-
-#            if required_cols.issubset(df.columns):
-#                fig = px.scatter(
-#                    df_filtered,
-#                    x="RA",
-#                    y="Dec",
-#                    color=selected_var,
-#                    color_continuous_scale='viridis',
-#                    hover_name="ID",
-#                    hover_data=hover_data,
-#                    title=f"Mapa filtrado por: {selected_var}"
-#                )
-
-#                fig.add_trace(
-#                    go.Histogram2dContour(
-#                        x=df_filtered['RA'],
-#                        y=df_filtered['Dec'],
-#                        ncontours=10,
-#                        colorscale='viridis',
-#                        contours_coloring='lines',
-#                        line_width=2,
-#                        opacity=0.5,
-#                        showscale=False,
-#                        hoverinfo='skip'
-#                    )    
-#                )
-
-#                fig.update_xaxes(autorange="reversed")
-#                #fig.update_yaxes(autorange="reversed")
-#                fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
-#                fig.update_yaxes(showgrid=False)  # Oculta solo las líneas horizontales
-
-#                # -------------------------------
-#                # ⭐️ Destacar N galaxias más brillantes o altas en la variable
-#                # -------------------------------
-#                st.write("Número de galaxias a destacar (por valor más extremo de la variable seleccionada):")
-#                num_highlight = st.slider("Cantidad de galaxias destacadas", min_value=1, max_value=100, value=5)
-
-#                if selected_var in num_vars:
-#                    df_stars = df_filtered.nsmallest(num_highlight, 'Rf') if selected_var == 'Rf' else df_filtered.nlargest(num_highlight, selected_var)
-#                else:
-#                    df_stars = df_filtered.head(num_highlight)
-#
-#                for i, (_, star_row) in enumerate(df_stars.iterrows()):
-#                    fig.add_trace(
-#                        go.Scatter(
-#                            x=[star_row['RA']],
-#                            y=[star_row['Dec']],
-#                            mode="markers+text",
-#                            marker=dict(
-#                                symbol="star",
-#                                size=20,
-#                                color="gold",
-#                                line=dict(width=1, color="black")
-#                            ),
-#                            text=[str(i+1)],
-#                            textposition="middle center",
-#                            textfont=dict(color="black", size=10),
-#                            name=f"Destacado {i+1}",
-#                            legendgroup="Destacadas",
-#                            showlegend=False,
-#                            hovertemplate="<br>".join([
-#                                f"ID: {star_row['ID']}",
-#                                f"RA: {star_row['RA']:.5f}",
-#                                f"Dec: {star_row['Dec']:.5f}",
-#                                f"Vel: {star_row['Vel']}",
-#                                f"Delta: {star_row['Delta']}",
-#                                f"{selected_var}: {star_row[selected_var]}"
-#                            ])
-#                        )
-#                    )
-
-#                fig.update_layout(
-#                    xaxis_title="Ascensión Recta (RA, grados)",
-#                    yaxis_title="Declinación (Dec, grados)",
-#                    height=700,
-#                    width=900,
-#                    #plot_bgcolor='gray',
-#                    #paper_bgcolor='black',
-#                    font=dict(color="white")
-#                )
-#                #fig.update_xaxes(showgrid=False)  # Oculta solo las líneas horizontales
-
-#                st.plotly_chart(fig)
-
-#                # -------------------------------
-#                # 💾 Botones de descarga
-#                # -------------------------------
-#                st.download_button(
-#                    "💾 Descargar tabla filtrada",
-#                    df_filtered.to_csv(index=False).encode('utf-8'),
-#                    file_name="galaxias_filtradas.csv",
-#                    mime="text/csv"
-#                )
-
-#                if not df_stars.empty:
-#                    st.download_button(
-#                        "⭐️ Descargar tabla de galaxias destacadas",
-#                        df_stars.to_csv(index=False).encode('utf-8'),
-#                        file_name="galaxias_destacadas.csv",
-#                        mime="text/csv"
-#                    )
-
-#            else:
-#                st.warning(
-#                    f"Faltan columnas necesarias para el mapa interactivo: "
-#                    f"{required_cols - set(df.columns)}"
-#                )
-
-        # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
-        with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
-        # 🌌 Expansor con mapa interactivo del cúmulo Abell 85
-        #with st.expander("🌌 Ver mapa interactivo del cúmulo Abell 85"):
+        # Expansor con mapa interactivo del cúmulo Abell 85
+        with st.expander("Ver mapa interactivo del cúmulo Abell 85"):
             import plotly.express as px
             import plotly.graph_objects as go
             import pandas as pd

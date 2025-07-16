@@ -1171,7 +1171,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if not df_extreme.empty or not df_bright.empty:
                     df_combined = pd.concat([df_extreme, df_bright]).drop_duplicates().reset_index(drop=True)
                     st.download_button(
-                        "⭐️ Descargar tabla de galaxias destacadas",
+                        "Descargar tabla de galaxias destacadas",
                         df_combined.to_csv(index=False).encode('utf-8'),
                         file_name="galaxias_destacadas.csv",
                         mime="text/csv"
@@ -1182,16 +1182,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     f"{required_cols - set(df.columns)}"
                 )
 
-
-            # ✅ Librerías necesarias
-            #import numpy as np
-            #import streamlit as st
-            #import plotly.graph_objects as go
-           # from scipy.stats import gaussian_kde
-           # from statsmodels.nonparametric.kernel_density import KDEMultivariate
-
-            # ✅ Encabezado
-            # ✅ Librerías necesarias
             import numpy as np        
             import streamlit as st
             import plotly.graph_objects as go
@@ -1199,7 +1189,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from statsmodels.nonparametric.kernel_density import KDEMultivariate
 
             # ✅ Encabezado
-            st.subheader("🗺️ Mapa KDE avanzado (fijo/adaptativo + opciones log/hover)")
+            st.subheader("Mapa KDE Gaussiano")
 
             # ✅ Variables disponibles
             smooth_var = st.selectbox(

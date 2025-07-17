@@ -13,6 +13,124 @@ import streamlit as st
 import random
 import math
 
+# -------------------------------------------------------
+# ✅ Clasificador detallado
+# -------------------------------------------------------
+def classify_morphology(morph_str):
+    morph_str = morph_str.lower()
+    if morph_str.startswith('e'):
+        return 'elliptical'
+    elif 's0' in morph_str:
+        return 'lenticular'
+    elif 'sa' in morph_str:
+        return 'spiral_sa'
+    elif 'sb' in morph_str:
+        return 'spiral_sb'
+    elif 'sc' in morph_str:
+        return 'spiral_sc'
+    elif 'sd' in morph_str:
+        return 'spiral_sd'
+    else:
+        return 'irregular'
+
+# -------------------------------------------------------
+# ✅ Generador de Perlin (opcional, mantén tu versión)
+# -------------------------------------------------------
+def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
+    from noise import pnoise2
+    halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    for x in range(width):
+        for y in range(height):
+            n = pnoise2(x * scale, y * scale, octaves=octaves)
+            val = max(n + 0.5, 0)
+            val = val ** 2.5
+            a = int(alpha * val)
+            halo.putpixel((x, y), (0, 180, 150, a))
+    return halo.filter(ImageFilter.GaussianBlur(40))
+
+# -------------------------------------------------------
+# ✅ Espirales por tipo
+# -------------------------------------------------------
+def draw_spiral_type(size, spiral_type='sa'):
+    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    draw = ImageDraw.Draw(g)
+    cx, cy = size, size
+
+    tightness = {
+        'sa': 0.4,
+        'sb': 0.7,
+        'sc': 1.0,
+        'sd': 1.4
+    }.get(spiral_type, 0.8)
+
+    tint = random.choice([(220, 240, 255), (200, 220, 255), (240, 240, 255)])
+
+    for arm in range(2):
+        theta_offset = (2 * math.pi / 2) * arm
+        points = []
+        for i in range(150):
+            t = i / 150 * (2 * math.pi)
+            r = size * (i / 150) * tightness
+            if spiral_type == 'sd' and random.random() < 0.05:
+                continue
+            x = cx + r * math.cos(t + theta_offset)
+            y = cy + r * math.sin(t + theta_offset)
+            points.append((x, y))
+        draw.line(points, fill=(tint[0], tint[1], tint[2], 255), width=1)
+
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255, 255, 255, 255))
+    return g.filter(ImageFilter.GaussianBlur(1))
+
+# -------------------------------------------------------
+# ✅ Elíptica
+# -------------------------------------------------------
+def draw_elliptical(size, brightness):
+    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    draw = ImageDraw.Draw(g)
+    cx, cy = size, size
+    tint = random.choice([(180, 220, 255), (200, 240, 255), (220, 220, 255)])
+    for i in range(5, 0, -1):
+        rx = int(size * (i / 5))
+        ry = int(size * (i / 5) * 0.6)
+        alpha = int(brightness * (i / 5) * 0.5)
+        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(tint[0], tint[1], tint[2], alpha))
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255,255,255,255))
+    return g.filter(ImageFilter.GaussianBlur(1))
+
+# -------------------------------------------------------
+# ✅ Lenticular
+# -------------------------------------------------------
+def draw_lenticular(size, brightness):
+    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    draw = ImageDraw.Draw(g)
+    cx, cy = size, size
+    tint = random.choice([(200, 220, 255), (255, 230, 200), (220, 220, 240)])
+    for i in range(2, 0, -1):
+        rx = int(size * (i/2))
+        ry = int(size * (i/2) * 0.3)
+        alpha = int(brightness * (i/2) * 0.5)
+        draw.ellipse([cx-rx, cy-ry, cx+rx, cy+ry], fill=(tint[0], tint[1], tint[2], alpha))
+    draw.line([cx-size//2, cy, cx+size//2, cy], fill=(200,220,255,180), width=1)
+    draw.ellipse([cx-2, cy-2, cx+2, cy+2], fill=(255,255,255,255))
+    return g.filter(ImageFilter.GaussianBlur(1))
+
+# -------------------------------------------------------
+# ✅ Irregular
+# -------------------------------------------------------
+def draw_irregular(size, brightness):
+    g = Image.new('RGBA', (size*2, size*2), (0,0,0,0))
+    draw = ImageDraw.Draw(g)
+    cx, cy = size, size
+    tint = random.choice([(120, 200, 255), (180, 240, 200), (140, 220, 250)])
+    for _ in range(size*4):
+        dx = random.randint(-size, size)
+        dy = random.randint(-size, size)
+        draw.point((cx+dx, cy+dy), fill=(tint[0], tint[1], tint[2], brightness))
+    draw.ellipse([cx-1, cy-1, cx+1, cy+1], fill=(255,255,255,255))
+    return g.filter(ImageFilter.GaussianBlur(1))
+
+
+
 def generate_perlin_halo(width, height, scale=0.02, octaves=1, alpha=150):
     from noise import pnoise2
     halo = Image.new('RGBA', (width, height), (0, 0, 0, 0))

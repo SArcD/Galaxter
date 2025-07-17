@@ -2850,12 +2850,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.markdown("Seleccione la variable a mostrar y el número de galaxias a desplegarse (puede seleccionar hasta 100 con los valores mas altos en la variable).")
             st.image(img)  # ✅ Esto mostrará el resultado actualizado
 
-        with st.expander("**Mapa con tamaños aparentes**"):
-            from astropy.cosmology import FlatLambdaCDM
-            from plot_galaxy_map_c import plot_galaxy_map_cosmology
-            img = plot_galaxy_map_cosmology(df)
-            #img.save("mapa_galaxias_corregido.png")
-            st.image(img)
+ #       with st.expander("**Mapa con tamaños aparentes**"):
+ #           from astropy.cosmology import FlatLambdaCDM
+ #           from plot_galaxy_map_c import plot_galaxy_map_cosmology
+ #           img = plot_galaxy_map_cosmology(df)
+ #           #img.save("mapa_galaxias_corregido.png")
+ #           st.image(img)
 
         
 

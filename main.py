@@ -1101,13 +1101,21 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 name="Superficie"
             ))
 
-            interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals)
+            #interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals)
+            interp_func = RegularGridInterpolator(
+                (dec_vals, ra_vals),  # eje y (Dec), eje x (RA)
+                proba_vals,
+                bounds_error=False,
+                fill_value=None
+            )
 
 
             for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
-                coords_sub = sub_df[["RA", "Dec"]].values
+                #coords_sub = sub_df[["RA", "Dec"]].values
+                coords_sub = np.column_stack((sub_df["Dec"], sub_df["RA"]))
+
                 if len(coords_sub) == 0:
                     continue
                 #z_sub = interp_func(coords_sub)

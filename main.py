@@ -993,7 +993,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 class_mode = "sub"
 
             # Rango de RA y Dec
-            min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))
+            min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))    
             min_dec, max_dec = st.slider("Rango de Dec", float(df["Dec"].min()), float(df["Dec"].max()), (float(df["Dec"].min()), float(df["Dec"].max())))
 
             ra_vals = np.linspace(min_ra, max_ra, 50)
@@ -1008,20 +1008,23 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = clf.predict_proba(X_grid)
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
-
+    
             if class_mode == "macro":
                 if selected_class == "TODAS":
                     proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
                     df_macro = df.copy()
+                    visible_subclases_all = sorted(df[target_var].unique())
                 else:
                     macro_subclases = [cls for cls in clf.classes_ if cls.startswith(selected_class)]
                     macro_indices = [class_proba_dict[cls] for cls in macro_subclases if cls in class_proba_dict]
                     proba_vals = proba_grid[:, macro_indices].sum(axis=1).reshape(ra_grid.shape)
                     df_macro = df[df["MacroClass"] == selected_class]
+                    visible_subclases_all = sorted(df_macro[target_var].unique())
             else:
                 class_idx = class_proba_dict[selected_class]
                 proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
                 df_macro = df[df[target_var] == selected_class]
+                visible_subclases_all = [selected_class]
 
             symbol_map = {
                 "E0": "circle", "E1": "square", "E2": "diamond", "E3": "x",
@@ -1030,10 +1033,16 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             }
 
             color_list = plotly.colors.qualitative.Set3
-            subclase_options = sorted(df_macro[target_var].unique())
-            color_map = {sub: color_list[i % len(color_list)] for i, sub in enumerate(subclase_options)}
+            color_map = {sub: color_list[i % len(color_list)] for i, sub in enumerate(visible_subclases_all)}
 
-            # ===== Mapa 2D =====
+            # Mostrar u ocultar subclases con botón superior
+            if class_mode == "macro":
+                st.markdown("**Selecciona subclases a mostrar en el mapa:**")
+                selected_subclases = st.multiselect("Mostrar subclases (puntos)", options=visible_subclases_all, default=visible_subclases_all)
+            else:
+                selected_subclases = visible_subclases_all
+
+            #     ===== Mapa 2D =====
             fig2d = go.Figure()
             fig2d.add_trace(go.Contour(
                 z=proba_vals,
@@ -1042,20 +1051,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 colorscale='Viridis',
                 contours=dict(showlabels=True, coloring='heatmap'),
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
-                name="Probabilidad"        
+                name="Probabilidad"
             ))
 
-            # Mostrar u ocultar subclases con botón maestro
-            st.markdown("**Selecciona subclases a mostrar en el mapa:**")
-            if class_mode == "macro":
-                if st.button("Seleccionar todas"):
-                    visible_subclases = subclase_options
-                else:
-                    visible_subclases = st.multiselect("Mostrar subclases (puntos)", options=subclase_options, default=[])
-            else:
-                visible_subclases = [selected_class]
-
-            for subclase in visible_subclases:
+            for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
                 fig2d.add_trace(go.Scatter(
@@ -1078,7 +1077,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig2d, use_container_width=True)
 
-            # Exportar imagen y CSV
+            # ===== Exportar imagen y CSV =====
             try:
                 import plotly.io as pio
                 img_bytes = pio.to_image(fig2d, format="png")
@@ -1104,7 +1103,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T)
 
-            for subclase in visible_subclases:
+            for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
                 coords_sub = sub_df[["RA", "Dec"]].values
@@ -1136,7 +1135,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig3d, use_container_width=True)
 
-           
             
             st.divider()
             

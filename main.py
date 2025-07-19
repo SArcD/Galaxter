@@ -960,7 +960,109 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                             )
                             st.plotly_chart(fig, use_container_width=True)
 
+            from plotly.subplots import make_subplots
 
+            st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
+
+            #  Selección de clase para visualizar
+            selected_class = st.selectbox("Clase morfológica para visualizar", clf.classes_)
+
+            # Crear grilla en RA vs Dec
+            ra_vals = np.linspace(df['RA'].min(), df['RA'].max(), 50)
+            dec_vals = np.linspace(df['Dec'].min(), df['Dec'].max(), 50)
+            ra_grid, dec_grid = np.meshgrid(ra_vals, dec_vals)
+
+            # Crear puntos del grid y valores de entrada
+            grid_points = np.column_stack((ra_grid.ravel(), dec_grid.ravel()))
+            grid_df = pd.DataFrame(grid_points, columns=["RA", "Dec"])
+
+            # Completar las otras variables necesarias para la predicción
+            for var in feature_vars:
+                if var not in ["RA", "Dec"]:
+                    grid_df[var] = df[var].mean()
+
+            # Reordenar columnas para coincidencia con entrenamiento
+            X_grid = grid_df[feature_vars].values
+            proba_grid = clf.predict_proba(X_grid)
+
+            # Probabilidad de la clase seleccionada
+            class_idx = list(clf.classes_).index(selected_class)
+            proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
+
+            # ====== 🔹 Mapa 2D con contornos ======
+            fig2d = go.Figure()
+
+            #  Contornos de probabilidad
+            fig2d.add_trace(go.Contour(
+                z=proba_vals,
+                x=ra_vals,
+                y=dec_vals,
+                colorscale='Viridis',
+                contours=dict(showlabels=True),
+                colorbar=dict(title='P(' + selected_class + ')'),
+                name="Probabilidad"
+            ))
+
+            # Puntos reales
+            df_target = df[df[target_var].astype(str) == selected_class]
+            fig2d.add_trace(go.Scatter(
+                x=df_target["RA"], y=df_target["Dec"],
+                mode="markers",
+                marker=dict(size=6, color='red', symbol='x'),
+                text=df_target[target_var],
+                name="Galaxias reales",
+                hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Clase real: %{text}"
+            ))
+
+            fig2d.update_layout(
+                title=f"Mapa 2D de Probabilidad para clase '{selected_class}'",
+                xaxis_title="Ascensión recta (RA)",
+                yaxis_title="Declinación (Dec)",
+                height=500
+            )
+
+            st.plotly_chart(fig2d, use_container_width=True)
+
+            # ====== 🔹 Mapa 3D ======
+            fig3d = go.Figure()
+
+            fig3d.add_trace(go.Surface(
+                z=proba_vals,
+                x=ra_vals,
+                y=dec_vals,
+                colorscale='Viridis',
+                colorbar=dict(title='P(' + selected_class + ')'),
+                name="Superficie"
+            ))
+
+            # Puntos reales con hover
+            fig3d.add_trace(go.Scatter3d(
+                x=df_target["RA"],
+                y=df_target["Dec"],
+                z=[1.05 * proba_vals.max()] * len(df_target),  # Puntos por encima de la superficie
+                mode='markers',
+                marker=dict(size=4, color='red'),
+                text=df_target[target_var],
+                name="Galaxias reales",
+                hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Clase real: %{text}"
+            ))
+
+            fig3d.update_layout(
+                title=f"Mapa 3D de Probabilidad para clase '{selected_class}'",
+                scene=dict(
+                    xaxis_title='RA',
+                    yaxis_title='Dec',
+                    zaxis_title='Probabilidad',
+                    zaxis=dict(range=[0, 1.1 * proba_vals.max()])
+                ),
+                height=600
+            )
+
+            st.plotly_chart(fig3d, use_container_width=True)
+
+
+
+            
             st.divider()
             
             st.subheader("Matriz de correlación")

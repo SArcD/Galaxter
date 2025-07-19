@@ -965,38 +965,42 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             from plotly.subplots import make_subplots
             from scipy.interpolate import RegularGridInterpolator
-            import io
+            import pandas as pd
+            import numpy as np    
+            import plotly.graph_objects as go
+            import streamlit as st
 
-            st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
+            st.subheader("Mapa 2D y 3D de Probabilidad Morfol\u00f3gica")
 
             # Unificar clases
             df[target_var] = df[target_var].astype(str).str.upper()
 
-            # Macroclases
             def macro_morphology(clase):
-                if clase.startswith("E"):
-                    return "E"
-                elif clase.startswith("S"):
-                    return "S"
-                else:
-                    return "Otras"
+                if clase.startswith("E"): return "E"
+                elif clase.startswith("S"): return "S"
+                else: return "Otras"
 
             df["MacroClass"] = df[target_var].apply(macro_morphology)
 
-            # Selección de macroclase
-            selected_class = st.selectbox("Macroclase a visualizar", ["TODAS", "E", "S"])
+            # Modo de visualización
+            modo = st.radio("Tipo de visualización", ["Macroclase (E/S/TODAS)", "Subclase individual"])
 
-            # === Selectores de rango RA/Dec ===
+            if modo == "Macroclase (E/S/TODAS)":
+                selected_class = st.selectbox("Selecciona macroclase", ["TODAS", "E", "S"])
+                class_mode = "macro"
+            else:
+                selected_class = st.selectbox("Selecciona subclase", sorted(df[target_var].unique()))
+                class_mode = "sub"
+
+            # Rango de RA y Dec
             min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))
             min_dec, max_dec = st.slider("Rango de Dec", float(df["Dec"].min()), float(df["Dec"].max()), (float(df["Dec"].min()), float(df["Dec"].max())))
 
-            # Crear grilla
             ra_vals = np.linspace(min_ra, max_ra, 50)
             dec_vals = np.linspace(min_dec, max_dec, 50)
             ra_grid, dec_grid = np.meshgrid(ra_vals, dec_vals)
             grid_df = pd.DataFrame(np.column_stack((ra_grid.ravel(), dec_grid.ravel())), columns=["RA", "Dec"])
 
-            # Completar otras variables
             for var in feature_vars:
                 if var not in ["RA", "Dec"]:
                     grid_df[var] = df[var].mean()
@@ -1004,35 +1008,38 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = clf.predict_proba(X_grid)
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
-
-            # Obtener probabilidades según macroclase
-            if selected_class == "TODAS":
-                proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
-                df_macro = df.copy()
+    
+            if class_mode == "macro":
+                if selected_class == "TODAS":
+                    proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
+                    df_macro = df.copy()
+                else:
+                    macro_subclases = [cls for cls in clf.classes_ if cls.startswith(selected_class)]
+                    macro_indices = [class_proba_dict[cls] for cls in macro_subclases if cls in class_proba_dict]
+                    proba_vals = proba_grid[:, macro_indices].sum(axis=1).reshape(ra_grid.shape)
+                    df_macro = df[df["MacroClass"] == selected_class]
             else:
-                macro_subclases = [cls for cls in clf.classes_ if cls.startswith(selected_class)]
-                macro_indices = [class_proba_dict[cls] for cls in macro_subclases if cls in class_proba_dict]
-                proba_vals = proba_grid[:, macro_indices].sum(axis=1).reshape(ra_grid.shape)
-                df_macro = df[df["MacroClass"] == selected_class]
+                class_idx = class_proba_dict[selected_class]
+                proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
+                df_macro = df[df[target_var] == selected_class]
 
-            # ====== Mapa 2D ======
+            symbol_map = {
+                "E0": "circle", "E1": "square", "E2": "diamond", "E3": "x",
+                "S0": "triangle-up", "SA": "star", "SB": "triangle-down", "SC": "cross",
+                "SAB": "pentagon", "SDM": "hexagram", "SDM/IM": "hexagon"
+            }
+
+            # ===== Mapa 2D =====
             fig2d = go.Figure()
-
             fig2d.add_trace(go.Contour(
                 z=proba_vals,
                 x=ra_vals,
                 y=dec_vals,
                 colorscale='Viridis',
                 contours=dict(showlabels=True, coloring='heatmap'),
-                colorbar=dict(title=f'P({selected_class})'),
+                colorbar=dict(title=f'P({selected_class})', x=1.05),
                 name="Probabilidad"
             ))
-
-            symbol_map = {
-                "E0": "circle", "E1": "square", "E2": "diamond", "E3": "x",
-                "S0": "triangle-up", "SA": "star", "SB": "triangle-down", "SC": "cross",
-                "SAB": "pentagon"
-            }
 
             for subclase in df_macro[target_var].unique():
                 sub_df = df_macro[df_macro[target_var] == subclase]
@@ -1041,8 +1048,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     x=sub_df["RA"], y=sub_df["Dec"],
                     mode="markers",
                     marker=dict(size=6, color='red', symbol=symbol_map.get(subclase, "circle")),
-                    text=sub_df[target_var],
                     name=f"Subclase {subclase}",
+                    text=sub_df[target_var],
                     hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
                 ))
 
@@ -1050,45 +1057,43 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 title=f"Mapa 2D de Probabilidad para '{selected_class}'",
                 xaxis_title="Ascensión recta (RA)",
                 yaxis_title="Declinación (Dec)",
-                height=500
+                height=500,
+                margin=dict(r=100)
             )
 
             st.plotly_chart(fig2d, use_container_width=True)
 
-            # ==== Exportación de imagen y CSV ====
+            # === Exportar imagen y CSV ===
+            try:
+                img_bytes = fig2d.to_image(format="png")
+                st.download_button("⬇️ Descargar imagen PNG del mapa 2D", data=img_bytes, file_name="mapa2D.png")
+            except:
+                st.warning("No se puede exportar imagen PNG en este entorno. Descarga manual desde el icono del gráfico.")
 
-            # Descargar imagen del mapa 2D como PNG
-            img_bytes = fig2d.to_image(format="png")
-            st.download_button("⬇️ Descargar imagen PNG del mapa 2D", data=img_bytes, file_name=f"mapa_2d_{selected_class}.png")
-
-            # Descargar CSV de la grilla
-            flat_probs = proba_vals.ravel()
             grid_df_export = grid_df[["RA", "Dec"]].copy()
-            grid_df_export["Probabilidad"] = flat_probs    
+            grid_df_export["Probabilidad"] = proba_vals.ravel()
             csv = grid_df_export.to_csv(index=False).encode("utf-8")
-            st.download_button("⬇️ Descargar grilla con probabilidades (CSV)", data=csv, file_name=f"probabilidades_{selected_class}.csv")
+            st.download_button("⬇️ Descargar grilla con probabilidades (CSV)", data=csv, file_name="probabilidades.csv")
 
-            # ====== Mapa 3D ======
+            # ===== Mapa 3D =====
             fig3d = go.Figure()
             fig3d.add_trace(go.Surface(
                 z=proba_vals,
                 x=ra_vals,
                 y=dec_vals,
                 colorscale='Viridis',
-                colorbar=dict(title=f'P({selected_class})'),
+                colorbar=dict(title=f'P({selected_class})', x=1.05),
                 name="Superficie"
             ))
 
-            # Altura real por interpolación
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T)
 
             for subclase in df_macro[target_var].unique():
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
                 coords_sub = sub_df[["RA", "Dec"]].values
-                if len(coords_sub) == 0:
-                    continue
-                z_sub = interp_func(coords_sub)
+                if len(coords_sub) == 0: continue
+                    z_sub = interp_func(coords_sub)
 
                 fig3d.add_trace(go.Scatter3d(
                     x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,
@@ -1107,12 +1112,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     zaxis_title='Probabilidad',
                     zaxis=dict(range=[0, 1.1 * proba_vals.max()])
                 ),
-                height=600
+                height=600,
+                margin=dict(r=100)
             )
 
             st.plotly_chart(fig3d, use_container_width=True)
 
-            
 
             
             st.divider()

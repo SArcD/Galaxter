@@ -973,8 +973,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
 
             # Unificar clases
-            df[target_var] = df[target_var].astype(str).str.upper()
+            if target_var in df.columns:
+                df[target_var] = df[target_var].astype(str).str.upper()
+                df[target_var] = df[target_var].str.replace(r'\s+', '', regex=True)  # remover espacios
 
+            # Revisar consistencia entre clases del modelo y del DataFrame
+            clf_classes_set = set(clf.classes_)
+            df_classes_set = set(df[target_var].unique())
+            if not df_classes_set.issubset(clf_classes_set):
+                st.warning("Hay clases en los datos que no fueron vistas por el modelo. Algunas predicciones pueden no estar disponibles.")
+
+            # Macroclasificación
             def macro_morphology(clase):
                 if clase.startswith("E"): return "E"
                 elif clase.startswith("S"): return "S"
@@ -982,18 +991,21 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             df["MacroClass"] = df[target_var].apply(macro_morphology)
 
-            # Modo de visualización
             modo = st.radio("Tipo de visualización", ["Macroclase (E/S/TODAS)", "Subclase individual"])
 
             if modo == "Macroclase (E/S/TODAS)":
                 selected_class = st.selectbox("Selecciona macroclase", ["TODAS", "E", "S"])
                 class_mode = "macro"
             else:
-                selected_class = st.selectbox("Selecciona subclase", sorted(df[target_var].unique()))
+                all_subclasses = sorted([cls for cls in df[target_var].unique() if cls in clf.classes_])
+                if not all_subclasses:
+                    st.error("No hay subclases reconocidas por el modelo disponibles en los datos.")
+                    st.stop()
+                selected_class = st.selectbox("Selecciona subclase", all_subclasses)
                 class_mode = "sub"
 
-            # Rango de RA y Dec
-            min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))    
+            # RA y Dec
+            min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))
             min_dec, max_dec = st.slider("Rango de Dec", float(df["Dec"].min()), float(df["Dec"].max()), (float(df["Dec"].min()), float(df["Dec"].max())))
 
             ra_vals = np.linspace(min_ra, max_ra, 50)
@@ -1008,7 +1020,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = clf.predict_proba(X_grid)
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
-    
+
             if class_mode == "macro":
                 if selected_class == "TODAS":
                     proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
@@ -1021,6 +1033,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     df_macro = df[df["MacroClass"] == selected_class]
                     visible_subclases_all = sorted(df_macro[target_var].unique())
             else:
+                if selected_class not in class_proba_dict:
+                    st.warning(f"La clase '{selected_class}' no fue reconocida por el modelo.")
+                    st.stop()
                 class_idx = class_proba_dict[selected_class]
                 proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
                 df_macro = df[df[target_var] == selected_class]
@@ -1035,14 +1050,13 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             color_list = plotly.colors.qualitative.Set3
             color_map = {sub: color_list[i % len(color_list)] for i, sub in enumerate(visible_subclases_all)}
 
-            # Mostrar u ocultar subclases con botón superior
             if class_mode == "macro":
                 st.markdown("**Selecciona subclases a mostrar en el mapa:**")
                 selected_subclases = st.multiselect("Mostrar subclases (puntos)", options=visible_subclases_all, default=visible_subclases_all)
             else:
                 selected_subclases = visible_subclases_all
 
-            #     ===== Mapa 2D =====
+            # ===== Mapa 2D =====
             fig2d = go.Figure()
             fig2d.add_trace(go.Contour(
                 z=proba_vals,
@@ -1101,26 +1115,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 name="Superficie"
             ))
 
-            #interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals)
-            interp_func = RegularGridInterpolator(
-                (dec_vals, ra_vals),  # eje y (Dec), eje x (RA)
-                proba_vals,
-                bounds_error=False,
-                fill_value=None
-            )
-
+            interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T, bounds_error=False, fill_value=None)
 
             for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
-                #coords_sub = sub_df[["RA", "Dec"]].values
-                coords_sub = np.column_stack((sub_df["Dec"], sub_df["RA"]))
-
+                coords_sub = sub_df[["RA", "Dec"]].values
                 if len(coords_sub) == 0:
                     continue
-                #z_sub = interp_func(coords_sub)
-                z_sub = interp_func(np.column_stack((sub_df["Dec"], sub_df["RA"])))
-
+                z_sub = interp_func(coords_sub)
                 fig3d.add_trace(go.Scatter3d(
                     x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,
                     mode='markers',
@@ -1145,7 +1148,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig3d, use_container_width=True)
 
-
+            
             st.divider()
             
             st.subheader("Matriz de correlación")

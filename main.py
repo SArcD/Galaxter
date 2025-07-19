@@ -1101,7 +1101,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 name="Superficie"
             ))
 
-            interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T)
+            interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals)
+
 
             for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
@@ -1109,7 +1110,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 coords_sub = sub_df[["RA", "Dec"]].values
                 if len(coords_sub) == 0:
                     continue
-                z_sub = interp_func(coords_sub)
+                #z_sub = interp_func(coords_sub)
+                z_sub = interp_func(np.column_stack((sub_df["Dec"], sub_df["RA"])))
 
                 fig3d.add_trace(go.Scatter3d(
                     x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,
@@ -1135,7 +1137,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig3d, use_container_width=True)
 
-            
+
             st.divider()
             
             st.subheader("Matriz de correlación")

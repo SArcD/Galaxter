@@ -959,63 +959,95 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                                 height=300
                             )
                             st.plotly_chart(fig, use_container_width=True)
+            
+            st.divider()
+
 
             from plotly.subplots import make_subplots
+            from scipy.interpolate import RegularGridInterpolator
+            import io
 
             st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
 
-            #  Selección de clase para visualizar
-            selected_class = st.selectbox("Clase morfológica para visualizar", clf.classes_)
+            # Unificar clases
+            df[target_var] = df[target_var].astype(str).str.upper()
 
-            # Crear grilla en RA vs Dec
-            ra_vals = np.linspace(df['RA'].min(), df['RA'].max(), 50)
-            dec_vals = np.linspace(df['Dec'].min(), df['Dec'].max(), 50)
+            # Macroclases
+            def macro_morphology(clase):
+                if clase.startswith("E"):
+                    return "E"
+                elif clase.startswith("S"):
+                    return "S"
+                else:
+                    return "Otras"
+
+            df["MacroClass"] = df[target_var].apply(macro_morphology)
+
+            # Selección de macroclase
+            selected_class = st.selectbox("Macroclase a visualizar", ["TODAS", "E", "S"])
+
+            # === Selectores de rango RA/Dec ===
+            min_ra, max_ra = st.slider("Rango de RA", float(df["RA"].min()), float(df["RA"].max()), (float(df["RA"].min()), float(df["RA"].max())))
+            min_dec, max_dec = st.slider("Rango de Dec", float(df["Dec"].min()), float(df["Dec"].max()), (float(df["Dec"].min()), float(df["Dec"].max())))
+
+            # Crear grilla
+            ra_vals = np.linspace(min_ra, max_ra, 50)
+            dec_vals = np.linspace(min_dec, max_dec, 50)
             ra_grid, dec_grid = np.meshgrid(ra_vals, dec_vals)
+            grid_df = pd.DataFrame(np.column_stack((ra_grid.ravel(), dec_grid.ravel())), columns=["RA", "Dec"])
 
-            # Crear puntos del grid y valores de entrada
-            grid_points = np.column_stack((ra_grid.ravel(), dec_grid.ravel()))
-            grid_df = pd.DataFrame(grid_points, columns=["RA", "Dec"])
-
-            # Completar las otras variables necesarias para la predicción
+            # Completar otras variables
             for var in feature_vars:
                 if var not in ["RA", "Dec"]:
                     grid_df[var] = df[var].mean()
 
-            # Reordenar columnas para coincidencia con entrenamiento
             X_grid = grid_df[feature_vars].values
             proba_grid = clf.predict_proba(X_grid)
+            class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
 
-            # Probabilidad de la clase seleccionada
-            class_idx = list(clf.classes_).index(selected_class)
-            proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
+            # Obtener probabilidades según macroclase
+            if selected_class == "TODAS":
+                proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
+                df_macro = df.copy()
+            else:
+                macro_subclases = [cls for cls in clf.classes_ if cls.startswith(selected_class)]
+                macro_indices = [class_proba_dict[cls] for cls in macro_subclases if cls in class_proba_dict]
+                proba_vals = proba_grid[:, macro_indices].sum(axis=1).reshape(ra_grid.shape)
+                df_macro = df[df["MacroClass"] == selected_class]
 
-            # ====== 🔹 Mapa 2D con contornos ======
+            # ====== Mapa 2D ======
             fig2d = go.Figure()
 
-            #  Contornos de probabilidad
             fig2d.add_trace(go.Contour(
                 z=proba_vals,
                 x=ra_vals,
                 y=dec_vals,
                 colorscale='Viridis',
-                contours=dict(showlabels=True),
-                colorbar=dict(title='P(' + selected_class + ')'),
+                contours=dict(showlabels=True, coloring='heatmap'),
+                colorbar=dict(title=f'P({selected_class})'),
                 name="Probabilidad"
             ))
 
-            # Puntos reales
-            df_target = df[df[target_var].astype(str) == selected_class]
-            fig2d.add_trace(go.Scatter(
-                x=df_target["RA"], y=df_target["Dec"],
-                mode="markers",
-                marker=dict(size=6, color='red', symbol='x'),
-                text=df_target[target_var],
-                name="Galaxias reales",
-                hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Clase real: %{text}"
-            ))
+            symbol_map = {
+                "E0": "circle", "E1": "square", "E2": "diamond", "E3": "x",
+                "S0": "triangle-up", "SA": "star", "SB": "triangle-down", "SC": "cross",
+                "SAB": "pentagon"
+            }
+
+            for subclase in df_macro[target_var].unique():
+                sub_df = df_macro[df_macro[target_var] == subclase]
+                sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
+                fig2d.add_trace(go.Scatter(
+                    x=sub_df["RA"], y=sub_df["Dec"],
+                    mode="markers",
+                    marker=dict(size=6, color='red', symbol=symbol_map.get(subclase, "circle")),
+                    text=sub_df[target_var],
+                    name=f"Subclase {subclase}",
+                    hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
+                ))
 
             fig2d.update_layout(
-                title=f"Mapa 2D de Probabilidad para clase '{selected_class}'",
+                title=f"Mapa 2D de Probabilidad para '{selected_class}'",
                 xaxis_title="Ascensión recta (RA)",
                 yaxis_title="Declinación (Dec)",
                 height=500
@@ -1023,32 +1055,52 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig2d, use_container_width=True)
 
-            # ====== 🔹 Mapa 3D ======
-            fig3d = go.Figure()
+            # ==== Exportación de imagen y CSV ====
 
+            # Descargar imagen del mapa 2D como PNG
+            img_bytes = fig2d.to_image(format="png")
+            st.download_button("⬇️ Descargar imagen PNG del mapa 2D", data=img_bytes, file_name=f"mapa_2d_{selected_class}.png")
+
+            # Descargar CSV de la grilla
+            flat_probs = proba_vals.ravel()
+            grid_df_export = grid_df[["RA", "Dec"]].copy()
+            grid_df_export["Probabilidad"] = flat_probs    
+            csv = grid_df_export.to_csv(index=False).encode("utf-8")
+            st.download_button("⬇️ Descargar grilla con probabilidades (CSV)", data=csv, file_name=f"probabilidades_{selected_class}.csv")
+
+            # ====== Mapa 3D ======
+            fig3d = go.Figure()
             fig3d.add_trace(go.Surface(
                 z=proba_vals,
                 x=ra_vals,
                 y=dec_vals,
                 colorscale='Viridis',
-                colorbar=dict(title='P(' + selected_class + ')'),
+                colorbar=dict(title=f'P({selected_class})'),
                 name="Superficie"
             ))
 
-            # Puntos reales con hover
-            fig3d.add_trace(go.Scatter3d(
-                x=df_target["RA"],
-                y=df_target["Dec"],
-                z=[1.05 * proba_vals.max()] * len(df_target),  # Puntos por encima de la superficie
-                mode='markers',
-                marker=dict(size=4, color='red'),
-                text=df_target[target_var],
-                name="Galaxias reales",
-                hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Clase real: %{text}"
-            ))
+            # Altura real por interpolación
+            interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T)
+
+            for subclase in df_macro[target_var].unique():
+                sub_df = df_macro[df_macro[target_var] == subclase]
+                sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
+                coords_sub = sub_df[["RA", "Dec"]].values
+                if len(coords_sub) == 0:
+                    continue
+                z_sub = interp_func(coords_sub)
+
+                fig3d.add_trace(go.Scatter3d(
+                    x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,
+                    mode='markers',
+                    marker=dict(size=5, color='red', symbol=symbol_map.get(subclase, "circle")),
+                    name=f"Subclase {subclase}",
+                    text=sub_df[target_var],
+                    hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
+                ))
 
             fig3d.update_layout(
-                title=f"Mapa 3D de Probabilidad para clase '{selected_class}'",
+                title=f"Mapa 3D de Probabilidad para '{selected_class}'",
                 scene=dict(
                     xaxis_title='RA',
                     yaxis_title='Dec',
@@ -1060,7 +1112,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig3d, use_container_width=True)
 
-
+            
 
             
             st.divider()

@@ -965,12 +965,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             from plotly.subplots import make_subplots
             from scipy.interpolate import RegularGridInterpolator
-            import pandas as pd
-            import numpy as np    
             import plotly.graph_objects as go
-            import streamlit as st
 
-            st.subheader("Mapa 2D y 3D de Probabilidad Morfol\u00f3gica")
+            st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
 
             # Unificar clases
             df[target_var] = df[target_var].astype(str).str.upper()
@@ -1008,7 +1005,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = clf.predict_proba(X_grid)
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
-    
+
             if class_mode == "macro":
                 if selected_class == "TODAS":
                     proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
@@ -1037,7 +1034,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 y=dec_vals,
                 colorscale='Viridis',
                 contours=dict(showlabels=True, coloring='heatmap'),
-                colorbar=dict(title=f'P({selected_class})', x=1.05),
+                colorbar=dict(title=f'P({selected_class})', x=1.1),
                 name="Probabilidad"
             ))
 
@@ -1047,7 +1044,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 fig2d.add_trace(go.Scatter(
                     x=sub_df["RA"], y=sub_df["Dec"],
                     mode="markers",
-                    marker=dict(size=6, color='red', symbol=symbol_map.get(subclase, "circle")),
+                    marker=dict(size=6, color='red'),
                     name=f"Subclase {subclase}",
                     text=sub_df[target_var],
                     hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
@@ -1058,16 +1055,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 xaxis_title="Ascensión recta (RA)",
                 yaxis_title="Declinación (Dec)",
                 height=500,
-                margin=dict(r=100)
+                margin=dict(r=140)
             )
 
             st.plotly_chart(fig2d, use_container_width=True)
 
-            # === Exportar imagen y CSV ===
+            # Exportar imagen y CSV
             try:
-                img_bytes = fig2d.to_image(format="png")
+                import plotly.io as pio
+                img_bytes = pio.to_image(fig2d, format="png")
                 st.download_button("⬇️ Descargar imagen PNG del mapa 2D", data=img_bytes, file_name="mapa2D.png")
-            except:
+            except Exception as e:
                 st.warning("No se puede exportar imagen PNG en este entorno. Descarga manual desde el icono del gráfico.")
 
             grid_df_export = grid_df[["RA", "Dec"]].copy()
@@ -1082,23 +1080,24 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 x=ra_vals,
                 y=dec_vals,
                 colorscale='Viridis',
-                colorbar=dict(title=f'P({selected_class})', x=1.05),
+                colorbar=dict(title=f'P({selected_class})', x=1.1),
                 name="Superficie"
             ))
 
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T)
-
+    
             for subclase in df_macro[target_var].unique():
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
                 coords_sub = sub_df[["RA", "Dec"]].values
-                if len(coords_sub) == 0: continue
+                if len(coords_sub) == 0:
+                    continue
                 z_sub = interp_func(coords_sub)
 
                 fig3d.add_trace(go.Scatter3d(
                     x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,
                     mode='markers',
-                    marker=dict(size=5, color='red', symbol=symbol_map.get(subclase, "circle")),
+                    marker=dict(size=5, color='red'),
                     name=f"Subclase {subclase}",
                     text=sub_df[target_var],
                     hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
@@ -1113,11 +1112,10 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     zaxis=dict(range=[0, 1.1 * proba_vals.max()])
                 ),
                 height=600,
-                margin=dict(r=100)
+                margin=dict(r=120)
             )
 
             st.plotly_chart(fig3d, use_container_width=True)
-
 
             
             st.divider()

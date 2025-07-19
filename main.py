@@ -1093,7 +1093,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]
                 coords_sub = sub_df[["RA", "Dec"]].values
                 if len(coords_sub) == 0: continue
-                    z_sub = interp_func(coords_sub)
+                z_sub = interp_func(coords_sub)
 
                 fig3d.add_trace(go.Scatter3d(
                     x=sub_df["RA"], y=sub_df["Dec"], z=z_sub,

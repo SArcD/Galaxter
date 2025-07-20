@@ -1034,18 +1034,33 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = np.full((X_grid.shape[0], len(clf.classes_)), np.nan)
 
-            if np.any(mask_near):
+            #if np.any(mask_near):
                 #density_weight = np.array([len(x) for x in is_near])
                 #density_weight = density_weight / np.max(density_weight)
                 #proba_valid_weighted = proba_valid * density_weight[:, None]
                 #proba_grid[mask_near] = proba_valid_weighted
-                proba_valid = clf.predict_proba(X_grid[mask_near])
-                density_weight = np.array([len(x) for x in is_near])
-                density_weight = density_weight / np.max(density_weight)
-                proba_valid_weighted = proba_valid * density_weight[:, None]
-                proba_grid[mask_near] = proba_valid_weighted
+           #     proba_valid = clf.predict_proba(X_grid[mask_near])
+           #     density_weight = np.array([len(x) for x in is_near])
+           #     density_weight = density_weight / np.max(density_weight)
+           #     proba_valid_weighted = proba_valid * density_weight[:, None]
+           #     proba_grid[mask_near] = proba_valid_weighted
                 #proba_grid[mask_near] = proba_valid
+            if np.any(mask_near):
+                proba_valid = clf.predict_proba(X_grid[mask_near])
+        
+                # Calcular pesos de densidad
+                density_weight = np.array([len(x) for x in is_near if len(x) > 0])
+                density_weight = density_weight / np.max(density_weight)  # Normalizar
 
+                # Aplicar ponderación
+                proba_valid_weighted = proba_valid * density_weight[:, None]
+
+                # Insertar en grilla
+                proba_grid[mask_near] = proba_valid_weighted
+
+
+
+            
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
 
             if class_mode == "macro":

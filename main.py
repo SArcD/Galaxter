@@ -1018,8 +1018,15 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if var not in ["RA", "Dec"]:
                     grid_df[var] = df[var].mean()
 
+
+#density_weight = np.array([len(x) for x in is_near])
+#density_weight = density_weight / np.max(density_weight)
+#proba_valid_weighted = proba_valid * density_weight[:, None]
+#proba_grid[mask_near] = proba_valid_weighted
+
+            
             # Enmascarar zonas vacías (sin galaxias cercanas)
-            neigh = NearestNeighbors(radius=0.3)
+            neigh = NearestNeighbors(radius=0.2)
             neigh.fit(df[["RA", "Dec"]])
             is_near = neigh.radius_neighbors(grid_df[["RA", "Dec"]], return_distance=False)
             mask_near = np.array([len(x) > 0 for x in is_near])
@@ -1028,8 +1035,16 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             proba_grid = np.full((X_grid.shape[0], len(clf.classes_)), np.nan)
 
             if np.any(mask_near):
+                #density_weight = np.array([len(x) for x in is_near])
+                #density_weight = density_weight / np.max(density_weight)
+                #proba_valid_weighted = proba_valid * density_weight[:, None]
+                #proba_grid[mask_near] = proba_valid_weighted
                 proba_valid = clf.predict_proba(X_grid[mask_near])
-                proba_grid[mask_near] = proba_valid
+                density_weight = np.array([len(x) for x in is_near])
+                density_weight = density_weight / np.max(density_weight)
+                proba_valid_weighted = proba_valid * density_weight[:, None]
+                proba_grid[mask_near] = proba_valid_weighted
+                #proba_grid[mask_near] = proba_valid
 
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
 

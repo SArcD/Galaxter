@@ -1269,7 +1269,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             entropy_vals_all = normalized_entropy[mask_near]
 
             if len(X_clumps) >= 5:
-                dbscan = DBSCAN(eps=0.2, min_samples=5)
+                dbscan = DBSCAN(eps=0.05, min_samples=5)
                 labels = dbscan.fit_predict(X_clumps)
 
                 fig_clumps_entropy = go.Figure()

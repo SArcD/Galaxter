@@ -1119,6 +1119,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             # ===== Mapa 3D =====
             fig3d = go.Figure()
+            #fig3d.add_trace(go.Surface(
+            #    z=proba_vals,
+            #    x=ra_vals,
+            #    y=dec_vals,
+            #    colorscale='Viridis',
+            #    colorbar=dict(title=f'P({selected_class})', x=1.1),
+            #    name="Superficie",
+            #    showscale=True,
+            #    zmin=0, zmax=1, zauto=True
+            #))
+
             fig3d.add_trace(go.Surface(
                 z=proba_vals,
                 x=ra_vals,
@@ -1126,8 +1137,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 colorscale='Viridis',
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
                 name="Superficie",
-                showscale=True,
-                zmin=0, zmax=1, zauto=True
+                showscale=True
             ))
 
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T, bounds_error=False, fill_value=None)

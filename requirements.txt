@@ -14,3 +14,4 @@ pykrige
 pillow
 noise
 imbalanced-learn	
+hdbscan

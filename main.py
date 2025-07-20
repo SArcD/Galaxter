@@ -1253,12 +1253,12 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             st.subheader("🔍 Regiones Coherentes de Baja Entropía (DBSCAN)")
 
             # Usar solo puntos con entropía suficientemente baja
-            threshold_entropia = 0.4
+            threshold_entropia = 0.2
             low_entropy_mask = (normalized_entropy < threshold_entropia) & mask_near
             X_clumps = grid_df[low_entropy_mask][["RA", "Dec"]].values
 
             if len(X_clumps) >= 5:
-                dbscan = DBSCAN(eps=0.2, min_samples=5)
+                dbscan = DBSCAN(eps=0.01, min_samples=5)
                 labels = dbscan.fit_predict(X_clumps)
 
                 fig_clumps = go.Figure()

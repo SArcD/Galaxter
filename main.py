@@ -1203,6 +1203,44 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig3d, use_container_width=True)
 
+
+            st.divider()
+
+            # ===== Mapa de Entropía =====
+            st.subheader("🔎 Mapa de Entropía de Predicción")
+
+            # Copia independiente del cálculo para evitar modificar proba_vals original
+            entropy_vals = np.full(X_grid.shape[0], np.nan)
+
+            if np.any(mask_near):
+                # Usar solo valores válidos y evitar log(0)
+                proba_valid = np.clip(proba_grid[mask_near], 1e-12, 1.0)
+                entropy_vals[mask_near] = -np.sum(proba_valid * np.log2(proba_valid), axis=1)
+
+            entropy_map = entropy_vals.reshape(ra_grid.shape)
+
+            # Mapa 2D de entropía
+            fig_entropy = go.Figure()
+            fig_entropy.add_trace(go.Contour(
+                z=entropy_map,
+                x=ra_vals,
+                y=dec_vals,
+                colorscale='Magma',
+                contours=dict(showlabels=True, coloring='heatmap'),
+                colorbar=dict(title='Entropía', x=1.1),
+                name="Entropía"
+            ))
+
+            fig_entropy.update_layout(
+                title="Mapa 2D de Entropía de Clasificación",
+                xaxis_title="Ascensión recta (RA)",
+                yaxis_title="Declinación (Dec)",
+                height=500,
+                margin=dict(r=120)
+            )    
+
+            st.plotly_chart(fig_entropy, use_container_width=True)
+
             
             st.divider()
             

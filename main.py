@@ -1291,8 +1291,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
                 # Fondo: galaxias reales
                 fig_clumps_overlay.add_trace(go.Scatter(
-                    x=df_cluster["RA"],
-                    y=df_cluster["Dec"],
+                    x=df["RA"],
+                    y=df["Dec"],
                     mode='markers',
                     marker=dict(size=4, color='lightgray'),
                     name='Galaxias'

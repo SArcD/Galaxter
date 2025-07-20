@@ -1193,6 +1193,9 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 zmin=0, zmax=1, zauto=True
             ))
 
+            fig2d.update_layout(xaxis=dict(autorange='reversed'))
+
+
             for subclase in selected_subclases:
                 sub_df = df_macro[df_macro[target_var] == subclase]
                 sub_df = sub_df[(sub_df["RA"] >= min_ra) & (sub_df["RA"] <= max_ra) & (sub_df["Dec"] >= min_dec) & (sub_df["Dec"] <= max_dec)]

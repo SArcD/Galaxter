@@ -969,6 +969,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             import plotly.graph_objects as go
             import streamlit as st
             import plotly.colors
+            from sklearn.neighbors import NearestNeighbors
 
             st.subheader("🗺️ Mapa 2D y 3D de Probabilidad Morfológica")
 
@@ -1017,19 +1018,30 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if var not in ["RA", "Dec"]:
                     grid_df[var] = df[var].mean()
 
+            # Enmascarar zonas vacías (sin galaxias cercanas)
+            neigh = NearestNeighbors(radius=0.5)
+            neigh.fit(df[["RA", "Dec"]])
+            is_near = neigh.radius_neighbors(grid_df[["RA", "Dec"]], return_distance=False)
+            mask_near = np.array([len(x) > 0 for x in is_near])
+
             X_grid = grid_df[feature_vars].values
-            proba_grid = clf.predict_proba(X_grid)
+            proba_grid = np.full((X_grid.shape[0], len(clf.classes_)), np.nan)
+
+            if np.any(mask_near):
+                proba_valid = clf.predict_proba(X_grid[mask_near])
+                proba_grid[mask_near] = proba_valid
+
             class_proba_dict = {cls: i for i, cls in enumerate(clf.classes_)}
 
             if class_mode == "macro":
                 if selected_class == "TODAS":
-                    proba_vals = proba_grid.sum(axis=1).reshape(ra_grid.shape)
+                    proba_vals = np.nanmax(proba_grid, axis=1).reshape(ra_grid.shape)
                     df_macro = df.copy()
                     visible_subclases_all = sorted(df[target_var].unique())
                 else:
                     macro_subclases = [cls for cls in clf.classes_ if cls.startswith(selected_class)]
                     macro_indices = [class_proba_dict[cls] for cls in macro_subclases if cls in class_proba_dict]
-                    proba_vals = proba_grid[:, macro_indices].sum(axis=1).reshape(ra_grid.shape)
+                    proba_vals = np.nansum(proba_grid[:, macro_indices], axis=1).reshape(ra_grid.shape)
                     df_macro = df[df["MacroClass"] == selected_class]
                     visible_subclases_all = sorted(df_macro[target_var].unique())
             else:
@@ -1037,7 +1049,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     st.warning(f"La clase '{selected_class}' no fue reconocida por el modelo.")
                     st.stop()
                 class_idx = class_proba_dict[selected_class]
-                proba_vals = proba_grid[:, class_idx].reshape(ra_grid.shape)
+                proba_vals = np.nan_to_num(proba_grid[:, class_idx]).reshape(ra_grid.shape)
                 df_macro = df[df[target_var] == selected_class]
                 visible_subclases_all = [selected_class]
 
@@ -1065,7 +1077,8 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 colorscale='Viridis',
                 contours=dict(showlabels=True, coloring='heatmap'),
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
-                name="Probabilidad"
+                name="Probabilidad",
+                zmin=0, zmax=1, zauto=False
             ))
 
             for subclase in selected_subclases:
@@ -1112,7 +1125,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 y=dec_vals,
                 colorscale='Viridis',
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
-                name="Superficie"
+                name="Superficie",
+                showscale=True,
+                zmin=0, zmax=1, zauto=False
             ))
 
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T, bounds_error=False, fill_value=None)
@@ -1139,7 +1154,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     xaxis_title='RA',
                     yaxis_title='Dec',
                     zaxis_title='Probabilidad',
-                    zaxis=dict(range=[0, 1.1 * proba_vals.max()])
+                    zaxis=dict(range=[0, 1.1 * np.nanmax(proba_vals)])
                 ),
                 height=600,
                 margin=dict(r=120),

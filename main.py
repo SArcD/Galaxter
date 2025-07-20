@@ -1241,6 +1241,74 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig_entropy, use_container_width=True)
 
+            st.divider()
+
+            from sklearn.cluster import DBSCAN
+            from sklearn.preprocessing import MinMaxScaler
+
+            # ===== Mapa de Entropía Local Normalizada =====
+            st.subheader("📉 Mapa de Entropía Local Normalizada")
+    
+            num_classes = len(clf.classes_)
+            entropy_max = np.log2(num_classes)
+            normalized_entropy = entropy_vals / entropy_max
+            normalized_entropy_map = normalized_entropy.reshape(ra_grid.shape)
+
+            fig_entropy_norm = go.Figure()            
+            fig_entropy_norm.add_trace(go.Contour(
+                z=normalized_entropy_map,
+                x=ra_vals,
+                y=dec_vals,
+                colorscale='Plasma',
+                contours=dict(showlabels=True, coloring='heatmap'),
+                colorbar=dict(title='Entropía Normalizada', x=1.1),
+                name="Entropía Normalizada"
+            ))
+
+            fig_entropy_norm.update_layout(
+                title="Mapa 2D de Entropía Local Normalizada",
+                xaxis_title="Ascensión recta (RA)",
+                yaxis_title="Declinación (Dec)",
+                height=500,
+                margin=dict(r=120)
+            )
+
+            st.plotly_chart(fig_entropy_norm, use_container_width=True)
+
+            # ===== Detección de Clumps con DBSCAN sobre Baja Entropía =====
+            st.subheader("🔍 Regiones Coherentes de Baja Entropía (DBSCAN)")
+
+            # Usar solo puntos con entropía suficientemente baja
+            threshold_entropia = 0.4
+            low_entropy_mask = (normalized_entropy < threshold_entropia) & mask_near
+            X_clumps = grid_df[low_entropy_mask][["RA", "Dec"]].values
+
+            if len(X_clumps) >= 5:
+                dbscan = DBSCAN(eps=0.2, min_samples=5)
+                labels = dbscan.fit_predict(X_clumps)
+
+                fig_clumps = go.Figure()
+                for label in np.unique(labels):
+                    cluster_mask = labels == label
+                    coords = X_clumps[cluster_mask]
+                    fig_clumps.add_trace(go.Scatter(
+                        x=coords[:, 0], y=coords[:, 1],
+                        mode='markers',
+                        marker=dict(size=6, color=label, colorscale='Turbo', showscale=False),
+                        name=f'Clump {label}' if label != -1 else "Ruido"
+                    ))
+
+                fig_clumps.update_layout(
+                    title="Mapa 2D de Regiones de Baja Entropía (Clumps DBSCAN)",
+                    xaxis_title="Ascensión recta (RA)",
+                    yaxis_title="Declinación (Dec)",
+                    height=500
+                )
+
+                st.plotly_chart(fig_clumps, use_container_width=True)
+            else:
+                st.info("No hay suficientes puntos con entropía baja para aplicar DBSCAN.")
+
             
             st.divider()
             

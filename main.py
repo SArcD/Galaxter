@@ -768,10 +768,9 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             import plotly.figure_factory as ff
             import plotly.graph_objects as go
 
-            st.header("Clasificación de morfología con Random Forest + SMOTE")
 
             st.markdown("""
-## 🧪 Flujo de Análisis y Clasificación Morfológica
+## Flujo de Análisis y Clasificación Morfológica
 
 Esta sección describe la **secuencia lógica** de análisis implementada para predecir y visualizar la morfología galáctica, así como para identificar posibles subestructuras significativas.
 
@@ -874,6 +873,8 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
 
 
             
+            st.markdown("""
+                ## Clasificación de morfología con Random Forest + SMOTE""")
 
             st.markdown("**Aquí puede usar las variables numéricas para predecir morfología usando modelos de Random Forest (se recomienda activar el botón de SMOTE, si considera que las clases morfolóficas están desbalanceadas). Use los botones y deslizadores para definir los predictores, la profundidad de los modelos de árbol en Random Forest y el número de vecinos (si usa SMOTE).**")
             

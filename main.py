@@ -1249,75 +1249,104 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig_entropy_norm, use_container_width=True)
 
-            # ===== DBSCAN aplicado directamente a las galaxias =====
-            st.subheader("🔍 Clumps de Galaxias por Entropía (DBSCAN sobre galaxias reales)")
+            from sklearn.cluster import DBSCAN
+            import hdbscan
+            from sklearn.preprocessing import MinMaxScaler
 
-            # Predecir probabilidades para las galaxias del DataFrame
+            st.subheader("🔍 Clumps de Galaxias por Entropía (DBSCAN y HDBSCAN)")
+
+            # === Predecir probabilidades y entropía ===
             X_galaxias = df[feature_vars].values
             proba_galaxias = clf.predict_proba(X_galaxias)
 
-            # Calcular entropía para cada galaxia (evitar log(0))
             proba_galaxias_clipped = np.clip(proba_galaxias, 1e-12, 1.0)
             entropy_galaxias = -np.sum(proba_galaxias_clipped * np.log2(proba_galaxias_clipped), axis=1)
-
-            # Entropía normalizada
             entropy_max = np.log2(len(clf.classes_))
             entropy_norm_galaxias = entropy_galaxias / entropy_max
 
-            # Filtrar galaxias con entropía válida (> 0, opcional)
+            # Agregar al DataFrame
+            df["Entropy_Norm"] = np.nan
             mask_valid_entropy = ~np.isnan(entropy_norm_galaxias)
-            coords_galaxias = df[["RA", "Dec"]].values[mask_valid_entropy]
-            entropy_vals_valid = entropy_norm_galaxias[mask_valid_entropy]
+            df.loc[mask_valid_entropy, "Entropy_Norm"] = entropy_norm_galaxias[mask_valid_entropy]
 
-            # Aplicar DBSCAN
-            if len(coords_galaxias) >= 5:
-                dbscan = DBSCAN(eps=0.05, min_samples=5)
-                labels = dbscan.fit_predict(coords_galaxias)
+            # === Filtro opcional: zona central (mayor densidad) ===
+            st.markdown("**Filtro espacial (opcional)**")
+            use_central_region = st.checkbox("🔲 Usar solo zona central (RA 10.2–10.7, Dec -9.7–-9.1)", value=False)
 
-                fig_gal_clumps = go.Figure()
+            if use_central_region:
+                mask_spatial = (
+                    (df["RA"] >= 10.2) & (df["RA"] <= 10.7) &
+                    (df["Dec"] >= -9.7) & (df["Dec"] <= -9.1)
+                )
+            else:
+                mask_spatial = df["RA"].notna()
+
+            # Filtrado final
+            mask_final = mask_valid_entropy & mask_spatial
+            coords = df[["RA", "Dec"]].values[mask_final]
+            entropies = df["Entropy_Norm"].values[mask_final]
+
+            # === Parámetros de clustering ===
+            st.markdown("**Parámetros para DBSCAN**")
+            eps = st.slider("Epsilon (radio de vecindad)", min_value=0.01, max_value=0.5, value=0.05, step=0.01)
+            min_samples = st.slider("Mínimo de galaxias por clump", min_value=3, max_value=20, value=5, step=1)
+
+            # Opción para usar HDBSCAN
+            use_hdbscan = st.checkbox("✅ Usar HDBSCAN en lugar de DBSCAN")
+
+            # === Clustering ===    
+            if len(coords) >= 5:
+                if use_hdbscan:
+                    clusterer = hdbscan.HDBSCAN(min_cluster_size=min_samples)
+                    labels = clusterer.fit_predict(coords)
+                else:
+                    clusterer = DBSCAN(eps=eps, min_samples=min_samples)
+                    labels = clusterer.fit_predict(coords)
+
+                fig = go.Figure()
                 unique_labels = np.unique(labels)
 
                 for label in unique_labels:
                     mask = labels == label
-                    coords = coords_galaxias[mask]
-                    entropies = entropy_vals_valid[mask]
-                    color = "gray" if label == -1 else np.mean(entropies)
+                    clump_coords = coords[mask]
+                    clump_entropies = entropies[mask]
+                    color = "gray" if label == -1 else np.mean(clump_entropies)
 
-                    fig_gal_clumps.add_trace(go.Scatter(
-                        x=coords[:, 0], y=coords[:, 1],
-                        mode='markers',
+                    fig.add_trace(go.Scatter(
+                        x=clump_coords[:, 0],
+                        y=clump_coords[:, 1],
+                        mode="markers",
                         marker=dict(
                             size=6,
                             color=color,
-                            colorscale='Reds',
+                            colorscale="Reds",
                             cmin=0, cmax=1,
                             showscale=False
                         ),
-                        name=f'Clump {label}' if label != -1 else "Ruido"
+                        name=f"Clump {label}" if label != -1 else "Ruido"
                     ))
 
-                fig_gal_clumps.update_layout(
-                    title="Clumps DBSCAN (Galaxias, color por entropía media)",
+                fig.update_layout(
+                    title="Clumps (Galaxias, color por entropía media)",
                     xaxis_title="Ascensión recta (RA)",
                     yaxis_title="Declinación (Dec)",
                     height=500
                 )
 
-                st.plotly_chart(fig_gal_clumps, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
 
                 # Tabla resumen
-                clump_entropies = {
-                    f"Clump {label}": np.mean(entropy_vals_valid[labels == label])
-                    for label in unique_labels if label != -1        
+                clump_summary = {
+                    f"Clump {label}": np.mean(entropies[labels == label])
+                    for label in unique_labels if label != -1
                 }
-                st.markdown("### Entropía media por clump (galaxias reales):")
+                st.markdown("### Entropía media por clump (galaxias):")
                 st.dataframe(
-                    pd.DataFrame.from_dict(clump_entropies, orient='index', columns=["Entropía Media"])
+                    pd.DataFrame.from_dict(clump_summary, orient='index', columns=["Entropía Media"])
                     .sort_values("Entropía Media")
                 )
             else:
-                st.info("No hay suficientes galaxias con entropía válida para aplicar DBSCAN.")
-
+                st.info("No hay suficientes galaxias válidas para aplicar el algoritmo.")
 
             
             st.divider()

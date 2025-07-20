@@ -863,12 +863,6 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
 
 ---
 
-### ✅ Consideraciones finales
-
-- El flujo está diseñado para ofrecer una visión **integrada y explicativa** del comportamiento del modelo.
-- El análisis permite explorar tanto la **eficacia del clasificador**, como la **coherencia espacial** de las predicciones.
-- La combinación de **predicción, visualización e incertidumbre** hace posible una interpretación más robusta de los datos astronómicos.
-
             """)
 
 

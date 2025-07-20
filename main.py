@@ -1264,18 +1264,38 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                     hovertemplate="RA: %{x:.2f}<br>Dec: %{y:.2f}<br>Subclase: %{text}"
                 ))
 
+            #fig3d.update_layout(
+            #    title=f"Mapa 3D de Probabilidad para '{selected_class}'",
+            #    scene=dict(
+            #        xaxis_title='RA', autorange='reversed',
+            #        yaxis_title='Dec',
+            #        zaxis_title='Probabilidad',
+            #        zaxis=dict(range=[0, 1.1 * np.nanmax(proba_vals)])
+            #    ),
+            #    height=600,
+            #    margin=dict(r=120),
+            #    showlegend=(class_mode == "sub")
+            #)
+
             fig3d.update_layout(
                 title=f"Mapa 3D de Probabilidad para '{selected_class}'",
                 scene=dict(
-                    xaxis_title='RA', autorange='reversed',
-                    yaxis_title='Dec',
-                    zaxis_title='Probabilidad',
-                    zaxis=dict(range=[0, 1.1 * np.nanmax(proba_vals)])
+                    xaxis=dict(
+                        title='RA',
+                        range=[max(ra_vals), min(ra_vals)]  # Invertir RA manualmente
+                    ),
+                    yaxis=dict(title='Dec'),
+                    zaxis=dict(
+                        title='Probabilidad',
+                        range=[0, 1.1 * np.nanmax(proba_vals)]
+                    )
                 ),
                 height=600,
                 margin=dict(r=120),
                 showlegend=(class_mode == "sub")
             )
+
+            
             st.plotly_chart(fig3d, use_container_width=True)
 
 

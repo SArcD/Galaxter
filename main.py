@@ -1267,7 +1267,7 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
             fig3d.update_layout(
                 title=f"Mapa 3D de Probabilidad para '{selected_class}'",
                 scene=dict(
-                    xaxis_title='RA',
+                    xaxis_title='RA', autorange='reversed',
                     yaxis_title='Dec',
                     zaxis_title='Probabilidad',
                     zaxis=dict(range=[0, 1.1 * np.nanmax(proba_vals)])
@@ -1276,7 +1276,6 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 margin=dict(r=120),
                 showlegend=(class_mode == "sub")
             )
-
             st.plotly_chart(fig3d, use_container_width=True)
 
 

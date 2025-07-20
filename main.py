@@ -1018,12 +1018,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 if var not in ["RA", "Dec"]:
                     grid_df[var] = df[var].mean()
 
-
-#density_weight = np.array([len(x) for x in is_near])
-#density_weight = density_weight / np.max(density_weight)
-#proba_valid_weighted = proba_valid * density_weight[:, None]
-#proba_grid[mask_near] = proba_valid_weighted
-
             
             # Enmascarar zonas vacías (sin galaxias cercanas)
             neigh = NearestNeighbors(radius=0.2)
@@ -1034,17 +1028,6 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             X_grid = grid_df[feature_vars].values
             proba_grid = np.full((X_grid.shape[0], len(clf.classes_)), np.nan)
 
-            #if np.any(mask_near):
-                #density_weight = np.array([len(x) for x in is_near])
-                #density_weight = density_weight / np.max(density_weight)
-                #proba_valid_weighted = proba_valid * density_weight[:, None]
-                #proba_grid[mask_near] = proba_valid_weighted
-           #     proba_valid = clf.predict_proba(X_grid[mask_near])
-           #     density_weight = np.array([len(x) for x in is_near])
-           #     density_weight = density_weight / np.max(density_weight)
-           #     proba_valid_weighted = proba_valid * density_weight[:, None]
-           #     proba_grid[mask_near] = proba_valid_weighted
-                #proba_grid[mask_near] = proba_valid
             if np.any(mask_near):
                 proba_valid = clf.predict_proba(X_grid[mask_near])
         
@@ -1149,16 +1132,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             # ===== Mapa 3D =====
             fig3d = go.Figure()
-            #fig3d.add_trace(go.Surface(
-            #    z=proba_vals,
-            #    x=ra_vals,
-            #    y=dec_vals,
-            #    colorscale='Viridis',
-            #    colorbar=dict(title=f'P({selected_class})', x=1.1),
-            #    name="Superficie",
-            #    showscale=True,
-            #    zmin=0, zmax=1, zauto=True
-            #))
+
 
             fig3d.add_trace(go.Surface(
                 z=proba_vals,
@@ -1308,6 +1282,51 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 st.plotly_chart(fig_clumps, use_container_width=True)
             else:
                 st.info("No hay suficientes puntos con entropía baja para aplicar DBSCAN.")
+
+            # ===== Superposición de Clumps Identificados sobre Galaxias =====
+            st.subheader("🌌 Superposición de Clumps DBSCAN sobre Galaxias Reales")
+
+            if len(X_clumps) >= 5:
+                fig_clumps_overlay = go.Figure()
+
+                # Fondo: galaxias reales
+                fig_clumps_overlay.add_trace(go.Scatter(
+                    x=df_cluster["RA"],
+                    y=df_cluster["Dec"],
+                    mode='markers',
+                    marker=dict(size=4, color='lightgray'),
+                    name='Galaxias'
+                ))
+
+                # Clumps de baja entropía
+                for label in np.unique(labels):
+                    cluster_mask = labels == label
+                    coords = X_clumps[cluster_mask]
+                    fig_clumps_overlay.add_trace(go.Scatter(
+                        x=coords[:, 0],
+                        y=coords[:, 1],
+                        mode='markers',
+                        marker=dict(
+                            size=7,
+                            color=label,
+                            colorscale='Turbo',
+                            showscale=False,
+                            line=dict(width=1, color='black') if label != -1 else None
+                        ),
+                        name=f'Clump {label}' if label != -1 else "Ruido"
+                    ))
+
+                fig_clumps_overlay.update_layout(
+                    title="Proyección de Clumps DBSCAN sobre Galaxias Reales",
+                    xaxis_title="Ascensión recta (RA)",
+                    yaxis_title="Declinación (Dec)",
+                    height=600
+                )
+
+                st.plotly_chart(fig_clumps_overlay, use_container_width=True)        
+            else:
+                st.info("No hay suficientes puntos para visualizar los clumps sobre las galaxias.")
+
 
             
             st.divider()

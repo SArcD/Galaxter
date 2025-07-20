@@ -1255,8 +1255,17 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
             from sklearn.cluster import DBSCAN
             from sklearn.preprocessing import MinMaxScaler
 
+
+            
             # Usar todos los puntos cercanos válidos
-            X_clumps = grid_df[mask_near][["RA", "Dec"]].values
+            X_clumps_base = grid_df[mask_near][["RA", "Dec"]].values
+            entropy_vals_all = normalized_entropy[mask_near]
+
+            # Opción con entropía como 3ra dimensión
+            X_clumps = np.column_stack((X_clumps_base, entropy_vals_all))
+
+            
+            #X_clumps = grid_df[mask_near][["RA", "Dec"]].values
             entropy_vals_all = normalized_entropy[mask_near]
 
             if len(X_clumps) >= 5:

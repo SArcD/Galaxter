@@ -770,6 +770,110 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.header("Clasificación de morfología con Random Forest + SMOTE")
 
+            st.markdown("""
+## 🧪 Flujo de Análisis y Clasificación Morfológica
+
+Esta sección describe la **secuencia lógica** de análisis implementada para predecir y visualizar la morfología galáctica, así como para identificar posibles subestructuras significativas.
+
+---
+
+### 1️⃣ Selección de variables y configuración del modelo
+
+**Objetivo:**  
+Definir la variable objetivo (morfología) y las variables numéricas que serán usadas como predictores. Ajustar los hiperparámetros del modelo Random Forest.
+
+**Puntos clave:**
+- La variable objetivo debe ser categórica.
+- Se recomienda usar solo variables numéricas como predictores.
+- El número de árboles y la profundidad del modelo afectan el desempeño y riesgo de sobreajuste.
+
+---
+
+### 2️⃣ Corrección del desbalance de clases con SMOTE
+
+**Objetivo:**  
+Aumentar artificialmente las clases minoritarias para mejorar el aprendizaje del modelo en conjuntos desbalanceados.
+
+**Puntos clave:**
+- SMOTE debe aplicarse solo si hay suficientes muestras por clase (≥2).
+- Las clases con muy pocas muestras serán ignoradas para evitar errores.
+- El valor de `k_neighbors` se ajusta automáticamente al tamaño mínimo permitido.
+
+---
+
+### 3️⃣ Entrenamiento y evaluación del modelo
+
+**Objetivo:**  
+Entrenar un clasificador Random Forest y evaluar su precisión tanto en entrenamiento como en validación cruzada.
+
+**Puntos clave:**
+- La **exactitud en entrenamiento** permite detectar sobreajuste.
+- El **reporte de clasificación** muestra precisión por clase.
+- La **matriz de confusión** ayuda a identificar errores comunes.
+- La **curva de aprendizaje** revela si el modelo mejora con más datos.
+
+---
+
+### 4️⃣ Predicción individual y estimación de incertidumbre
+
+**Objetivo:**  
+Permitir al usuario predecir la clase morfológica de una galaxia específica y visualizar la **incertidumbre del modelo** usando bootstrap.
+
+**Puntos clave:**
+- Se muestran las probabilidades para cada clase.
+- El bootstrap repite el entrenamiento múltiples veces para estimar la variabilidad de la predicción.
+- Se presentan histogramas de distribución por clase para facilitar la interpretación.
+
+---
+
+### 5️⃣ Mapas espaciales 2D y 3D de probabilidad
+
+**Objetivo:**  
+Visualizar cómo varía la probabilidad de pertenecer a una clase morfológica en función de la posición en el cielo (RA y Dec).
+
+**Puntos clave:**
+- Se puede seleccionar una macroclase (E/S) o una subclase específica.
+- Se aplican máscaras espaciales para evitar zonas sin datos.
+- Las probabilidades se ponderan por densidad local para mejorar la visualización.
+- Se permite exportar el mapa como imagen o CSV.
+
+---
+
+### 6️⃣ Mapas de entropía
+
+**Objetivo:**  
+Evaluar la **incertidumbre espacial** del modelo mediante la entropía de la predicción.
+
+**Puntos clave:**
+- La entropía alta indica regiones donde el modelo no está seguro.
+- Se visualiza tanto la entropía absoluta como su forma **normalizada**.
+- Las regiones con alta entropía pueden coincidir con **transiciones morfológicas** o falta de información.
+
+---
+
+### 7️⃣ Detección de subestructuras: clumps por entropía
+
+**Objetivo:**  
+Identificar posibles **subestructuras espaciales** en la distribución de galaxias, agrupando aquellas con entropía similar.
+
+**Puntos clave:**
+- Se usan algoritmos de clustering como DBSCAN y HDBSCAN.
+- El color de los puntos representa la entropía promedio por clump.
+- Los clumps pueden indicar **zonas de transición, interacción o estructuras físicas reales**.
+- Se recomienda validar con redshift si está disponible.
+
+---
+
+### ✅ Consideraciones finales
+
+- El flujo está diseñado para ofrecer una visión **integrada y explicativa** del comportamiento del modelo.
+- El análisis permite explorar tanto la **eficacia del clasificador**, como la **coherencia espacial** de las predicciones.
+- La combinación de **predicción, visualización e incertidumbre** hace posible una interpretación más robusta de los datos astronómicos.
+
+            """)
+
+
+            
 
             st.markdown("**Aquí puede usar las variables numéricas para predecir morfología usando modelos de Random Forest (se recomienda activar el botón de SMOTE, si considera que las clases morfolóficas están desbalanceadas). Use los botones y deslizadores para definir los predictores, la profundidad de los modelos de árbol en Random Forest y el número de vecinos (si usa SMOTE).**")
             

@@ -1249,86 +1249,74 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig_entropy_norm, use_container_width=True)
 
-            # ===== Detección de Clumps con DBSCAN sobre Baja Entropía =====
-            st.subheader("🔍 Regiones Coherentes de Baja Entropía (DBSCAN)")
+           # ===== Detección de Clumps entre Galaxias en Regiones de Baja Entropía =====
+            st.subheader("🌀 Clumps de Galaxias en Regiones de Baja Entropía")
 
-            # Usar solo puntos con entropía suficientemente baja
-            threshold_entropia = 0.2
-            low_entropy_mask = (normalized_entropy < threshold_entropia) & mask_near
-            X_clumps = grid_df[low_entropy_mask][["RA", "Dec"]].values
+            # Interpolar entropía normalizada al RA/Dec de galaxias reales
+            from scipy.interpolate import griddata
 
-            if len(X_clumps) >= 5:
-                dbscan = DBSCAN(eps=0.2, min_samples=5)
-                labels = dbscan.fit_predict(X_clumps)
+            # Coordenadas de la malla
+            grid_points = np.column_stack((grid_df["RA"], grid_df["Dec"]))
+            # Valores de entropía normalizada
+            grid_entropy = normalized_entropy
 
-                fig_clumps = go.Figure()
-                for label in np.unique(labels):
-                    cluster_mask = labels == label
-                    coords = X_clumps[cluster_mask]
-                    fig_clumps.add_trace(go.Scatter(
-                        x=coords[:, 0], y=coords[:, 1],
-                        mode='markers',
-                        marker=dict(size=6, color=label, colorscale='Turbo', showscale=False),
-                        name=f'Clump {label}' if label != -1 else "Ruido"
-                    ))
+            # Interpolar a coordenadas de galaxias reales
+            galaxy_coords = df[["RA", "Dec"]].values
+            galaxy_entropy = griddata(
+                grid_points, grid_entropy, galaxy_coords, method="linear"
+            )
 
-                fig_clumps.update_layout(
-                    title="Mapa 2D de Regiones de Baja Entropía (Clumps DBSCAN)",
-                    xaxis_title="Ascensión recta (RA)",
-                    yaxis_title="Declinación (Dec)",
-                    height=500
-                )
+            # Agregar al DataFrame
+            df["Entropy_Local"] = galaxy_entropy
 
-                st.plotly_chart(fig_clumps, use_container_width=True)
-            else:
-                st.info("No hay suficientes puntos con entropía baja para aplicar DBSCAN.")
+            # Filtrar galaxias con entropía baja
+            ent_threshold = 0.2
+            galaxias_baja_entropia = df[df["Entropy_Local"] < ent_threshold].copy()
 
-            # ===== Superposición de Clumps Identificados sobre Galaxias =====
-            st.subheader("🌌 Superposición de Clumps DBSCAN sobre Galaxias Reales")
+            # Aplicar DBSCAN a estas galaxias
+            X = galaxias_baja_entropia[["RA", "Dec"]].values
+            if len(X) >= 5:
+                dbscan_gal = DBSCAN(eps=0.1, min_samples=5)
+                labels_gal = dbscan_gal.fit_predict(X)
+                galaxias_baja_entropia["Cluster"] = labels_gal
 
-            if len(X_clumps) >= 5:
-                fig_clumps_overlay = go.Figure()
+                # Graficar resultado
+                fig_clumps_gal = go.Figure()
 
-                # Fondo: galaxias reales
-                fig_clumps_overlay.add_trace(go.Scatter(
-                    x=df["RA"],
-                    y=df["Dec"],
+                # Galaxias originales en gris
+                fig_clumps_gal.add_trace(go.Scatter(
+                    x=df["RA"], y=df["Dec"],
                     mode='markers',
-                    marker=dict(size=4, color='lightgray'),
+                    marker=dict(size=3, color='lightgray'),
                     name='Galaxias'
                 ))
 
-                # Clumps de baja entropía
-                for label in np.unique(labels):
-                    cluster_mask = labels == label
-                    coords = X_clumps[cluster_mask]
-                    fig_clumps_overlay.add_trace(go.Scatter(
-                        x=coords[:, 0],
-                        y=coords[:, 1],
+                # Colorear clumps detectados
+                for cl in np.unique(labels_gal):
+                    mask = galaxias_baja_entropia["Cluster"] == cl
+                    color = cl if cl != -1 else "rgba(0,200,255,0.4)"
+                    nombre = f"Clump {cl}" if cl != -1 else "Ruido"
+                    fig_clumps_gal.add_trace(go.Scatter(
+                        x=galaxias_baja_entropia.loc[mask, "RA"],
+                        y=galaxias_baja_entropia.loc[mask, "Dec"],
                         mode='markers',
-                        marker=dict(
-                            size=7,
-                            color=label,
-                            colorscale='Turbo',
-                            showscale=False,
-                            line=dict(width=1, color='black') if label != -1 else None
-                        ),
-                        name=f'Clump {label}' if label != -1 else "Ruido"
+                        marker=dict(size=6, color=color, colorscale="Turbo", showscale=False),
+                        name=nombre
                     ))
 
-                fig_clumps_overlay.update_layout(
-                    title="Proyección de Clumps DBSCAN sobre Galaxias Reales",
+                fig_clumps_gal.update_layout(
+                    title="Proyección de Clumps entre Galaxias con Baja Entropía",
                     xaxis_title="Ascensión recta (RA)",
                     yaxis_title="Declinación (Dec)",
-                    height=600
+                    height=550
                 )
 
-                st.plotly_chart(fig_clumps_overlay, use_container_width=True)        
+                st.plotly_chart(fig_clumps_gal, use_container_width=True)
+
             else:
-                st.info("No hay suficientes puntos para visualizar los clumps sobre las galaxias.")
+                st.info("No hay suficientes galaxias en regiones de baja entropía para aplicar DBSCAN.")
+ 
 
-
-            
             st.divider()
             
             st.subheader("Matriz de correlación")

@@ -1249,73 +1249,65 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             st.plotly_chart(fig_entropy_norm, use_container_width=True)
 
-           # ===== Detección de Clumps entre Galaxias en Regiones de Baja Entropía =====
-            st.subheader("🌀 Clumps de Galaxias en Regiones de Baja Entropía")
+            # ===== Detección de Clumps sobre Toda la Región, ponderando por Entropía =====
+            st.subheader("🔍 Clumps Identificados (DBSCAN en Región Válida, ponderado por Entropía)")
 
-            # Interpolar entropía normalizada al RA/Dec de galaxias reales
-            from scipy.interpolate import griddata
+            from sklearn.cluster import DBSCAN
+            from sklearn.preprocessing import MinMaxScaler
 
-            # Coordenadas de la malla
-            grid_points = np.column_stack((grid_df["RA"], grid_df["Dec"]))
-            # Valores de entropía normalizada
-            grid_entropy = normalized_entropy
+            # Usar todos los puntos cercanos válidos
+            X_clumps = grid_df[mask_near][["RA", "Dec"]].values
+            entropy_vals_all = normalized_entropy[mask_near]
 
-            # Interpolar a coordenadas de galaxias reales
-            galaxy_coords = df[["RA", "Dec"]].values
-            galaxy_entropy = griddata(
-                grid_points, grid_entropy, galaxy_coords, method="linear"
-            )
+            if len(X_clumps) >= 5:
+                dbscan = DBSCAN(eps=0.2, min_samples=5)
+                labels = dbscan.fit_predict(X_clumps)
 
-            # Agregar al DataFrame
-            df["Entropy_Local"] = galaxy_entropy
+                fig_clumps_entropy = go.Figure()
+                unique_labels = np.unique(labels)
+    
+                for label in unique_labels:
+                    mask = labels == label
+                    coords = X_clumps[mask]
+                    entropies = entropy_vals_all[mask]
 
-            # Filtrar galaxias con entropía baja
-            ent_threshold = 0.2
-            galaxias_baja_entropia = df[df["Entropy_Local"] < ent_threshold].copy()
-
-            # Aplicar DBSCAN a estas galaxias
-            X = galaxias_baja_entropia[["RA", "Dec"]].values
-            if len(X) >= 5:
-                dbscan_gal = DBSCAN(eps=0.1, min_samples=5)
-                labels_gal = dbscan_gal.fit_predict(X)
-                galaxias_baja_entropia["Cluster"] = labels_gal
-
-                # Graficar resultado
-                fig_clumps_gal = go.Figure()
-
-                # Galaxias originales en gris
-                fig_clumps_gal.add_trace(go.Scatter(
-                    x=df["RA"], y=df["Dec"],
-                    mode='markers',
-                    marker=dict(size=3, color='lightgray'),
-                    name='Galaxias'
-                ))
-
-                # Colorear clumps detectados
-                for cl in np.unique(labels_gal):
-                    mask = galaxias_baja_entropia["Cluster"] == cl
-                    color = cl if cl != -1 else "rgba(0,200,255,0.4)"
-                    nombre = f"Clump {cl}" if cl != -1 else "Ruido"
-                    fig_clumps_gal.add_trace(go.Scatter(
-                        x=galaxias_baja_entropia.loc[mask, "RA"],
-                        y=galaxias_baja_entropia.loc[mask, "Dec"],
+                    color = "gray" if label == -1 else np.mean(entropies)
+                    fig_clumps_entropy.add_trace(go.Scatter(
+                        x=coords[:, 0], y=coords[:, 1],
                         mode='markers',
-                        marker=dict(size=6, color=color, colorscale="Turbo", showscale=False),
-                        name=nombre
+                        marker=dict(
+                            size=6,
+                            color=color,
+                            colorscale='Reds',
+                            cmin=0, cmax=1,
+                            showscale=False
+                        ),
+                        name=f'Clump {label}' if label != -1 else "Ruido"
                     ))
 
-                fig_clumps_gal.update_layout(
-                    title="Proyección de Clumps entre Galaxias con Baja Entropía",
+                fig_clumps_entropy.update_layout(
+                    title="Clumps DBSCAN (color por entropía media del clump)",
                     xaxis_title="Ascensión recta (RA)",
                     yaxis_title="Declinación (Dec)",
-                    height=550
+                    height=500
                 )
 
-                st.plotly_chart(fig_clumps_gal, use_container_width=True)
+                st.plotly_chart(fig_clumps_entropy, use_container_width=True)
+
+                # Mostrar tabla resumen con entropía por clump
+                clump_entropies = {
+                    f"Clump {label}": np.mean(entropy_vals_all[labels == label])
+                    for label in unique_labels if label != -1
+                }
+                st.markdown("### Entropía media por clump (excluyendo ruido):")
+                #st.dataframe(pd.DataFrame.from_dict(clump_entropies, orient='index', columns=["Entropía Media"]))
+                st.dataframe(
+                    pd.DataFrame.from_dict(clump_entropies, orient='index', columns=["Entropía Media"])
+                    .sort_values("Entropía Media")
+                )
 
             else:
-                st.info("No hay suficientes galaxias en regiones de baja entropía para aplicar DBSCAN.")
- 
+                st.info("No hay suficientes puntos para aplicar DBSCAN.")
 
             st.divider()
             

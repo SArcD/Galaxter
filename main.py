@@ -1271,7 +1271,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
 
             # Aplicar DBSCAN
             if len(coords_galaxias) >= 5:
-                dbscan = DBSCAN(eps=0.15, min_samples=5)
+                dbscan = DBSCAN(eps=0.10, min_samples=5)
                 labels = dbscan.fit_predict(coords_galaxias)
 
                 fig_gal_clumps = go.Figure()

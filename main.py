@@ -1315,6 +1315,9 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 margin=dict(r=120)
             )    
 
+            fig_entropy.update_layout(xaxis=dict(autorange='reversed'))
+
+            
             st.plotly_chart(fig_entropy, use_container_width=True)
 
             st.divider()
@@ -1349,6 +1352,9 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 margin=dict(r=120)
             )
 
+            fig_entropy_norm.update_layout(xaxis=dict(autorange='reversed'))
+
+            
             st.plotly_chart(fig_entropy_norm, use_container_width=True)
 
             from sklearn.cluster import DBSCAN
@@ -1434,6 +1440,7 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                     yaxis_title="Declinación (Dec)",
                     height=500
                 )
+                fig.update_layout(xaxis=dict(autorange='reversed'))
 
                 st.plotly_chart(fig, use_container_width=True)
 

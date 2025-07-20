@@ -1078,7 +1078,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 contours=dict(showlabels=True, coloring='heatmap'),
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
                 name="Probabilidad",
-                zmin=0, zmax=1, zauto=False
+                zmin=0, zmax=1, zauto=True
             ))
 
             for subclase in selected_subclases:
@@ -1127,7 +1127,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                 colorbar=dict(title=f'P({selected_class})', x=1.1),
                 name="Superficie",
                 showscale=True,
-                zmin=0, zmax=1, zauto=False
+                zmin=0, zmax=1, zauto=True
             ))
 
             interp_func = RegularGridInterpolator((ra_vals, dec_vals), proba_vals.T, bounds_error=False, fill_value=None)

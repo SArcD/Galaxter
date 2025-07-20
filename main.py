@@ -1019,7 +1019,7 @@ En esta sección puede colocar el nombre de cualquiera de las columnas de la bas
                     grid_df[var] = df[var].mean()
 
             # Enmascarar zonas vacías (sin galaxias cercanas)
-            neigh = NearestNeighbors(radius=0.5)
+            neigh = NearestNeighbors(radius=0.1)
             neigh.fit(df[["RA", "Dec"]])
             is_near = neigh.radius_neighbors(grid_df[["RA", "Dec"]], return_distance=False)
             mask_near = np.array([len(x) > 0 for x in is_near])

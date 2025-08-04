@@ -3609,7 +3609,7 @@ elif opcion == "Equipo de trabajo":
                "CV": "https://www.irya.unam.mx/web/es/gente/tecnicos-academicos/r-ortega", "contacto": "r.ortega@irya.unam.mx"},
               {
                "nombre": "D. C. (Astrofísica) Josué de Jesús Trejo Alonso",
-               "foto": "TrejoJ.jpg",
+               "foto": "Trejo.jpg",
                "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica).",
                "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": " "}
                ]

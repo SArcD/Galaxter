@@ -3615,7 +3615,7 @@ elif opcion == "Equipo de trabajo":
                ]
 
     for persona in equipo:
-        st.image(persona["foto"], width=250)
+        st.image(persona["foto"], width=350)
     
         st.markdown(f"""
         <h4 style='text-align: left;'>{persona['nombre']}</h4>

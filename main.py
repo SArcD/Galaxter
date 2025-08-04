@@ -3610,8 +3610,8 @@ elif opcion == "Equipo de trabajo":
               {
                "nombre": "D. C. (Astrofísica) Josué de Jesús Trejo Alonso",
                "foto": "Josue.jpg",
-               "reseña": "Licenciado en Física, Maestro en Física y Doctor en Ciencias (Astrofísica).",
-               "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": " "}
+               "reseña": "El doctor Josué de Jesús Trejo Alonso, estudió en la Universidad de Guanajuato la carrera de Licenciatura en Física, después se graduó de la Maestría en Ciencias y el Doctorado en Ciencias (Astrofísica) del Departamento de Astronomía de la misma Universidad. Desde 2010 ha estado activo en la divulgación científica dando más de 40 conferencias para todo público. Cuenta con 16 publicaciones en el área de la astronomía y la hidrología ambiental. Es profesor de tiempo completo en la Universidad Autónoma de Querétaro y tiene SNII nivel I. Su mayor logro ha sido comerse 26 tacos con doble tortilla y 2 caguamas. Actualmente si toma le da gastritis.",
+               "CV": "https://www.researchgate.net/profile/Josue-Trejo-Alonso", "contacto": "josue.trejo@uaq.mx"}
                ]
 
     for persona in equipo:

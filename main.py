@@ -3601,7 +3601,7 @@ elif opcion == "Equipo de trabajo":
                "nombre": "D. C. (Astrofísica) Juan Manuel Islas Islas",
                "foto": "IslasJ.jpeg",
                "reseña": "Dr. Juan Manuel Islas Islas – Investigador Nacional SNII Nivel I, Físico egresado del Instituto de Física de la Universidad de Guanajuato,  cuenta con Doctorado en Astrofísica por la misma casa de estudios. Su  línea de investigación se centra en la evolución de galaxias en entornos densos y en el desarrollo de instrumentos ópticos de bajo costo basados en economía circular; ha publicado artículos en revistas JCR (dos como  primer autor), capítulos de libro y un texto de divulgación científica. Entre 2020 y 2022 realizó una Estancia Posdoctoral por México (CONAHCYT) enfocada en interferometría óptica de cambio de fase, donde diseñó sistemas interferométricos científicos a partir de componentes reciclados. Desde 2013 es Profesor-Investigador de la Universidad Tecnológica de Tulancingo, impartiendo más de sesenta cursos de física, matemáticas, óptica y estadística en programas de TSU, licenciatura y maestría, y dirigiendo  siete tesis de licenciatura. Promueve la vinculación académica al gestionar la colaboración entre la UTT y el Radio Telescopio Tulancingo 1 del IRyA-UNAM, así como proyectos  con centros de investigación nacionales e internacionales.",
-               "CV": "https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ", "contacto": " "},
+               "CV": "https://scholar.google.com/citations?hl=es&user=dvyLfnUAAAAJ", "contacto": "manuel.islas@utectulancingo.edu.mx"},
               {
                "nombre": "D. C. (Astrofísica) René Alberto Ortega Minakata",
                "foto": "MinakataR.jpg",

@@ -126,7 +126,7 @@ Por favor cargue un archivo .csv con la base de datos (versión actual del archi
     if uploaded_file is not None:
         # Leer archivo
         df = pd.read_csv(uploaded_file)
-        st.write("Datos cargados:", df.head())
+        st.write("Datos cargados:", df.describe())
         # Expansor con explicaciones
         with st.expander("**Ver explicación de las columnas**"):
             # Descripciones

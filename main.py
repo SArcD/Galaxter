@@ -2024,13 +2024,80 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
         # ================================================    
         # ✅ FUNCIÓN: t-SNE
         # ================================================
+        #def add_tsne(df, scaled_data, idx):
+        #    pca = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
+        #    tsne = TSNE(n_components=2, random_state=42)
+        #    tsne_result = tsne.fit_transform(pca)
+        #    df.loc[idx, 'TSNE1'] = tsne_result[:, 0]
+        #    df.loc[idx, 'TSNE2'] = tsne_result[:, 1]
+        #    return df
+
+
+        import numpy as np
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+
+        # ================================================    
+        # ✅ FUNCIÓN: t-SNE (versión robusta)
+        # ================================================
         def add_tsne(df, scaled_data, idx):
-            pca = PCA(n_components=min(20, scaled_data.shape[1])).fit_transform(scaled_data)
-            tsne = TSNE(n_components=2, random_state=42)
-            tsne_result = tsne.fit_transform(pca)
+            # Aseguramos que sea un array NumPy
+            X = np.asarray(scaled_data)
+
+            # Dimensiones
+            n_samples, n_features = X.shape
+
+            # --- 1) Checar si hay suficientes datos ---
+            # t-SNE necesita al menos unas cuantas muestras para tener sentido
+            if n_samples < 3 or n_features < 1:
+                # Si quieres, puedes poner NaN en lugar de explotar
+                df.loc[idx, 'TSNE1'] = np.nan
+                df.loc[idx, 'TSNE2'] = np.nan
+                # En Streamlit podrías mostrar un warning fuera de esta función
+                # st.warning(f"Demasiado pocos objetos ({n_samples}) para calcular t-SNE.")
+                return df
+
+            # --- 2) PCA seguro ---
+            max_components = min(n_samples, n_features)      # máximo permitido por sklearn
+            n_components = min(20, max_components)           # tu límite de 20, pero sin pasarse
+
+            if n_components < 2:
+                # No tiene mucho sentido reducir a <2 componentes antes de mandar a t-SNE
+                df.loc[idx, 'TSNE1'] = np.nan
+                df.loc[idx, 'TSNE2'] = np.nan
+                return df
+
+            pca = PCA(n_components=n_components, random_state=42)
+            X_pca = pca.fit_transform(X)
+
+            # --- 3) t-SNE con perplexity ajustado ---
+            # Regla típica: perplexity < n_samples (y no demasiado grande)
+            # algo razonable: entre 5 y 30, pero siempre < n_samples
+            if n_samples <= 5:
+                perplexity = max(2, n_samples - 1)
+            else:
+                perplexity = min(30, n_samples // 3)
+
+            # Seguridad extra por si acaso
+            if perplexity >= n_samples:
+                perplexity = n_samples - 1
+
+            tsne = TSNE(
+                n_components=2,
+                random_state=42,
+                perplexity=perplexity,
+                init="pca",
+                learning_rate="auto"
+            )
+            tsne_result = tsne.fit_transform(X_pca)
+
+            # Asignar resultados respetando el índice idx
             df.loc[idx, 'TSNE1'] = tsne_result[:, 0]
             df.loc[idx, 'TSNE2'] = tsne_result[:, 1]
+
             return df
+
+        
 
         # ================================================
         # ✅ FUNCIÓN: DS TEST para subcluster

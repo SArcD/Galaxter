@@ -2023,7 +2023,7 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
         from sklearn.manifold import TSNE
         import streamlit as st
 
-        def plot_tsne_and_boxplots(df, scaled, idx, *args, **kwargs):
+        #def plot_tsne_and_boxplots(df, scaled, idx, *args, **kwargs):
         import numpy as np
         import streamlit as st
         import plotly.graph_objects as go

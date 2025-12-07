@@ -2024,27 +2024,55 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
         import streamlit as st
 
         def plot_tsne_and_boxplots(df, scaled, idx, *args, **kwargs):
+        import numpy as np
+        import streamlit as st
+        import plotly.graph_objects as go
+
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+
+        # ================================================
+        # ✅ FUNCIÓN: t-SNE + (espacio para boxplots)
+        # ================================================
+        def plot_tsne_and_boxplots(df, idx, selected_cols):
             """
-            df   : DataFrame completo
-            scaled : matriz ya estandarizada (solo las columnas numéricas que usas para PCA/t-SNE)
-            idx  : índice/boolean mask o lista de índices que corresponden a 'scaled'
-            *args, **kwargs : otros parámetros que ya usaba tu función (level, nombres de columnas, etc.)
+            df            : DataFrame completo
+            idx           : máscara booleana o índice (df.index, lista de índices, etc.)
+                    que indica las filas a usar.
+            selected_cols : nombre de columna (str) o lista de columnas numéricas
+                    para PCA/t-SNE.
+            Devuelve:
+            fig_tsne : figura de Plotly con el scatter de t-SNE
+                   (puedes ampliarla para añadir boxplots).
             """
 
-            # -----------------------------------------
-            # 1) Asegurar que scaled es un array válido
-            # -----------------------------------------
-            X = np.asarray(scaled)
+            # --- 0) Asegurar que selected_cols sea lista de columnas ---
+            if isinstance(selected_cols, str):
+                cols = [selected_cols]
+            else:
+                cols = list(selected_cols)
 
-            if X.size == 0:
-                st.warning("No hay datos suficientes para calcular PCA/t-SNE en este nivel.")
-                return
+            if len(cols) == 0:
+                st.warning("No se han seleccionado columnas para PCA/t-SNE.")
+                return None
 
+            # --- 1) Extraer sub-DataFrame y limpiar NaN ---
+            # idx puede ser máscara booleana o índice; ambos funcionan con .loc
+            df_sub = df.loc[idx, cols].dropna()
+
+            if df_sub.empty:
+                st.warning("No hay datos suficientes (todas las filas son NaN) para PCA/t-SNE.")
+                return None
+
+            # Escalado
+            scaler = StandardScaler()
+            X = scaler.fit_transform(df_sub.values)  # ahora es 2D sí o sí
+
+            # Dimensiones
             n_samples, n_features = X.shape
 
-            # -----------------------------------------
-            # 2) PCA SEGURO
-            # -----------------------------------------
+            # --- 2) PCA SEGURO ---
             max_components = min(n_samples, n_features)
             n_components = min(20, max_components)
 
@@ -2052,26 +2080,24 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 st.warning(
                     f"No hay suficientes datos para PCA en este nivel "
                     f"(muestras={n_samples}, variables={n_features}). "
-                    "Prueba con un filtro menos restrictivo."
+                    "Prueba con un filtro menos restrictivo o más columnas."
                 )
-                return
+                return None
 
             pca = PCA(n_components=n_components, random_state=42)
             X_pca = pca.fit_transform(X)
 
-            # -----------------------------------------
-            # 3) t-SNE con perplexity ajustada
-            # -----------------------------------------
+            # --- 3) t-SNE con perplexity ajustada ---
             if n_samples <= 2:
                 st.warning(
                     f"Hay muy pocos objetos ({n_samples}) para calcular t-SNE de forma estable."
                 )
-                # Puedes decidir aquí si pones NaN o simplemente regresas
-                df.loc[idx, 'TSNE1'] = np.nan
-                df.loc[idx, 'TSNE2'] = np.nan
-                return
+                # Rellenamos NaN para no romper nada
+                df.loc[df_sub.index, "TSNE1"] = np.nan
+                df.loc[df_sub.index, "TSNE2"] = np.nan
+                return None
 
-            # Regla simple: perplexity < n_samples y en rango razonable
+            # Regla simple para perplexity: < n_samples y rango razonable
             if n_samples <= 5:
                 perplexity = max(2, n_samples - 1)
             else:
@@ -2085,13 +2111,36 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                 random_state=42,
                 perplexity=perplexity,
                 init="pca",
-                learning_rate="auto"
+                learning_rate="auto",
             )
             tsne_result = tsne.fit_transform(X_pca)
 
-            # Guardar en el DataFrame original según idx
-            df.loc[idx, 'TSNE1'] = tsne_result[:, 0]
-            df.loc[idx, 'TSNE2'] = tsne_result[:, 1]
+            # Guardar en df original para esas mismas filas
+            df.loc[df_sub.index, "TSNE1"] = tsne_result[:, 0]
+            df.loc[df_sub.index, "TSNE2"] = tsne_result[:, 1]
+
+            # --- 4) Figura básica t-SNE (puedes ampliarla con boxplots) ---
+            fig_tsne = go.Figure()
+
+            fig_tsne.add_trace(
+                go.Scatter(
+                    x=tsne_result[:, 0],
+                    y=tsne_result[:, 1],
+                    mode="markers",
+                    marker=dict(size=6),
+                    text=[str(i) for i in df_sub.index],
+                    hovertemplate="TSNE1=%{x:.3f}<br>TSNE2=%{y:.3f}<br>Index=%{text}<extra></extra>",
+                )
+            )
+
+            fig_tsne.update_layout(
+                title="Mapa t-SNE",
+                xaxis_title="TSNE1",
+                yaxis_title="TSNE2",
+                template="plotly_white",
+            )
+
+            return fig_tsne
 
 
 

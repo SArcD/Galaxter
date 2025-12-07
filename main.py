@@ -2018,6 +2018,81 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
             return fig
 
 
+        import numpy as np
+        from sklearn.decomposition import PCA
+        from sklearn.manifold import TSNE
+        import streamlit as st
+
+        def plot_tsne_and_boxplots(df, scaled, idx, *args, **kwargs):
+            """
+            df   : DataFrame completo
+            scaled : matriz ya estandarizada (solo las columnas numéricas que usas para PCA/t-SNE)
+            idx  : índice/boolean mask o lista de índices que corresponden a 'scaled'
+            *args, **kwargs : otros parámetros que ya usaba tu función (level, nombres de columnas, etc.)
+            """
+
+            # -----------------------------------------
+            # 1) Asegurar que scaled es un array válido
+            # -----------------------------------------
+            X = np.asarray(scaled)
+
+            if X.size == 0:
+                st.warning("No hay datos suficientes para calcular PCA/t-SNE en este nivel.")
+                return
+
+            n_samples, n_features = X.shape
+
+            # -----------------------------------------
+            # 2) PCA SEGURO
+            # -----------------------------------------
+            max_components = min(n_samples, n_features)
+            n_components = min(20, max_components)
+
+            if n_components < 2:
+                st.warning(
+                    f"No hay suficientes datos para PCA en este nivel "
+                    f"(muestras={n_samples}, variables={n_features}). "
+                    "Prueba con un filtro menos restrictivo."
+                )
+                return
+
+            pca = PCA(n_components=n_components, random_state=42)
+            X_pca = pca.fit_transform(X)
+
+            # -----------------------------------------
+            # 3) t-SNE con perplexity ajustada
+            # -----------------------------------------
+            if n_samples <= 2:
+                st.warning(
+                    f"Hay muy pocos objetos ({n_samples}) para calcular t-SNE de forma estable."
+                )
+                # Puedes decidir aquí si pones NaN o simplemente regresas
+                df.loc[idx, 'TSNE1'] = np.nan
+                df.loc[idx, 'TSNE2'] = np.nan
+                return
+
+            # Regla simple: perplexity < n_samples y en rango razonable
+            if n_samples <= 5:
+                perplexity = max(2, n_samples - 1)
+            else:
+                perplexity = min(30, n_samples // 3)
+
+            if perplexity >= n_samples:
+                perplexity = n_samples - 1
+
+            tsne = TSNE(
+                n_components=2,
+                random_state=42,
+                perplexity=perplexity,
+                init="pca",
+                learning_rate="auto"
+            )
+            tsne_result = tsne.fit_transform(X_pca)
+
+            # Guardar en el DataFrame original según idx
+            df.loc[idx, 'TSNE1'] = tsne_result[:, 0]
+            df.loc[idx, 'TSNE2'] = tsne_result[:, 1]
+
 
 
         

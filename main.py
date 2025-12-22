@@ -2563,7 +2563,21 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
                         continue
 
                     scaled = scaler.fit_transform(data)
-                    pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
+                    #pca = PCA(n_components=min(20, scaled.shape[1])).fit_transform(scaled)
+
+
+                    n_samples, n_features = scaled.shape
+                    max_comp = min(n_samples, n_features)
+
+                    if max_comp < 2:  # con 1 muestra o 1 feature útil, no hay nada que hacer
+                        df.loc[data.index, tsne1] = np.nan
+                        df.loc[data.index, tsne2] = np.nan
+                        continue
+
+                    pca = PCA(n_components=min(20, max_comp)).fit_transform(scaled)
+
+
+                    
                     #perplexity = min(30, max(5, scaled.shape[0] - 1))
                     # Perplexity dinámico
                     #n_points = pca.shape[0]

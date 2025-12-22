@@ -2429,7 +2429,7 @@ Identificar posibles **subestructuras espaciales** en la distribución de galaxi
             )
             
             
-            num_clusters = st.slider("Número de clusters:", 2, 10, 4)
+            num_clusters = st.slider("Número de clusters:", 2, 50, 4)
             df = full_pipeline(df, selected_cols, num_clusters)
             # Y muestra el mapa final interactivo:
             plot_final_map_subclusters(df)
